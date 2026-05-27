@@ -1,15 +1,15 @@
 import sqlite3
 import os
 def init_db():
-    sql_blueprint_path = "schema.sql"
+    sql_blueprint_path = "database.sql"
     database_file_name = "medical_platform.db"
     if not os.path.exists(sql_blueprint_path):
         print(f"❌ Error: Could not find '{sql_blueprint_path}' in this folder.")
-        print("Please create your 'schema.sql' file first before running this script.")
+        print("Please create your 'database.sql' file first before running this script.")
         return
     print(f"🏗️  Reading blueprint from {sql_blueprint_path}...")
     try:
-        with open("schema.sql", "r") as sql_file:
+        with open("database.sql", "r") as sql_file:
             sql_script = sql_file.read()
         conn = sqlite3.connect(database_file_name)
         cursor = conn.cursor()

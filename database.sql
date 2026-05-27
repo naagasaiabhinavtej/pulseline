@@ -22,7 +22,7 @@ CREATE TABLE clinics (
     location VARCHAR(150) NOT NULL,
     clinic_type VARCHAR(100) NOT NULL DEFAULT 'General Medicine',
     facility_scale VARCHAR(50) NOT NULL DEFAULT 'Rural Spoke',
-    contact_number VARCHAR(15),
+    contact_number VARCHAR(15)
 );
 CREATE INDEX idx_clinics_type ON clinics(clinic_type);
 CREATE INDEX idx_clinics_scale ON clinics(facility_scale);
@@ -56,6 +56,8 @@ CREATE TABLE consultation_sessions (
     session_status VARCHAR(20) DEFAULT 'queued',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     resolved_at TIMESTAMP,
+    referred_hospital_id INTEGER,
+    FOREIGN KEY (referred_hospital_id) REFERENCES clinics(clinic_id)
     FOREIGN KEY (health_id) REFERENCES patients(health_id),
     FOREIGN KEY (clinic_id) REFERENCES clinics(clinic_id),
     FOREIGN KEY (assigned_doctor_id) REFERENCES doctors(doctor_id)
