@@ -20,8 +20,24 @@ CREATE TABLE clinics (
     clinic_id INTEGER PRIMARY KEY AUTOINCREMENT,
     name VARCHAR(150) NOT NULL,
     location VARCHAR(150) NOT NULL,
-    clinic_type VARCHAR(100) NOT NULL DEFAULT 'General Medicine',
-    facility_scale VARCHAR(50) NOT NULL DEFAULT 'Rural Spoke',
+    clinic_type VARCHAR(100) NOT NULL DEFAULT 'PHC_CHC'
+        CHECK (clinic_type IN (
+            'PHC_CHC', 
+            'Govt_General_Hospital', 
+            'Corporate_Multi_Specialty', 
+            'Single_Specialty_Hospital', 
+            'Private_Clinic'
+        )),
+        
+    facility_scale VARCHAR(50) NOT NULL DEFAULT 'Rural Spoke'
+        CHECK (facility_scale IN ('Rural Spoke', 'Urban Node', 'Major Hub')),
+        
+    specialty_stream VARCHAR(50) DEFAULT NULL
+        CHECK (specialty_stream IN (
+            'General_Medicine', 'Ophthalmology', 'Otolaryngology', 'Cardiology',
+            'Orthopedics', 'Neurology', 'Gastroenterology', 'Dermatology',
+            'OB-GYN', 'Pediatrics', 'Psychiatry', 'Urology'
+        )),
     contact_number VARCHAR(15)
 );
 CREATE INDEX idx_clinics_type ON clinics(clinic_type);
@@ -49,7 +65,21 @@ CREATE TABLE consultation_sessions (
     blood_pressure VARCHAR(20), 
     blood_sugar REAL,           
     temperature REAL,           
-    heart_rate INTEGER,         
+    heart_rate INTEGER,  
+    department VARCHAR(50), CHECK (department in (
+        'General_Medicine',   -- 1. General & Common Illnesses
+        'Ophthalmology',      -- 2. Eyes & Vision
+        'Otolaryngology',     -- 3. Ear, Nose, & Throat (ENT)
+        'Cardiology',         -- 4. Heart & Blood Pressure
+        'Orthopedics',        -- 5. Bones, Joints, & Muscles
+        'Neurology',          -- 6. Brain & Nerves
+        'Gastroenterology',   -- 7. Stomach & Digestion
+        'Dermatology',        -- 8. Skin, Hair, & Nails
+        'OB-GYN',             -- 9. Women's Health & Pregnancy
+        'Pediatrics',         -- 10. Kids & Infants
+        'Psychiatry',         -- 11. Mental Health & Wellness
+        'Urology'             -- 12. Urinary & Men's Health
+    )),       
     chief_complaint TEXT NOT NULL,       
     uploaded_report_path VARCHAR(255), 
     additional_vitals TEXT DEFAULT '{}', 
@@ -57,7 +87,7 @@ CREATE TABLE consultation_sessions (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     resolved_at TIMESTAMP,
     referred_hospital_id INTEGER,
-    FOREIGN KEY (referred_hospital_id) REFERENCES clinics(clinic_id)
+    FOREIGN KEY (referred_hospital_id) REFERENCES clinics(clinic_id),
     FOREIGN KEY (health_id) REFERENCES patients(health_id),
     FOREIGN KEY (clinic_id) REFERENCES clinics(clinic_id),
     FOREIGN KEY (assigned_doctor_id) REFERENCES doctors(doctor_id)
