@@ -3,23 +3,27 @@ CREATE TABLE patients (
     health_id VARCHAR(50) PRIMARY KEY,
     name VARCHAR(100) NOT NULL,
     date_of_birth DATE NOT NULL,
-    gender VARCHAR(20) NOT NULL,
-    blood_group VARCHAR(10),
+    gender VARCHAR(20) NOT NULL CHECK (gender IN ('male', 'female', 'other')),
+    blood_group VARCHAR(10) CHECK (blood_group IN ('A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-')),
     height REAL, -- Stored in cm
     weight REAL, -- Stored in kg
     eye_sight VARCHAR(150), 
     hearing VARCHAR(150),   
     medical_history TEXT,  
     allergies TEXT,        
-    emergency_contact VARCHAR(150)
+    emergency_contact VARCHAR(150),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
-CREATE INDEX idx_patients_health_id ON patients(health_id);
+-- CREATE INDEX idx_patients_health_id ON patients(health_id);
 
 --local clinics table
 CREATE TABLE clinics (
     clinic_id INTEGER PRIMARY KEY AUTOINCREMENT,
     name VARCHAR(150) NOT NULL,
     location VARCHAR(150) NOT NULL,
+    latitude REAL NOT NULL,          -- GPS Latitude (e.g., 16.5062)
+    longitude REAL NOT NULL,         -- GPS Longitude (e.g., 80.6480)
     clinic_type VARCHAR(100) NOT NULL DEFAULT 'PHC_CHC'
         CHECK (clinic_type IN (
             'PHC_CHC', 
@@ -47,7 +51,9 @@ CREATE INDEX idx_clinics_scale ON clinics(facility_scale);
  CREATE TABLE doctors (
     doctor_id INTEGER PRIMARY KEY AUTOINCREMENT,
     name VARCHAR(100) NOT NULL,
-    specialization VARCHAR(100) NOT NULL, 
+    specialization VARCHAR(100) CHECK (specialization in ('General_Medicine', 'Ophthalmology', 'Otolaryngology', 'Cardiology',
+            'Orthopedics', 'Neurology', 'Gastroenterology', 'Dermatology',
+            'OB-GYN', 'Pediatrics', 'Psychiatry', 'Urology')), 
     contact_number VARCHAR(15),
     is_available BOOLEAN DEFAULT 1, 
     assigned_clinic_id INTEGER,
@@ -61,12 +67,11 @@ CREATE TABLE consultation_sessions (
     health_id VARCHAR(50) NOT NULL,
     clinic_id INTEGER NOT NULL,          
     assigned_doctor_id INTEGER,          
-    logged_nurse_name VARCHAR(100) NOT NULL,
     blood_pressure VARCHAR(20), 
     blood_sugar REAL,           
     temperature REAL,           
     heart_rate INTEGER,  
-    department VARCHAR(50), CHECK (department in (
+    department VARCHAR(50) CHECK (department in (
         'General_Medicine',   -- 1. General & Common Illnesses
         'Ophthalmology',      -- 2. Eyes & Vision
         'Otolaryngology',     -- 3. Ear, Nose, & Throat (ENT)
@@ -83,7 +88,7 @@ CREATE TABLE consultation_sessions (
     chief_complaint TEXT NOT NULL,       
     uploaded_report_path VARCHAR(255), 
     additional_vitals TEXT DEFAULT '{}', 
-    session_status VARCHAR(20) DEFAULT 'queued',
+    session_status VARCHAR(20) DEFAULT 'started',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     resolved_at TIMESTAMP,
     referred_hospital_id INTEGER,
