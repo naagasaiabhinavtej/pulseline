@@ -18,6 +18,11 @@ app.add_middleware(
 UPLOAD_DIR = "HealthProjectfile_uploads"
 os.makedirs(UPLOAD_DIR, exist_ok=True)
 
+@app.post("/api/sessions/start")
+def make_session(health_id:str = Form(...), clinic_id:str = Form(...), department:str = Form(...), assigned_doctor_id:str = Form(...)):
+    #make check when unkown patient_name comes or unknown_doc_name or clinic name comes
+    return create_patient_session(health_id, clinic_id, department, assigned_doctor_id)
+
 @app.post("/api/sessions/submit")
 async def submit_patient_session(
     health_id:str =Form(...),
