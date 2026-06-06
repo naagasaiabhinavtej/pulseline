@@ -1,6 +1,6 @@
 import os
-from fastapi import FastAPI, UploadFile, File, Form, HTTPException
-from crud import create_patient_session, trigger_emergency_escalation
+from fastapi import FastAPI, UploadFile, File, Form, HTTPException, Request
+from crud import create_patient_session, complete_patient_session
 from datetime import datetime
 from typing import Optional
 from fastapi.middleware.cors import CORSMiddleware
@@ -15,13 +15,56 @@ app.add_middleware(
     allow_methods = ["*"],
 )
 
-UPLOAD_DIR = "HealthProjectfile_uploads"
-os.makedirs(UPLOAD_DIR, exist_ok=True)
-
 @app.post("/api/sessions/start")
 def make_session(health_id:str = Form(...), clinic_id:str = Form(...), department:str = Form(...), assigned_doctor_id:str = Form(...)):
     #make check when unkown patient_name comes or unknown_doc_name or clinic name comes
     return create_patient_session(health_id, clinic_id, department, assigned_doctor_id)
+
+TO_UPLOAD_DIR = "folder"
+os.makedirs(TO_UPLOAD_DIR, exist_ok = True)
+
+@app.post("/api/sessions/{session_id}/submit")
+async def complete_session(request:Request,chief_complaint:str = Form(...), additional_vitals:str = Form(...), uploaded_filepath:UploadFile = File(...),
+                            blood_pressure: Optional[str] = Form(None), blood_sugar: Optional[float] = Form(None), temperature:Optional[float] = Form(None), 
+                            heart_rate: Optional[int] = Form(None)):
+    file_path = None
+    try:
+        _, file_ext = os.path.splitext(uploaded_filepath.filename)
+        if not file_ext:
+            file_ext = '.jpg'
+        session_id = request.path_params.get("session_id")
+        resolved_time = datetime.now().strftime("%Y%m%d_%H%M%S")
+        file_total_name = f"{str(session_id)}_{resolved_time}{file_ext}"
+        file_path = os.path.join(TO_UPLOAD_DIR, file_total_name)
+        with open(file_path, "wb") as f:
+            content = await uploaded_filepath.read()
+            f.write(content)
+        result = complete_patient_session(session_id=int(session_id), chief_complaint=chief_complaint, additional_vitals=additional_vitals,uploaded_filepath=file_path,resolved_time=resolved_time, blood_pressure=blood_pressure, blood_sugar=blood_sugar,temperature=temperature, heart_rate=heart_rate )
+        return result
+    except Exception as e:
+        if file_path and os.path.exists(file_path):
+            os.remove(file_path)
+        raise HTTPException(status_code=500, detail=f"Internal server problem : {str(e)}")
+        
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 @app.post("/api/sessions/submit")
 async def submit_patient_session(

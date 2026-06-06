@@ -1,14 +1,14 @@
 import sqlite3
 from typing import Optional
-import datetime
+# import datetime
 
 database_path = "medical_platform.db"
 
 def create_patient_session(health_id:str, clinic_id:str, department:str, assigned_doctor_id:str):
-    conn = sqlite3.connect(database_path)
-    curs = conn.cursor()
-    timenow = datetime.now().isoformat()
+    conn = None
     try:
+        conn = sqlite3.connect(database_path)
+        curs = conn.cursor()
         clinic_id = int(clinic_id)
         assigned_doctor_id = int(assigned_doctor_id)
         curs.execute("""
@@ -34,10 +34,10 @@ def create_patient_session(health_id:str, clinic_id:str, department:str, assigne
 
         curs.execute("""
                     INSERT INTO consultation_sessions
-                    (health_id, clinic_id, assigned_doctor_id, department, session_status, created_at)
+                    (health_id, clinic_id, assigned_doctor_id, department, session_status)
                     VALUES
-                    (?,?,?,?,"started",?)
-                        """, (health_id, clinic_id, assigned_doctor_id, department, timenow))
+                    (?,?,?,?,"started")
+                        """, (health_id, clinic_id, assigned_doctor_id, department))
         conn.commit()
         newsession_id = curs.lastrowid
         return{
@@ -48,12 +48,56 @@ def create_patient_session(health_id:str, clinic_id:str, department:str, assigne
             "message" : "Session created successfully"
         }
     except Exception as e:
-        conn.rollback()
+        if conn:
+            conn.rollback()
         raise e
     finally:
-        conn.close()
+        if conn:
+            conn.close()
+
+#dont use None things first 
+def complete_patient_session( 
+    session_id:int,
+    chief_complaint: str,
+    additional_vitals: str,
+    uploaded_filepath: str,
+    resolved_time:str,
+    blood_pressure: Optional[str] = None,
+    blood_sugar: Optional[float] = None,
+    temperature: Optional[float] = None,
+    heart_rate: Optional[int] = None):
+    conn = None
+    try:
+        conn = sqlite3.connect(database_path)
+        curs = conn.cursor()
+        curs.execute("""
+                        UPDATE consultation_sessions
+                        SET chief_complaint = ?, additional_vitals = ?, uploaded_file_path = ?, blood_pressure = ?, blood_sugar = ?, temperature = ?, heart_rate = ?, session_status = 'completed', resolved_at = ?
+                        WHERE session_id = ?   
+                    """, (chief_complaint, additional_vitals, uploaded_filepath, blood_pressure, blood_sugar, temperature, heart_rate, resolved_time, session_id))
+        
+        conn.commit()
+        return{
+            "message":"session completed successfully"
+        }
+    except Exception as e:
+        if conn:
+            conn.rollback()
+        raise e
+    finally:
+        if conn:
+            conn.close()
+    
 
     
+
+
+
+
+
+
+
+
 def create_patient_sessio(health_id:str, clinic_id:str, logged_nurse_name: str, file_path:str, additional_vitals:Optional[str] = None, chief_complaint:Optional[str] = None):
     conn = sqlite3.connect(database_path)
     cursor = conn.cursor()
