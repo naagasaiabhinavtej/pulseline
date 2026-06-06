@@ -85,8 +85,8 @@ CREATE TABLE consultation_sessions (
         'Psychiatry',         -- 11. Mental Health & Wellness
         'Urology'             -- 12. Urinary & Men's Health
     )),       
-    chief_complaint TEXT NOT NULL,       
-    uploaded_report_path VARCHAR(255), 
+    chief_complaint TEXT DEFAULT NULL,       
+    uploaded_file_path TEXT DEFAULT NULL, 
     additional_vitals TEXT DEFAULT '{}', 
     session_status VARCHAR(20) DEFAULT 'started',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
