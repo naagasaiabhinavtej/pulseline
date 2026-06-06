@@ -86,7 +86,7 @@ CREATE TABLE consultation_sessions (
         'Urology'             -- 12. Urinary & Men's Health
     )),       
     chief_complaint TEXT NOT NULL,       
-    -- uploaded_report_path VARCHAR(255), 
+    uploaded_report_path VARCHAR(255), 
     additional_vitals TEXT DEFAULT '{}', 
     session_status VARCHAR(20) DEFAULT 'started',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -103,14 +103,14 @@ CREATE INDEX idx_sessions_status ON consultation_sessions(session_status);
 
 CREATE TABLE session_attachments (
     attachment_id INTEGER PRIMARY KEY AUTOINCREMENT,
-    session_id INTEGER NOT NULL,
-    file_path VARCHAR(255) NOT NULL,
-    uploaded_by VARCHAR(50) NOT NULL CHECK (uploaded_by IN ('local_clinic', 'major_hospital')),
+    message_id INTEGER NOT NULL,
+    file_name TEXT NOT NULL,
+    file_path TEXT NOT NULL,
     uploaded_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (session_id) REFERENCES consultation_sessions(session_id)
+    FOREIGN KEY (message_id) REFERENCES session_messages(message_id)
 );
 
-CREATE INDEX idx_attachment_session ON session_attachments(session_id);
+CREATE INDEX idx_attachment_session ON session_attachments(message_id);
 
 CREATE TABLE session_messages(
     message_id INTEGER PRIMARY KEY AUTOINCREMENT,
