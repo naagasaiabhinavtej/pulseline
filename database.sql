@@ -111,3 +111,14 @@ CREATE TABLE session_attachments (
 );
 
 CREATE INDEX idx_attachment_session ON session_attachments(session_id);
+
+CREATE TABLE session_messages(
+    message_id INTEGER PRIMARY KEY AUTOINCREMENT,
+    session_id INTEGER NOT NULL,
+    uploaded_by VARCHAR(50) NOT NULL CHECK (uploaded_by IN ('local_clinic', 'major_hospital')),
+    message TEXT,
+    uploaded_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (session_id) REFERENCES consultation_sessions(session_id)
+);
+
+CREATE INDEX idx_message_session ON session_messages(session_id);
