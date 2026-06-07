@@ -1,6 +1,6 @@
 import os
-from fastapi import FastAPI, UploadFile, File, Form, HTTPException, Request
-from crud import create_patient_session, complete_patient_session
+from fastapi import FastAPI, UploadFile, File, Form, HTTPException, Request, Query
+from crud import create_patient_session, complete_patient_session, emergency_connect_hospitals
 from datetime import datetime
 from typing import Optional
 from fastapi.middleware.cors import CORSMiddleware
@@ -47,60 +47,54 @@ async def complete_session(request:Request,chief_complaint:str = Form(...), addi
         raise HTTPException(status_code=500, detail=f"Internal server problem : {str(e)}")
         
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-@app.post("/api/sessions/submit")
-async def submit_patient_session(
-    health_id:str =Form(...),
-    clinic_id:str = Form(...),
-    logged_nurse_name:str = Form(...),
-    chief_complaint: Optional[str] = Form(None),
-    additional_vitals: Optional[str] = Form(None),
-    report_file: UploadFile = File(...)
-):
+@app.get("/api/sessions/emergency")
+def connect_hospitals(session_id:int = Query(..., description="The ID of the current consultation session"),
+                      clinic_id: int = Query(..., description="The ID of the requesting clinic"),
+                      department: str = Query(..., description="The department stream (e.g., Cardiology)")):
     try:
-        _, file_extension = os.path.splitext(report_file.filename)
-        if not file_extension:
-            file_extension = ".jpg"
-        
-        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-        unique_filename = f"{health_id}_{timestamp}{file_extension}"
-        saved_file_path = os.path.join(UPLOAD_DIR, unique_filename)
-
-        with open(saved_file_path, "wb") as buffer:
-            content = await report_file.read()
-            buffer.write(content)
-
-        result = create_patient_session(
-                    health_id=health_id,
-                    clinic_id=clinic_id,
-                    logged_nurse_name=logged_nurse_name,
-                    file_path=saved_file_path, 
-                    chief_complaint=chief_complaint,
-                    additional_vitals=additional_vitals
-                )        
+        result = emergency_connect_hospitals(session_id=session_id, clinic_id=clinic_id, department=department)
         return result
     except Exception as e:
-        if 'saved_file_path' in locals() and os.path.exists(saved_file_path):
-            os.remove(saved_file_path)
-        raise HTTPException(status_code=500, detail="Internal Error Occurred")
+        raise HTTPException(status_code=500, detail=f"Internal sever issue: {str(e)}")
+    
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
     
 @app.post("/api/sessions/{session_id}/escalate")
 async def escalate_session(session_id: int):

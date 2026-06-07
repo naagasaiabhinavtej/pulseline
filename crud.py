@@ -1,5 +1,6 @@
 import sqlite3
 from typing import Optional
+import math
 # import datetime
 
 database_path = "medical_platform.db"
@@ -89,54 +90,79 @@ def complete_patient_session(
             conn.close()
     
 
+def caluculate_distance(lat1, lon1, lat2, lon2):
+    if None in (lat1, lon1, lat2, lon2):
+        return float('inf')
+    a1 = math.radians(lat1)
+    b1 = math.radians(lon1)
+    a2 = math.radians(lat2)
+    b2 = math.radians(lon2)
+    diff1 = a1 - a2
+    diff2 = b1 - b2
+    a = (math.sin(diff1/2))**2
+    b = math.cos(a1)*math.cos(a2)*(math.sin(diff2/2))**2
+    return 2*6371*(math.asin(math.sqrt(a+b)))
     
-
-
-
-
-
-
-
-
-def create_patient_sessio(health_id:str, clinic_id:str, logged_nurse_name: str, file_path:str, additional_vitals:Optional[str] = None, chief_complaint:Optional[str] = None):
-    conn = sqlite3.connect(database_path)
-    cursor = conn.cursor()
+def emergency_connect_hospitals(session_id:int, clinic_id:int, department:int):
+    conn = None
     try:
-        cursor.execute("""SELECT name from patients where health_id = ?
-                            """, (health_id,))
-        patient_row = cursor.fetchone()
-        # print(f"--- SQLITE INDEX CHECK: {patient_row[3]} ---")
-        health_name = patient_row[0] if patient_row else "Unknown Patient"
-
-        cursor.execute("SELECT name FROM Clinics WHERE clinic_id = ?", (clinic_id,))
-        clinic_row = cursor.fetchone()
-        clinic_name = clinic_row[0] if clinic_row else "Unknown Clinic"
-
-        cursor.execute("""
-                        INSERT INTO consultation_sessions
-                        (health_id, clinic_id, logged_nurse_name, uploaded_report_path, 
-                        chief_complaint, additional_vitals, session_status)
-                        VALUES
-                        (?,?,?,?,?,?,'queued')
-                        """,
-                        (
-                            health_id, clinic_id, logged_nurse_name, file_path, 
-                            chief_complaint, additional_vitals
-                        )                        
-                        )
-        conn.commit()
-        new_session_id = cursor.lastrowid
-        return {
-            "session_id": new_session_id,
-            "health_name": health_name,
-            "clinic_name": clinic_name,
-            "message": "Session successfully queued with bundled vitals!"
-        }        
+        conn = sqlite3.connect(database_path)
+        curs = conn.cursor()
+        # Arguments: (Name inside SQL, number of inputs, Python function name)
+        conn.create_function("calculate_distance", 4, caluculate_distance)
+        available = []
+        curs.execute("""
+                        SELECT a.clinic_id, b.doctor_id
+                        FROM clinics as a
+                        LEFT JOIN doctors as b
+                        ON a.clinic_id = b.assigned_clinic_id
+                        WHERE a.clinic_type IN ('Corporate_Multi_Specialty', 
+                        'Single_Specialty_Hospital' 
+                        ) AND a.specialty_stream = ? AND b.specialization = ?
+                        AND b.is_available = True
+                        AND (
+                                ((SELECT created_at FROM consultation_sessions WHERE session_id = ?)>=datetime('now','-30 minutes')
+                                AND calculate_distance(
+                                                        (SELECT latitude FROM consultation_sessions WHERE session_id = ?),
+                                                        (SELECT lONGItude FROM consultation_sessions WHERE session_id = ?),
+                                                        a.latitude,
+                                                        a.longitude
+                                                    ) <= 50
+                                OR
+                                ( (SELECT created_at FROM consultation_sessions WHERE session_id = ?)<datetime('now','-30 minutes') )
+                            )
+                        """, department,department, session_id, session_id, session_id, session_id)
+        rows = curs.fetchall() 
+        for row in rows:
+            available.append({
+                "assigned_clinic_id":row[0],
+                "assigned_doctor_id":row[1]
+            })
+        return available
     except Exception as e:
         conn.rollback()
         raise e
     finally:
         conn.close()
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 def trigger_emergency_escalation(session_id: int):
     conn = sqlite3.connect(database_path)
