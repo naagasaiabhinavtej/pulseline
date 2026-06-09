@@ -132,6 +132,7 @@ def emergency_connect_hospitals(session_id:int, clinic_id:int, department:int):
                                 ( (SELECT created_at FROM consultation_sessions WHERE session_id = ?)<datetime('now','-30 minutes') )
                             )
                         """, department,department, session_id, session_id, session_id, session_id)
+        conn.commit()
         rows = curs.fetchall() 
         for row in rows:
             available.append({
@@ -146,7 +147,24 @@ def emergency_connect_hospitals(session_id:int, clinic_id:int, department:int):
         conn.close()
 
 
-
+def make_available_doctor(doctor_id:int):
+    conn = None
+    try:
+        conn = sqlite3.connect(database_path)
+        curs = conn.cursor()
+        curs.execute("""
+                        UPDATE doctors
+                        SET is_available = not is_available
+                        WHERE doctor_id = ? AND is_available = True
+                        """, (doctor_id,))
+        conn.commit()
+        return {"message":"success"}
+    except Exception as e:
+        conn.rollback()
+        raise e
+    finally:
+        if conn:
+            conn.close()
 
 
 

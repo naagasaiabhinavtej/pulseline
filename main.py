@@ -1,6 +1,6 @@
 import os
-from fastapi import FastAPI, UploadFile, File, Form, HTTPException, Request, Query
-from crud import create_patient_session, complete_patient_session, emergency_connect_hospitals
+from fastapi import FastAPI, UploadFile, File, Form, HTTPException, Request, Query, WebSocket
+from crud import create_patient_session, complete_patient_session, emergency_connect_hospitals, make_available_doctor
 from datetime import datetime
 from typing import Optional
 from fastapi.middleware.cors import CORSMiddleware
@@ -48,14 +48,27 @@ async def complete_session(request:Request,chief_complaint:str = Form(...), addi
         
 
 @app.get("/api/sessions/emergency")
-def connect_hospitals(session_id:int = Query(..., description="The ID of the current consultation session"),
+async def connect_hospitals(session_id:int = Query(..., description="The ID of the current consultation session"),
                       clinic_id: int = Query(..., description="The ID of the requesting clinic"),
                       department: str = Query(..., description="The department stream (e.g., Cardiology)")):
     try:
-        result = emergency_connect_hospitals(session_id=session_id, clinic_id=clinic_id, department=department)
-        return result
+        results = emergency_connect_hospitals(session_id=session_id, clinic_id=clinic_id, department=department)
+        
+        for result in results:
+            await connections[result[0]].send_text()
+        return results
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Internal sever issue: {str(e)}")
+    
+connections = {}
+@app.websocket("/ws/doctor")
+async def make_connections_doctor(websocket:WebSocket):
+    doctor_id = websocket.query_params["doctor_id"]
+    await websocket.accept()
+    connections[doctor_id] = websocket
+    result = make_available_doctor(doctor_id=doctor_id)
+    return result
+
     
 
 
