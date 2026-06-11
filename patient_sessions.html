@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MediConnect - Patient Portal</title>
+    <link rel="stylesheet" href="patient_dashboard.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+</head>
+<body>
+
+    <div class="dashboard-container">
+        
+        <aside class="sidebar">
+            <div class="brand">
+                <div class="brand-logo">
+                    <i data-lucide="heart-pulse"></i>
+                </div>
+                <span class="brand-name">MediConnect</span>
+            </div>
+
+            <nav class="nav-menu">
+                <a href="#" class="nav-item">
+                    <i data-lucide="activity"></i>
+                    <span>Medical Data</span>
+                </a>
+                <a href="#" class="nav-item">
+                    <i data-lucide="history"></i>
+                    <span>Previous Sessions</span>
+                </a>
+                <a href="#" class="nav-item active">
+                    <i data-lucide="video"></i>
+                    <span>Active Sessions</span>
+                </a>
+                <a href="#" class="nav-item">
+                    <i data-lucide="settings"></i>
+                    <span>Settings</span>
+                </a>
+            </nav>
+
+            <div class="sidebar-footer">
+                <button class="logout-btn">
+                    <i data-lucide="log-out"></i>
+                    <span>Logout</span>
+                </button>
+            </div>
+        </aside>
+
+        <main class="main-content">
+            
+            <header class="main-header">
+                <div class="welcome-text">
+                    <h1>Welcome, Alex Mercer</h1>
+                    <p>Your current ongoing medical consult tracks</p>
+                </div>
+                <div class="header-profile">
+                    <div class="notification-bell">
+                        <i data-lucide="bell"></i>
+                        <span class="badge">2</span>
+                    </div>
+                    <div class="profile-card">
+                        <img src="https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&q=80&w=100" alt="Alex Mercer" class="avatar">
+                        <div class="profile-info">
+                            <span class="profile-name">Alex Mercer</span>
+                            <span class="profile-role">Patient</span>
+                        </div>
+                        <i data-lucide="chevron-down" class="dropdown-icon"></i>
+                    </div>
+                </div>
+            </header>
+
+            <section class="overview-grid">
+            
+                <!-- <div class="stat-card">
+      
+                    <div class="progress-container">
+                        <div class="progress-bar bg-blue" style="width: 50%;"></div>
+                    </div>
+                </div> -->
+
+                <div class="patient-hero-banner">
+                    <div class="patient-banner-leaves"></div>
+                    <div class="banner-inner">
+                        <div class="stethoscope-left">
+                            <i data-lucide="sparkles" style="width: 50px; height: 50px; color: #22c55e; opacity: 0.7;"></i>
+                        </div>
+                        
+                        <div class="banner-message">
+                            <span class="patient-quote-mark">“</span>
+                            <p class="patient-quote-text">
+                                Healing is a matter of time, but it is sometimes also a matter of opportunity. Trust the process and your care team.
+                            </p>
+                            <span class="patient-quote-mark">”</span>
+                            <div class="patient-signature">— Your Health, Our Shared Journey</div>
+                        </div>
+
+                        <div class="stethoscope-right">
+                            <i data-lucide="heart" style="width: 50px; height: 50px; color: #3b82f6; opacity: 0.6; transform: scaleX(-1);"></i>
+                        </div>
+                    </div>
+                </div>
+
+            </section>
+
+            <section class="table-section">
+                <div class="table-header">
+                    <h2>Your Active Consultations</h2>
+                    <div class="table-actions">
+                        <div class="search-box">
+                            <i data-lucide="search"></i>
+                            <input type="text" placeholder="Search doctor or specialty...">
+                        </div>
+                        <button class="filter-btn">
+                            <i data-lucide="sliders-horizontal"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="table-responsive">
+                    <table class="sessions-table">
+                        <thead>
+                            <tr>
+                                <th>Session ID</th>
+                                <th>Assigned Doctor</th>
+                                <th>Scheduled Time</th>
+                                <th>Status</th>
+                                <th style="text-align: right;">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><span class="session-id id-blue">MC-1001</span></td>
+                                <td>
+                                    <div class="patient-cell">
+                                        <img src="https://images.unsplash.com/photo-1559839734-2b71ea197ec2?auto=format&fit=crop&q=80&w=100" alt="Dr. Sarah Johnson" class="table-avatar">
+                                        <div class="patient-info">
+                                            <span class="p-name">Dr. Sarah Johnson</span>
+                                            <span class="p-meta">Specialty: Cardiology</span>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="time-cell">
+                                        <i data-lucide="calendar"></i>
+                                        <div>
+                                            <div class="date-text">May 24, 2025</div>
+                                            <div class="time-text">10:15 AM</div>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td><span class="status-badge active-bg">Active</span></td>
+                                <td style="text-align: right;"><button class="action-btn"><i data-lucide="chevron-right"></i></button></td>
+                            </tr>
+                            <tr>
+                                <td><span class="session-id id-purple">MC-1003</span></td>
+                                <td>
+                                    <div class="patient-cell">
+                                        <img src="https://images.unsplash.com/photo-1622253692010-333f2da6031d?auto=format&fit=crop&q=80&w=100" alt="Dr. James Carter" class="table-avatar">
+                                        <div class="patient-info">
+                                            <span class="p-name">Dr. James Carter</span>
+                                            <span class="p-meta">Specialty: Neurology</span>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="time-cell">
+                                        <i data-lucide="calendar"></i>
+                                        <div>
+                                            <div class="date-text">May 24, 2025</div>
+                                            <div class="time-text">11:30 AM</div>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td><span class="status-badge active-bg">Active</span></td>
+                                <td style="text-align: right;"><button class="action-btn"><i data-lucide="chevron-right"></i></button></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="table-footer-hint">
+                    <i data-lucide="info"></i>
+                    <span>Click on any session card to securely join the video portal or sync vitals.</span>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <script>
+        lucide.createIcons();
+    </script>
+</body>
+</html>

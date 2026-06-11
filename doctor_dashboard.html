@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MediConnect - Doctor Dashboard</title>
+    <link rel="stylesheet" href="dashboard.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+</head>
+<body>
+
+    <div class="dashboard-container">
+        
+        <aside class="sidebar">
+            <div class="brand">
+                <div class="brand-logo">
+                    <i data-lucide="heart-pulse"></i>
+                </div>
+                <span class="brand-name">MediConnect</span>
+            </div>
+
+            <nav class="nav-menu">
+                <a href="index.html" class="nav-item">
+                    <i data-lucide="users"></i>
+                    <span>Active Sessions</span>
+                </a>
+                <a href="doctor_dashboard.html" class="nav-item active">
+                    <i data-lucide="layout-dashboard"></i>
+                    <span>Dashboard</span>
+                </a>
+                <a href="#" class="nav-item">
+                    <i data-lucide="settings"></i>
+                    <span>Settings</span>
+                </a>
+            </nav>
+
+            <div class="sidebar-footer">
+                <button class="logout-btn">
+                    <i data-lucide="log-out"></i>
+                    <span>Logout</span>
+                </button>
+            </div>
+        </aside>
+
+        <main class="main-content">
+            
+            <header class="main-header">
+                <div class="welcome-text">
+                    <h1>Welcome, Dr. Sarah Johnson</h1>
+                    <p>Overview of your professional profile and clinic details</p>
+                </div>
+                <div class="header-profile">
+                    <div class="notification-bell">
+                        <i data-lucide="bell"></i>
+                        <span class="badge">3</span>
+                    </div>
+                    <div class="profile-card">
+                        <img src="https://images.unsplash.com/photo-1559839734-2b71ea197ec2?auto=format&fit=crop&q=80&w=100" alt="Doctor Profile" class="avatar">
+                        <div class="profile-info">
+                            <span class="profile-name">Dr. Sarah Johnson</span>
+                            <span class="profile-role">Doctor</span>
+                        </div>
+                        <i data-lucide="chevron-down" class="dropdown-icon"></i>
+                    </div>
+                </div>
+            </header>
+
+            <div class="profile-grid">
+                
+                <section class="profile-panel card-glow">
+                    <div class="panel-header-badge">
+                        <i data-lucide="user"></i>
+                        <h2>Doctor Credentials</h2>
+                    </div>
+                    
+                    <div class="doctor-hero">
+                        <img src="https://images.unsplash.com/photo-1559839734-2b71ea197ec2?auto=format&fit=crop&q=80&w=200" alt="Dr. Sarah Johnson" class="hero-avatar">
+                        <div class="hero-badge">ID: DOC-98432</div>
+                    </div>
+
+                    <div class="info-list">
+                        <div class="info-item">
+                            <label>Full Name</label>
+                            <div class="value">Dr. Sarah Johnson</div>
+                        </div>
+                        <div class="info-item">
+                            <label>Specialization</label>
+                            <div class="value-highlight">Cardiologist & Internal Medicine</div>
+                        </div>
+                        <div class="info-item">
+                            <label>Contact Number</label>
+                            <div class="value">+1 (555) 234-5678</div>
+                        </div>
+                    </div>
+
+                    <hr class="panel-divider">
+
+                    <div class="cases-solved-box">
+                        <div class="cases-icon">
+                            <i data-lucide="award"></i>
+                        </div>
+                        <div class="cases-data">
+                            <span class="cases-count">1,248</span>
+                            <span class="cases-label">Total Cases Solved Successfully</span>
+                        </div>
+                    </div>
+                </section>
+
+                <section class="profile-panel">
+                    <div class="panel-header-badge clinic-theme-header">
+                        <i data-lucide="building-2"></i>
+                        <h2>Clinic & Hospital Facility</h2>
+                    </div>
+
+                    <div class="info-list syntax-grid">
+                        
+                        <div class="info-item full-width">
+                            <label>Clinic Name</label>
+                            <div class="value text-large">Primary Health & Wellness Center</div>
+                        </div>
+
+                        <div class="info-item">
+                            <label>Clinic ID</label>
+                            <div class="value code-style">CLN-2026-X8</div>
+                        </div>
+
+                        <div class="info-item">
+                            <label>Clinic Type</label>
+                            <div class="value">Private Multi-Specialty</div>
+                        </div>
+
+                        <div class="info-item">
+                            <label>Facility Scale</label>
+                            <div class="value tag-scale">Tier 1 (Large Scale)</div>
+                        </div>
+
+                        <div class="info-item">
+                            <label>Speciality Stream</label>
+                            <div class="value">Cardiovascular Diseases & Diagnostics</div>
+                        </div>
+
+                        <div class="info-item full-width">
+                            <label>Location Address</label>
+                            <div class="value address-layout">
+                                <i data-lucide="map-pin"></i>
+                                <span>742 Evergreen Terrace, Metro City, Suite 400</span>
+                            </div>
+                        </div>
+
+                        <div class="info-item full-width coordinates-box">
+                            <label><i data-lucide="compass"></i> Geo-Location Coordinates</label>
+                            <div class="geo-inputs">
+                                <div>
+                                    <span class="geo-label">Latitude</span>
+                                    <span class="geo-val">40.7128° N</span>
+                                </div>
+                                <div>
+                                    <span class="geo-label">Longitude</span>
+                                    <span class="geo-val">74.0060° W</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="info-item full-width hospital-contact-card">
+                            <div class="h-contact-icon">
+                                <i data-lucide="phone-call"></i>
+                            </div>
+                            <div>
+                                <label>Hospital Emergency Hotline</label>
+                                <div class="value hot-number">+1 (555) 911-4400</div>
+                            </div>
+                        </div>
+
+                    </div>
+                </section>
+
+            </div>
+        </main>
+    </div>
+
+    <script>
+        lucide.createIcons();
+    </script>
+</body>
+</html>

@@ -57,6 +57,7 @@ CREATE INDEX idx_clinics_scale ON clinics(facility_scale);
     contact_number VARCHAR(15),
     is_available BOOLEAN DEFAULT 1, 
     assigned_clinic_id INTEGER,
+    cases_solved INTEGER DEFAULT 0,
     FOREIGN KEY (assigned_clinic_id) REFERENCES clinics(clinic_id)
 );
 CREATE INDEX idx_doctors_specialization ON doctors(specialization);

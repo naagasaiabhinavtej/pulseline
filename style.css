@@ -1,0 +1,648 @@
+/* ==========================================================================
+   1. BASE VARIABLES & RESET
+   ========================================================================== */
+:root {
+    --bg-main: #f4f7fc;
+    --bg-sidebar: #f8faff;
+    --primary-blue: #003399;
+    --accent-blue: #2563eb;
+    --text-dark: #1e293b;
+    --text-muted: #6c7a9c;
+    --text-light: #94a3b8;
+    --border-color: #edf2f9;
+    --success-green: #10b981;
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Inter', sans-serif;
+}
+
+body {
+    background-color: var(--bg-main);
+    color: var(--text-dark);
+    overflow-x: hidden;
+}
+
+.dashboard-container {
+    display: flex;
+    min-height: 100vh;
+}
+
+/* ==========================================================================
+   2. SIDEBAR LAYOUT (CLEANED UP)
+   ========================================================================== */
+.sidebar {
+    width: 260px;
+    background-color: var(--bg-sidebar);
+    border-right: 1px solid var(--border-color);
+    display: flex;
+    flex-direction: column;
+    padding: 32px 24px;
+    position: fixed;
+    height: 100vh;
+    left: 0;
+    top: 0;
+    z-index: 10;
+}
+
+.brand {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 48px;
+}
+
+.brand-logo {
+    background-color: var(--accent-blue);
+    color: white;
+    width: 36px;
+    height: 36px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.brand-logo i {
+    width: 20px;
+    height: 20px;
+}
+
+.brand-name {
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--primary-blue);
+}
+
+.nav-menu {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    flex-grow: 1;
+}
+
+.nav-item {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 14px 16px;
+    color: var(--text-muted);
+    text-decoration: none;
+    font-size: 15px;
+    font-weight: 500;
+    border-radius: 12px;
+    transition: all 0.2s ease;
+}
+
+.nav-item i {
+    width: 20px;
+    height: 20px;
+}
+
+.nav-item:hover {
+    background-color: #f0f4ff;
+    color: var(--accent-blue);
+}
+
+.nav-item.active {
+    background-color: #e0ebff;
+    color: var(--accent-blue);
+    font-weight: 600;
+}
+
+.sidebar-footer {
+    margin-top: auto;
+}
+
+.logout-btn {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    padding: 14px;
+    background-color: #ffffff;
+    border: 1px solid #f1f5f9;
+    color: #dc2626;
+    font-size: 15px;
+    font-weight: 600;
+    border-radius: 12px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.logout-btn:hover {
+    background-color: #fef2f2;
+}
+
+/* ==========================================================================
+   3. MAIN CONTENT CONTAINER
+   ========================================================================== */
+.main-content {
+    margin-left: 260px;
+    flex-grow: 1;
+    padding: 40px;
+}
+
+/* ==========================================================================
+   4. TOP MAIN HEADER
+   ========================================================================== */
+.main-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 32px;
+}
+
+.welcome-text h1 {
+    font-size: 26px;
+    font-weight: 700;
+    color: var(--text-dark);
+}
+
+.welcome-text p {
+    color: var(--text-muted);
+    font-size: 15px;
+    margin-top: 4px;
+}
+
+.header-profile {
+    display: flex;
+    align-items: center;
+    gap: 24px;
+}
+
+.notification-bell {
+    position: relative;
+    cursor: pointer;
+    color: var(--text-dark);
+}
+
+.notification-bell i {
+    width: 24px;
+    height: 24px;
+}
+
+.notification-bell .badge {
+    position: absolute;
+    top: -4px;
+    right: -4px;
+    background-color: #ef4444;
+    color: white;
+    font-size: 10px;
+    font-weight: 700;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 2px solid var(--bg-main);
+}
+
+.profile-card {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    cursor: pointer;
+}
+
+.profile-card .avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    object-fit: cover;
+}
+
+.profile-info {
+    display: flex;
+    flex-direction: column;
+}
+
+.profile-name {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text-dark);
+}
+
+.profile-role {
+    font-size: 12px;
+    color: var(--text-light);
+}
+
+.dropdown-icon {
+    width: 16px;
+    height: 16px;
+    color: var(--text-light);
+}
+
+/* ==========================================================================
+   5. TOP OVERVIEW GRID (MATCHED TO CROP IMAGE)
+   ========================================================================== */
+.overview-grid {
+    display: grid;
+    grid-template-columns: 240px 1fr 240px;
+    gap: 20px;
+    align-items: center;
+    width: 100%;
+    margin-bottom: 30px;
+}
+
+/* Left & Right Stat Cards */
+.stat-card {
+    background: #ffffff;
+    border: 1.5px solid #e2e8f0;
+    border-radius: 20px;
+    padding: 24px 20px;
+    height: 155px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.01);
+}
+
+.stat-card.border-green {
+    border-color: #e6f4ea;
+}
+
+.card-content {
+    display: flex;
+    align-items: center;
+    gap: 18px;
+}
+
+/* Circular Icon Ring Wrappers */
+.icon-avatar-wrapper {
+    width: 68px;
+    height: 68px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+}
+
+.icon-avatar-wrapper.blue-theme {
+    background-color: #e8f0fe;
+    color: #1a73e8;
+    box-shadow: 0 0 0 6px #f4f8ff;
+}
+
+.icon-avatar-wrapper.green-theme {
+    background-color: #e6f4ea;
+    color: #137333;
+    box-shadow: 0 0 0 6px #f3faf6;
+}
+
+.icon-avatar-wrapper i {
+    width: 28px;
+    height: 28px;
+}
+
+.icon-avatar-wrapper .check-icon {
+    stroke-width: 3px;
+}
+
+/* Stat Card Typography */
+.stat-text {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.stat-title {
+    font-size: 13.5px;
+    font-weight: 600;
+}
+
+.color-blue { color: #1a73e8; }
+.color-green { color: #137333; }
+
+.stat-number {
+    font-size: 38px;
+    font-weight: 700;
+    color: #111827;
+    line-height: 1;
+}
+
+/* Horizontal Track Sliders */
+.progress-container {
+    width: 100%;
+    height: 4px;
+    background-color: #f1f5f9;
+    border-radius: 10px;
+    overflow: hidden;
+    margin-top: 10px;
+}
+
+.progress-bar {
+    height: 100%;
+    border-radius: 10px;
+}
+
+.progress-bar.bg-blue { background-color: #1a73e8; }
+.progress-bar.bg-green { background-color: #137333; }
+
+/* Premium Center Motivational Hero Banner */
+.hero-banner-card {
+    background: linear-gradient(105deg, #dbeafe 0%, #eff6ff 40%, #e0e7ff 100%);
+    border: 1px solid #d0dfff;
+    border-radius: 24px;
+    height: 155px;
+    position: relative;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    padding: 0 30px;
+}
+
+.banner-overlay-leaves {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    opacity: 0.25;
+    background-image: radial-gradient(circle at 10% 90%, #60a5fa 10%, transparent 30%),
+                      radial-gradient(circle at 90% 20%, #818cf8 12%, transparent 40%);
+    pointer-events: none;
+}
+
+.banner-inner {
+    display: flex;
+    width: 100%;
+    align-items: center;
+    justify-content: space-between;
+    z-index: 2;
+}
+
+.stethoscope-left {
+    width: 90px;
+    height: 90px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0.85;
+}
+
+.steth-svg {
+    width: 100%;
+    height: 100%;
+    transform: rotate(-10deg);
+}
+
+.banner-message {
+    text-align: center;
+    flex: 1;
+    max-width: 550px;
+    padding: 0 10px;
+}
+
+.quote-mark {
+    font-family: Georgia, serif;
+    font-size: 24px;
+    color: #3b82f6;
+    font-weight: bold;
+    vertical-align: middle;
+    line-height: 0;
+}
+
+.quote-text {
+    display: inline;
+    font-size: 15px;
+    font-weight: 500;
+    color: #1e3a8a;
+    line-height: 1.5;
+    font-style: italic;
+}
+
+.banner-signature {
+    margin-top: 8px;
+    font-size: 14px;
+    font-weight: 700;
+    color: #2563eb;
+}
+
+.stethoscope-right {
+    opacity: 0.75;
+    display: flex;
+    align-items: center;
+    transform: scaleX(-1) rotate(25deg);
+}
+
+.steth-icon-right {
+    width: 85px;
+    height: 85px;
+    color: #3b82f6;
+    stroke-width: 1.2px;
+}
+
+/* ==========================================================================
+   6. ACTIVE SESSIONS DATA TABLE SECTION
+   ========================================================================== */
+.table-section {
+    background-color: #ffffff;
+    border-radius: 20px;
+    border: 1px solid var(--border-color);
+    padding: 28px;
+}
+
+.table-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 24px;
+}
+
+.table-header h2 {
+    font-size: 18px;
+    font-weight: 700;
+}
+
+.table-actions {
+    display: flex;
+    gap: 12px;
+}
+
+.search-box {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.search-box i {
+    position: absolute;
+    left: 14px;
+    width: 18px;
+    height: 18px;
+    color: var(--text-light);
+}
+
+.search-box input {
+    padding: 10px 16px 10px 42px;
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    width: 260px;
+    font-size: 14px;
+    outline: none;
+    background-color: #fafbfc;
+}
+
+.filter-btn {
+    background-color: #fafbfc;
+    border: 1px solid var(--border-color);
+    padding: 10px;
+    border-radius: 12px;
+    cursor: pointer;
+    color: var(--text-muted);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.table-responsive {
+    overflow-x: auto;
+}
+
+.sessions-table {
+    width: 100%;
+    border-collapse: collapse;
+    text-align: left;
+}
+
+.sessions-table th {
+    padding: 14px 16px;
+    color: var(--text-light);
+    font-size: 13px;
+    font-weight: 600;
+    border-bottom: 1px solid var(--border-color);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.sessions-table td {
+    padding: 16px;
+    border-bottom: 1px solid #f8fafc;
+    vertical-align: middle;
+}
+
+/* Patient ID tags */
+.session-id {
+    font-size: 13px;
+    font-weight: 600;
+    padding: 6px 12px;
+    border-radius: 8px;
+}
+.id-blue { background-color: #eff6ff; color: #1e40af; }
+.id-green { background-color: #ecfdf5; color: #065f46; }
+.id-purple { background-color: #faf5ff; color: #6b21a8; }
+.id-orange { background-color: #fff7ed; color: #9a3412; }
+
+/* Patient Meta Columns */
+.patient-cell {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.table-avatar {
+    width: 38px;
+    height: 38px;
+    border-radius: 50%;
+    object-fit: cover;
+}
+
+.patient-info {
+    display: flex;
+    flex-direction: column;
+}
+
+.p-name {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text-dark);
+}
+
+.p-meta {
+    font-size: 12px;
+    color: var(--text-muted);
+}
+
+/* Time Entries */
+.time-cell {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    color: var(--text-muted);
+}
+
+.time-cell i {
+    width: 16px;
+    height: 16px;
+    color: var(--text-light);
+}
+
+.date-text {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text-dark);
+}
+
+.time-text {
+    font-size: 11px;
+    color: var(--text-light);
+}
+
+/* Status Labels */
+.status-badge {
+    font-size: 13px;
+    font-weight: 500;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.status-badge::before {
+    content: '';
+    width: 6px;
+    height: 6px;
+    background-color: var(--success-green);
+    border-radius: 50%;
+}
+
+.active-bg {
+    color: var(--success-green);
+    background-color: #f0fdf4;
+    padding: 4px 12px;
+    border-radius: 20px;
+}
+
+.action-btn {
+    background: none;
+    border: none;
+    color: var(--accent-blue);
+    cursor: pointer;
+}
+
+.action-btn i {
+    width: 20px;
+    height: 20px;
+}
+
+.table-footer-hint {
+    margin-top: 24px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: var(--accent-blue);
+    font-size: 13px;
+    font-weight: 500;
+}
+
+.table-footer-hint i {
+    width: 16px;
+    height: 16px;
+}

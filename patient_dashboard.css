@@ -1,0 +1,557 @@
+:root {
+    --bg-main: #f4f7fc;
+    --bg-sidebar: #f8faff;
+    --primary-blue: #003399;
+    --accent-blue: #2563eb;
+    --text-dark: #1e293b;
+    --text-muted: #6c7a9c;
+    --text-light: #94a3b8;
+    --border-color: #edf2f9;
+    --success-green: #10b981;
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Inter', sans-serif;
+}
+
+body {
+    background-color: var(--bg-main);
+    color: var(--text-dark);
+    overflow-x: hidden;
+}
+
+.dashboard-container {
+    display: flex;
+    min-height: 100vh;
+}
+
+/* ==========================================================================
+   SIDEBAR
+   ========================================================================== */
+
+.sidebar {
+    width: 260px;
+    background-color: var(--bg-sidebar);
+    border-right: 1px solid var(--border-color);
+    display: flex;
+    flex-direction: column;
+    padding: 32px 24px;
+    position: fixed;
+    height: 100vh;
+    left: 0;
+    top: 0;
+}
+
+.brand {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 48px;
+}
+
+.brand-logo {
+    background-color: var(--accent-blue);
+    color: white;
+    width: 36px;
+    height: 36px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.brand-logo i {
+    width: 20px;
+    height: 20px;
+}
+
+.brand-name {
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--primary-blue);
+}
+
+.nav-menu {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    flex-grow: 1;
+}
+
+.nav-item {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 14px 16px;
+    color: var(--text-muted);
+    text-decoration: none;
+    font-size: 15px;
+    font-weight: 500;
+    border-radius: 12px;
+    transition: all 0.2s ease;
+}
+
+.nav-item i {
+    width: 20px;
+    height: 20px;
+}
+
+.nav-item:hover {
+    background-color: #f0f4ff;
+    color: var(--accent-blue);
+}
+
+.nav-item.active {
+    background-color: #e0ebff;
+    color: var(--accent-blue);
+    font-weight: 600;
+}
+
+.sidebar-footer {
+    margin-top: auto;
+}
+
+.logout-btn {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    padding: 14px;
+    background: white;
+    border: 1px solid #f1f5f9;
+    color: #dc2626;
+    font-size: 15px;
+    font-weight: 600;
+    border-radius: 12px;
+    cursor: pointer;
+}
+
+.logout-btn:hover {
+    background: #fef2f2;
+}
+
+/* ==========================================================================
+   MAIN CONTENT
+   ========================================================================== */
+
+.main-content {
+    margin-left: 260px;
+    flex-grow: 1;
+    padding: 40px;
+}
+
+/* ==========================================================================
+   HEADER
+   ========================================================================== */
+
+.main-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 32px;
+}
+
+.welcome-text h1 {
+    font-size: 26px;
+    font-weight: 700;
+}
+
+.welcome-text p {
+    margin-top: 4px;
+    color: var(--text-muted);
+    font-size: 15px;
+}
+
+.header-profile {
+    display: flex;
+    align-items: center;
+    gap: 24px;
+}
+
+.notification-bell {
+    position: relative;
+    cursor: pointer;
+}
+
+.notification-bell i {
+    width: 24px;
+    height: 24px;
+}
+
+.badge {
+    position: absolute;
+    top: -4px;
+    right: -4px;
+    background: #ef4444;
+    color: white;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    font-size: 10px;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.profile-card {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    object-fit: cover;
+}
+
+.profile-info {
+    display: flex;
+    flex-direction: column;
+}
+
+.profile-name {
+    font-size: 14px;
+    font-weight: 600;
+}
+
+.profile-role {
+    font-size: 12px;
+    color: var(--text-light);
+}
+
+.dropdown-icon {
+    width: 16px;
+    height: 16px;
+    color: var(--text-light);
+}
+
+/* ==========================================================================
+   OVERVIEW GRID
+   ========================================================================== */
+
+.overview-grid {
+    width: 100%;
+    margin-bottom: 32px;
+}
+
+/* ==========================================================================
+   PATIENT HERO BANNER
+   ========================================================================== */
+
+.patient-hero-banner {
+    background: linear-gradient(
+        135deg,
+        #e0f2fe 0%,
+        #e6f4ea 50%,
+        #f0fdf4 100%
+    );
+
+    border: 1px solid #cce8d5;
+    border-radius: 24px;
+
+    min-height: 180px;
+
+    position: relative;
+    overflow: hidden;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    padding: 32px 40px;
+
+    box-shadow: 0 8px 20px rgba(0,0,0,0.04);
+}
+
+.patient-banner-leaves {
+    position: absolute;
+    inset: 0;
+    opacity: 0.45;
+
+    background-image:
+        radial-gradient(circle at 12% 80%, #bbf7d0 15%, transparent 35%),
+        radial-gradient(circle at 88% 20%, #bfdbfe 18%, transparent 40%);
+}
+
+.banner-inner {
+    width: 100%;
+    max-width: 1100px;
+
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+
+    position: relative;
+    z-index: 2;
+}
+
+.stethoscope-left,
+.stethoscope-right {
+    width: 100px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.banner-message {
+    flex: 1;
+    text-align: center;
+    padding: 0 20px;
+}
+
+.patient-quote-mark {
+    font-family: Georgia, serif;
+    font-size: 36px;
+    font-weight: bold;
+    color: #22c55e;
+    line-height: 1;
+}
+
+.patient-quote-text {
+    display: inline;
+
+    font-size: 18px;
+    font-weight: 500;
+    font-style: italic;
+
+    color: #14532d;
+
+    line-height: 1.8;
+}
+
+.patient-signature {
+    margin-top: 14px;
+
+    font-size: 13px;
+    font-weight: 700;
+
+    color: #16a34a;
+
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+}
+
+.patient-hero-banner:hover .stethoscope-left i {
+    transform: rotate(12deg) scale(1.08);
+    transition: all 0.3s ease;
+}
+
+.patient-hero-banner:hover .stethoscope-right i {
+    transform: scaleX(-1) scale(1.08);
+    transition: all 0.3s ease;
+}
+
+/* ==========================================================================
+   TABLE SECTION
+   ========================================================================== */
+
+.table-section {
+    background: white;
+    border-radius: 20px;
+    border: 1px solid var(--border-color);
+    padding: 28px;
+}
+
+.table-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 24px;
+}
+
+.table-header h2 {
+    font-size: 18px;
+    font-weight: 700;
+}
+
+.table-actions {
+    display: flex;
+    gap: 12px;
+}
+
+.search-box {
+    position: relative;
+}
+
+.search-box i {
+    position: absolute;
+    left: 14px;
+    top: 11px;
+    width: 18px;
+    height: 18px;
+    color: var(--text-light);
+}
+
+.search-box input {
+    width: 260px;
+    padding: 10px 16px 10px 42px;
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    background: #fafbfc;
+    outline: none;
+}
+
+.filter-btn {
+    background: #fafbfc;
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    padding: 10px;
+    cursor: pointer;
+}
+
+.table-responsive {
+    overflow-x: auto;
+}
+
+.sessions-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.sessions-table th {
+    text-align: left;
+    padding: 14px 16px;
+    font-size: 13px;
+    color: var(--text-light);
+    text-transform: uppercase;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.sessions-table td {
+    padding: 16px;
+    border-bottom: 1px solid #f8fafc;
+}
+
+.session-id {
+    font-size: 13px;
+    font-weight: 600;
+    padding: 6px 12px;
+    border-radius: 8px;
+}
+
+.id-blue {
+    background: #eff6ff;
+    color: #1e40af;
+}
+
+.id-purple {
+    background: #faf5ff;
+    color: #6b21a8;
+}
+
+.patient-cell {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.table-avatar {
+    width: 38px;
+    height: 38px;
+    border-radius: 50%;
+    object-fit: cover;
+}
+
+.patient-info {
+    display: flex;
+    flex-direction: column;
+}
+
+.p-name {
+    font-size: 14px;
+    font-weight: 600;
+}
+
+.p-meta {
+    font-size: 12px;
+    color: var(--text-muted);
+}
+
+.time-cell {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.date-text {
+    font-size: 13px;
+    font-weight: 500;
+}
+
+.time-text {
+    font-size: 11px;
+    color: var(--text-light);
+}
+
+.active-bg {
+    color: var(--success-green);
+    background: #f0fdf4;
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 13px;
+    font-weight: 500;
+}
+
+.action-btn {
+    background: none;
+    border: none;
+    color: var(--accent-blue);
+    cursor: pointer;
+}
+
+.table-footer-hint {
+    margin-top: 24px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: var(--accent-blue);
+    font-size: 13px;
+    font-weight: 500;
+}
+
+/* ==========================================================================
+   RESPONSIVE
+   ========================================================================== */
+
+@media (max-width: 1024px) {
+    .overview-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .stethoscope-left,
+    .stethoscope-right {
+        display: none;
+    }
+
+    .patient-hero-banner {
+        height: auto;
+        padding: 24px;
+    }
+
+    .main-content {
+        padding: 24px;
+    }
+}
+@media (max-width: 1024px) {
+
+    .stethoscope-left,
+    .stethoscope-right {
+        display: none;
+    }
+
+    .patient-hero-banner {
+        min-height: auto;
+        padding: 24px;
+    }
+
+    .patient-quote-text {
+        font-size: 16px;
+    }
+}

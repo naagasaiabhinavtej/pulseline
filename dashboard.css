@@ -1,0 +1,458 @@
+/* ==========================================================================
+   1. BASE VARIABLES & RESET
+   ========================================================================== */
+:root {
+    --bg-main: #f4f7fc;
+    --bg-sidebar: #f8faff;
+    --primary-blue: #003399;
+    --accent-blue: #2563eb;
+    --text-dark: #1e293b;
+    --text-muted: #6c7a9c;
+    --text-light: #94a3b8;
+    --border-color: #edf2f9;
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Inter', sans-serif;
+}
+
+body {
+    background-color: var(--bg-main);
+    color: var(--text-dark);
+    overflow-x: hidden;
+}
+
+.dashboard-container {
+    display: flex;
+    min-height: 100vh;
+}
+
+/* ==========================================================================
+   2. SIDEBAR NAVIGATION LAYOUT
+   ========================================================================== */
+.sidebar {
+    width: 260px;
+    background-color: var(--bg-sidebar);
+    border-right: 1px solid var(--border-color);
+    display: flex;
+    flex-direction: column;
+    padding: 32px 24px;
+    position: fixed;
+    height: 100vh;
+    left: 0;
+    top: 0;
+    z-index: 10;
+}
+
+.brand {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 48px;
+}
+
+.brand-logo {
+    background-color: var(--accent-blue);
+    color: white;
+    width: 36px;
+    height: 36px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.brand-logo i {
+    width: 20px;
+    height: 20px;
+}
+
+.brand-name {
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--primary-blue);
+}
+
+.nav-menu {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    flex-grow: 1;
+}
+
+.nav-item {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 14px 16px;
+    color: var(--text-muted);
+    text-decoration: none;
+    font-size: 15px;
+    font-weight: 500;
+    border-radius: 12px;
+    transition: all 0.2s ease;
+}
+
+.nav-item i {
+    width: 20px;
+    height: 20px;
+}
+
+.nav-item:hover {
+    background-color: #f0f4ff;
+    color: var(--accent-blue);
+}
+
+.nav-item.active {
+    background-color: #e0ebff;
+    color: var(--accent-blue);
+    font-weight: 600;
+}
+
+.sidebar-footer {
+    margin-top: auto;
+}
+
+.logout-btn {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    padding: 14px;
+    background-color: #ffffff;
+    border: 1px solid #f1f5f9;
+    color: #dc2626;
+    font-size: 15px;
+    font-weight: 600;
+    border-radius: 12px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.logout-btn:hover {
+    background-color: #fef2f2;
+}
+
+/* ==========================================================================
+   3. MAIN CONTENT CONTAINER (PADDING ADJUSTED TO MATCH INDEX.HTML)
+   ========================================================================== */
+.main-content {
+    margin-left: 260px;
+    flex-grow: 1;
+    padding: 30px; /* Matched to index.html grid specifications */
+}
+
+/* ==========================================================================
+   4. TOP MAIN HEADER
+   ========================================================================== */
+.main-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 32px;
+}
+
+.welcome-text h1 {
+    font-size: 26px;
+    font-weight: 700;
+    color: var(--text-dark);
+}
+
+.welcome-text p {
+    color: var(--text-muted);
+    font-size: 15px;
+    margin-top: 4px;
+}
+
+.header-profile {
+    display: flex;
+    align-items: center;
+    gap: 24px;
+}
+
+.notification-bell {
+    position: relative;
+    cursor: pointer;
+    color: var(--text-dark);
+}
+
+.notification-bell i {
+    width: 24px;
+    height: 24px;
+}
+
+.notification-bell .badge {
+    position: absolute;
+    top: -4px;
+    right: -4px;
+    background-color: #ef4444;
+    color: white;
+    font-size: 10px;
+    font-weight: 700;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 2px solid var(--bg-main);
+}
+
+.profile-card {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    cursor: pointer;
+}
+
+.profile-card .avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    object-fit: cover;
+}
+
+.profile-info {
+    display: flex;
+    flex-direction: column;
+}
+
+.profile-name {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text-dark);
+}
+
+.profile-role {
+    font-size: 12px;
+    color: var(--text-light);
+}
+
+.dropdown-icon {
+    width: 16px;
+    height: 16px;
+    color: var(--text-light);
+}
+
+/* ==========================================================================
+   5. DOCTOR & CLINIC PROFILE WORKSPACE PANELS
+   ========================================================================== */
+.profile-grid {
+    display: grid;
+    grid-template-columns: 340px 1fr;
+    gap: 30px;
+    align-items: start;
+    width: 100%;
+}
+
+.profile-panel {
+    background-color: #ffffff;
+    border: 1px solid var(--border-color);
+    border-radius: 24px;
+    padding: 32px;
+    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.02);
+}
+
+.card-glow {
+    border-top: none; /* Top accent line completely removed */
+}
+
+.panel-header-badge {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    color: var(--accent-blue);
+    margin-bottom: 28px;
+}
+
+.panel-header-badge i {
+    width: 22px;
+    height: 22px;
+}
+
+.panel-header-badge h2 {
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--text-dark);
+}
+
+.clinic-theme-header {
+    color: #0d9488;
+}
+
+/* Doctor Section Header Elements */
+.doctor-hero {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-bottom: 28px;
+    position: relative;
+}
+
+.hero-avatar {
+    width: 120px;
+    height: 120px;
+    border-radius: 32px;
+    object-fit: cover;
+    border: 4px solid #f0f4ff;
+}
+
+.hero-badge {
+    background-color: var(--text-dark);
+    color: #ffffff;
+    font-size: 11px;
+    font-weight: 700;
+    padding: 4px 12px;
+    border-radius: 20px;
+    margin-top: -12px;
+    z-index: 2;
+    letter-spacing: 0.5px;
+}
+
+/* Data Struct Blocks Layout */
+.info-list {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.syntax-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 24px;
+}
+
+.info-item {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.info-item.full-width {
+    grid-column: span 2;
+}
+
+.info-item label {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text-light);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.info-item .value {
+    font-size: 15px;
+    font-weight: 500;
+    color: var(--text-dark);
+}
+
+.info-item .text-large {
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--primary-blue);
+}
+
+.info-item .value-highlight {
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--accent-blue);
+}
+
+.info-item .code-style {
+    font-family: monospace;
+    background-color: #f1f5f9;
+    padding: 4px 8px;
+    border-radius: 6px;
+    display: inline-block;
+    width: fit-content;
+}
+
+.info-item .tag-scale {
+    color: #0d9488;
+    background-color: #f0fdfa;
+    padding: 4px 12px;
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 13px;
+    width: fit-content;
+}
+
+.panel-divider {
+    border: 0;
+    height: 1px;
+    background-color: var(--border-color);
+    margin: 24px 0;
+}
+
+/* Metrics Counter Box */
+.cases-solved-box {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    background: linear-gradient(135deg, #e0f2fe 0%, #eff6ff 100%);
+    padding: 16px;
+    border-radius: 16px;
+    border: 1px solid #bae6fd;
+}
+
+.cases-icon {
+    width: 48px;
+    height: 48px;
+    background-color: #0284c7;
+    color: #ffffff;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.cases-icon i { width: 24px; height: 24px; }
+.cases-data { display: flex; flex-direction: column; }
+.cases-count { font-size: 24px; font-weight: 700; color: #0369a1; }
+.cases-label { font-size: 12px; color: #0284c7; font-weight: 500; }
+
+/* Geo Coordinates and Address Fields Layout */
+.address-layout {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    color: var(--text-muted);
+}
+.address-layout i { width: 18px; height: 18px; color: var(--text-light); margin-top: 2px; }
+
+.coordinates-box {
+    background-color: #fafbfc;
+    border: 1px dashed #cbd5e1;
+    padding: 16px;
+    border-radius: 14px;
+}
+.coordinates-box label { display: flex; align-items: center; gap: 6px; color: var(--text-muted); }
+.coordinates-box label i { width: 14px; height: 14px; }
+
+.geo-inputs {
+    display: flex;
+    gap: 32px;
+    margin-top: 6px;
+}
+.geo-label { font-size: 11px; color: var(--text-light); font-weight: 600; text-transform: uppercase; margin-right: 8px; }
+.geo-val { font-family: monospace; font-size: 14px; color: var(--text-dark); font-weight: 600; }
+
+/* Contact emergency layout box banner */
+.hospital-contact-card {
+    display: flex;
+    flex-direction: row !important;
+    align-items: center;
+    gap: 16px;
+    background-color: #fef2f2;
+    border: 1px solid #fee2e2;
+    padding: 16px;
+    border-radius: 16px;
+    margin-top: 10px;
+}
+.h-contact-icon { width: 42px; height: 42px; background-color: #ef4444; color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; }
+.h-contact-icon i { width: 18px; height: 18px; }
+.hot-number { font-size: 18px !important; font-weight: 700 !important; color: #991b1b !important; }
