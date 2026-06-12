@@ -1,0 +1,576 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MediConnect - Medical Data Profile</title>
+    <link rel="stylesheet" href="patient_medical_data.css">
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+
+    <div class="dashboard-container">
+        <!-- Sidebar Navigation Menu -->
+        <aside class="sidebar">
+            <div class="logo">
+                <i class="fa-solid fa-heart-pulse"></i>
+                <div class="logo-text">
+                    <span class="brand-name">MediConnect</span>
+                    <span class="brand-sub">Patient Portal</span>
+                </div>
+            </div>
+            <nav class="nav-menu">
+                <a href="patient_medical_data.html" class="nav-item active">
+                    <i class="fa-solid fa-wave-square"></i> Medical Data
+                </a>
+                <a href="#" class="nav-item">
+                    <i class="fa-solid fa-clock-rotate-left"></i> Previous Sessions
+                </a>
+                <a href="patient_sessions.html" class="nav-item">
+                    <i class="fa-solid fa-video"></i> Active Sessions
+                </a>
+                <a href="#" class="nav-item">
+                    <i class="fa-solid fa-gear"></i> Settings
+                </a>
+            </nav>
+            <button class="logout-btn">
+                <i class="fa-solid fa-right-from-bracket"></i> Logout
+            </button>
+        </aside>
+
+        <!-- Main Workspace Contents -->
+        <main class="main-content">
+            
+            <!-- Global Dashboard Content Header -->
+            <header class="content-header">
+                <div class="header-title">
+                    <h1>Medical Data Profile</h1>
+                    <p>View your permanent records and update your health metrics manually.</p>
+                </div>
+                <div class="header-profile">
+                    <div class="notification-badge">
+                        <i class="fa-regular fa-bell"></i>
+                        <span class="badge">2</span>
+                    </div>
+                    <img src="https://via.placeholder.com/45" alt="Alex Mercer" class="avatar">
+                    <div class="profile-info">
+                        <span class="profile-name">Alex Mercer</span>
+                        <span class="profile-role">Patient</span>
+                    </div>
+                    <i class="fa-solid fa-chevron-down profile-arrow"></i>
+                </div>
+            </header>
+
+            <!-- Top Core Analytics Summaries Widget Banner -->
+            <section class="analytics-banner">
+                <!-- Widget Card 1: Heart Rate -->
+                <div class="widget-card">
+                    <div class="widget-icon icon-blue">
+                        <i class="fa-solid fa-heart-pulse"></i>
+                    </div>
+                    <div class="widget-details">
+                        <span class="widget-label">Heart Rate</span>
+                        <div class="widget-value-group">
+                            <span class="widget-number">72</span>
+                            <span class="widget-unit">bpm</span>
+                        </div>
+                        <span class="status-tag tag-green">Normal</span>
+                        <span class="widget-sub">Last updated: Today</span>
+                    </div>
+                </div>
+                <!-- Widget Card 2: BMI -->
+                <div class="widget-card">
+                    <div class="widget-icon icon-green">
+                        <i class="fa-solid fa-weight-scale"></i>
+                    </div>
+                    <div class="widget-details">
+                        <span class="widget-label">BMI</span>
+                        <div class="widget-value-group">
+                            <span class="widget-number">23.5</span>
+                        </div>
+                        <span class="status-tag tag-green">Normal</span>
+                        <span class="widget-sub">Healthy Range: 18.5 – 24.9</span>
+                    </div>
+                </div>
+                <!-- Widget Card 3: Health Status -->
+                <div class="widget-card">
+                    <div class="widget-icon icon-purple">
+                        <i class="fa-solid fa-shield-halved"></i>
+                    </div>
+                    <div class="widget-details">
+                        <span class="widget-label">Health Status</span>
+                        <div class="widget-value-group">
+                            <span class="widget-text-status">Stable <i class="fa-solid fa-circle-check text-green-check"></i></span>
+                        </div>
+                        <span class="widget-sub" style="margin-top: 4px;">Overall condition is good</span>
+                    </div>
+                </div>
+                <!-- Widget Card 4: Last Checkup -->
+                <div class="widget-card">
+                    <div class="widget-icon icon-orange">
+                        <i class="fa-regular fa-calendar-days"></i>
+                    </div>
+                    <div class="widget-details">
+                        <span class="widget-label">Last Checkup</span>
+                        <div class="widget-value-group">
+                            <span class="widget-text-date">May 10, 2025</span>
+                        </div>
+                        <span class="widget-sub" style="margin-top: 4px;">General Physician</span>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Twin Split Layout: Permanent Records vs Updatable Vitals -->
+            <div class="profile-grid">
+                
+                <!-- Left Hand Side: Locked Permanent Information Block -->
+                <section class="card">
+                    <div class="card-section-header">
+                        <div class="section-icon icon-light-blue">
+                            <i class="fa-regular fa-file-lines text-blue-main"></i>
+                        </div>
+                        <div>
+                            <h2 class="section-heading">Permanent Record (Read-Only)</h2>
+                            <p class="section-desc">Verified information from hospital database</p>
+                        </div>
+                    </div>
+
+                    <div class="fields-stack">
+                        <div class="data-box-row">
+                            <div class="box-icon-container"><i class="fa-solid fa-fingerprint"></i></div>
+                            <div class="box-inner-content">
+                                <label>Health ID</label>
+                                <div class="box-value text-bold">MC-99234-X</div>
+                            </div>
+                        </div>
+                        <div class="data-box-row">
+                            <div class="box-icon-container"><i class="fa-regular fa-user"></i></div>
+                            <div class="box-inner-content">
+                                <label>Full Name</label>
+                                <div class="box-value">Alex Mercer</div>
+                            </div>
+                        </div>
+                        <div class="grid-2col">
+                            <div class="data-box-row">
+                                <div class="box-icon-container"><i class="fa-regular fa-calendar"></i></div>
+                                <div class="box-inner-content">
+                                    <label>Date of Birth</label>
+                                    <div class="box-value">1998-05-14</div>
+                                </div>
+                            </div>
+                            <div class="data-box-row">
+                                <div class="box-icon-container"><i class="fa-solid fa-mars text-blue-main"></i></div>
+                                <div class="box-inner-content">
+                                    <label>Gender</label>
+                                    <div class="box-value">Male</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="data-box-row">
+                            <div class="box-icon-container"><i class="fa-solid fa-droplet text-red"></i></div>
+                            <div class="box-inner-content">
+                                <label>Blood Group</label>
+                                <div class="box-value text-red text-bold">O+ (Positive)</div>
+                            </div>
+                        </div>
+                        <div class="alert-banner banner-blue">
+                            <i class="fa-solid fa-circle-plus"></i>
+                            <p>This information is locked and cannot be edited. Contact hospital administration for any changes.</p>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Right Hand Side: Updatable Form Elements Area Panel -->
+                <section class="card">
+                    <form action="#" method="POST">
+                        <div class="card-section-header">
+                            <div class="section-icon icon-light-green">
+                                <i class="fa-regular fa-pen-to-square text-green-main"></i>
+                            </div>
+                            <div>
+                                <h2 class="section-heading">Manually Updatable Vitals & Metrics</h2>
+                                <p class="section-desc">Update your latest health metrics and personal information</p>
+                            </div>
+                        </div>
+
+                        <div class="fields-stack">
+                            <div class="grid-2col">
+                                <div class="interactive-box-row">
+                                    <div class="box-icon-container text-green-main"><i class="fa-solid fa-ruler-horizontal"></i></div>
+                                    <div class="box-inner-content">
+                                        <label for="height">Height (CM)</label>
+                                        <input type="text" id="height" name="height" value="182.5">
+                                    </div>
+                                </div>
+                                <div class="interactive-box-row">
+                                    <div class="box-icon-container text-green-main"><i class="fa-solid fa-weight-scale"></i></div>
+                                    <div class="box-inner-content">
+                                        <label for="weight">Weight (KG)</label>
+                                        <input type="text" id="weight" name="weight" value="78.2">
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="grid-2col">
+                                <div class="interactive-box-row">
+                                    <div class="box-icon-container text-green-main"><i class="fa-regular fa-eye"></i></div>
+                                    <div class="box-inner-content">
+                                        <label for="eye_sight">Eye Sight Metric</label>
+                                        <input type="text" id="eye_sight" name="eye_sight" value="20/20 Vision (Normal)">
+                                    </div>
+                                </div>
+                                <div class="interactive-box-row">
+                                    <div class="box-icon-container text-green-main"><i class="fa-solid fa-ear-listen"></i></div>
+                                    <div class="box-inner-content">
+                                        <label for="hearing">Hearing Metric</label>
+                                        <input type="text" id="hearing" name="hearing" value="Normal threshold (0-25 dB)">
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="interactive-box-row">
+                                <div class="box-icon-container text-green-main"><i class="fa-solid fa-phone"></i></div>
+                                <div class="box-inner-content">
+                                    <label for="emergency_contact">Emergency Contact Info</label>
+                                    <input type="text" id="emergency_contact" name="emergency_contact" value="Sarah Mercer (Spouse) - +1 (555) 019-2834">
+                                </div>
+                            </div>
+
+                            <div class="interactive-box-row items-start">
+                                <div class="box-icon-container text-green-main padding-top-icon"><i class="fa-regular fa-clipboard"></i></div>
+                                <div class="box-inner-content">
+                                    <label for="medical_history">Medical History Logs</label>
+                                    <textarea id="medical_history" name="medical_history" rows="1">Slight childhood asthma (resolved). Appendectomy in 2018.</textarea>
+                                </div>
+                            </div>
+
+                            <div class="interactive-box-row items-start border-danger">
+                                <div class="box-icon-container text-danger padding-top-icon"><i class="fa-solid fa-triangle-exclamation"></i></div>
+                                <div class="box-inner-content">
+                                    <label for="allergies" class="text-danger-label">Allergies & Intolerances</label>
+                                    <textarea id="allergies" name="allergies" rows="1">Penicillin, Peanuts, Seasonal Pollen.</textarea>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="form-buttons-row">
+                            <button type="reset" class="btn-discard">
+                                <i class="fa-regular fa-trash-can"></i> Discard Changes
+                            </button>
+                            <button type="submit" class="btn-save">
+                                <i class="fa-solid fa-download"></i> Save Changes
+                            </button>
+                        </div>
+                    </form>
+                </section>
+            </div>
+
+            <!-- NEW SECTION: Health Trends & Vitals History Tracking Panels -->
+            <section class="section-container">
+                <div class="section-header-row">
+                    <div>
+                        <h2 class="block-title">Health Trends & Vitals History</h2>
+                        <p class="block-subtitle">Track your vital signs over time. Add new readings to keep your data up to date.</p>
+                    </div>
+                    <div class="timeframe-selector">
+                        <button class="time-btn">7D</button>
+                        <button class="time-btn">30D</button>
+                        <button class="time-btn active">90D</button>
+                        <button class="time-btn">All</button>
+                    </div>
+                </div>
+
+                <!-- 2x2 Grid Chart Block Metrics Wrapper Elements -->
+                <div class="charts-grid">
+                    
+                    <!-- Chart Module 1: Blood Pressure -->
+                    <div class="chart-card">
+                        <div class="chart-card-top">
+                            <div class="chart-label-header">
+                                <div class="chart-icon-round icon-purple-bg"><i class="fa-solid fa-heart-pulse text-purple-main"></i></div>
+                                <h3>Blood Pressure <span class="unit-text">(mmHg)</span></h3>
+                            </div>
+                            <button class="add-reading-btn"><i class="fa-solid fa-plus"></i> Add Reading</button>
+                        </div>
+                        <div class="chart-main-value-group">
+                            <div class="chart-stat-number">120/80 <span class="sub-unit">mmHg</span></div>
+                            <span class="status-tag tag-green">Normal</span>
+                        </div>
+                        
+                        <!-- Embedded Visual Vector Data Rendering Layer Graph Component -->
+                        <div class="canvas-chart-wrapper">
+                            <div class="y-axis-labels">
+                                <span>160/100</span><span>140/90</span><span>120/80</span><span>100/60</span><span>80/40</span>
+                            </div>
+                            <div class="grid-and-vector">
+                                <svg class="chart-svg-layer" viewBox="0 0 500 120" preserveAspectRatio="none">
+                                    <!-- Grid Dotted Paths lines -->
+                                    <line x1="0" y1="0" x2="500" y2="0" stroke="#F1F5F9" stroke-dasharray="3,3" />
+                                    <line x1="0" y1="30" x2="500" y2="30" stroke="#F1F5F9" stroke-dasharray="3,3" />
+                                    <line x1="0" y1="60" x2="500" y2="60" stroke="#E2E8F0" />
+                                    <line x1="0" y1="90" x2="500" y2="90" stroke="#F1F5F9" stroke-dasharray="3,3" />
+                                    <line x1="0" y1="120" x2="500" y2="120" stroke="#F1F5F9" stroke-dasharray="3,3" />
+                                    
+                                    <!-- Area Fills -->
+                                    <path d="M0,40 L60,35 L120,45 L180,32 L240,30 L300,42 L360,38 L420,48 L500,55 L500,120 L0,120 Z" fill="rgba(124, 58, 237, 0.03)" />
+                                    <path d="M0,65 L60,65 L120,70 L180,62 L240,64 L300,72 L360,66 L420,74 L500,82 L500,120 L0,120 Z" fill="rgba(79, 70, 229, 0.03)" />
+                                    
+                                    <!-- Systolic Line Graph path -->
+                                    <path d="M0,40 L60,35 L120,45 L180,32 L240,30 L300,42 L360,38 L420,48 L500,55" fill="none" stroke="#7C3AED" stroke-width="2.5" />
+                                    <!-- Diastolic Line Graph path -->
+                                    <path d="M0,65 L60,65 L120,70 L180,62 L240,64 L300,72 L360,66 L420,74 L500,82" fill="none" stroke="#4F46E5" stroke-width="2.5" />
+                                    
+                                    <!-- Data node circular rendering plots points -->
+                                    <circle cx="60" cy="35" r="3.5" fill="#7C3AED" /><circle cx="120" cy="45" r="3.5" fill="#7C3AED" /><circle cx="180" cy="32" r="3.5" fill="#7C3AED" /><circle cx="240" cy="30" r="3.5" fill="#7C3AED" /><circle cx="300" cy="42" r="3.5" fill="#7C3AED" /><circle cx="360" cy="38" r="3.5" fill="#7C3AED" /><circle cx="420" cy="48" r="3.5" fill="#7C3AED" /><circle cx="500" cy="55" r="3.5" fill="#7C3AED" />
+                                    <circle cx="60" cy="65" r="3.5" fill="#4F46E5" /><circle cx="120" cy="70" r="3.5" fill="#4F46E5" /><circle cx="180" cy="62" r="3.5" fill="#4F46E5" /><circle cx="240" cy="64" r="3.5" fill="#4F46E5" /><circle cx="300" cy="72" r="3.5" fill="#4F46E5" /><circle cx="360" cy="66" r="3.5" fill="#4F46E5" /><circle cx="420" cy="74" r="3.5" fill="#4F46E5" /><circle cx="500" cy="82" r="3.5" fill="#4F46E5" />
+                                </svg>
+                            </div>
+                        </div>
+                        <div class="x-axis-timeline">
+                            <span>Apr 21</span><span>Apr 28</span><span>May 5</span><span>May 12</span><span>May 19</span><span>May 26</span><span>Jun 2</span><span>Jun 9</span>
+                        </div>
+                        <div class="chart-legends-footer">
+                            <span class="legend-item"><span class="legend-dot color-systolic"></span> Systolic</span>
+                            <span class="legend-item"><span class="legend-dot color-diastolic"></span> Diastolic</span>
+                        </div>
+                    </div>
+
+                    <!-- Chart Module 2: Blood Sugar -->
+                    <div class="chart-card">
+                        <div class="chart-card-top">
+                            <div class="chart-label-header">
+                                <div class="chart-icon-round icon-green-bg"><i class="fa-solid fa-droplet text-green-main"></i></div>
+                                <h3>Blood Sugar <span class="unit-text">(mg/dL)</span></h3>
+                            </div>
+                            <button class="add-reading-btn"><i class="fa-solid fa-plus"></i> Add Reading</button>
+                        </div>
+                        <div class="chart-main-value-group">
+                            <div class="chart-stat-number">98.6 <span class="sub-unit">mg/dL</span></div>
+                            <span class="status-tag tag-green">Normal</span>
+                        </div>
+                        
+                        <div class="canvas-chart-wrapper">
+                            <div class="y-axis-labels">
+                                <span>200</span><span>160</span><span>120</span><span>80</span><span>40</span>
+                            </div>
+                            <div class="grid-and-vector">
+                                <svg class="chart-svg-layer" viewBox="0 0 500 120" preserveAspectRatio="none">
+                                    <line x1="0" y1="0" x2="500" y2="0" stroke="#F1F5F9" stroke-dasharray="3,3" />
+                                    <line x1="0" y1="30" x2="500" y2="30" stroke="#F1F5F9" stroke-dasharray="3,3" />
+                                    <line x1="0" y1="60" x2="500" y2="60" stroke="#E2E8F0" />
+                                    <line x1="0" y1="90" x2="500" y2="90" stroke="#F1F5F9" stroke-dasharray="3,3" />
+                                    <line x1="0" y1="120" x2="500" y2="120" stroke="#F1F5F9" stroke-dasharray="3,3" />
+                                    
+                                    <path d="M0,75 L40,82 L80,72 L120,85 L160,70 L200,80 L240,68 L285,82 L330,70 L370,76 L410,72 L450,80 L500,84 L500,120 L0,120 Z" fill="rgba(16, 185, 129, 0.03)" />
+                                    
+                                    <path d="M0,75 L40,82 L80,72 L120,85 L160,70 L200,80 L240,68 L285,82 L330,70 L370,76 L410,72 L450,80 L500,84" fill="none" stroke="#10B981" stroke-width="2.5" />
+                                    <path d="M0,88 L50,92 L100,84 L150,96 L200,88 L250,90 L300,94 L350,86 L400,92 L450,90 L500,98" fill="none" stroke="#059669" stroke-width="1.5" stroke-dasharray="4,3" />
+                                    
+                                    <circle cx="80" cy="72" r="3.5" fill="#10B981" /><circle cx="160" cy="70" r="3.5" fill="#10B981" /><circle cx="240" cy="68" r="3.5" fill="#10B981" /><circle cx="330" cy="70" r="3.5" fill="#10B981" /><circle cx="410" cy="72" r="3.5" fill="#10B981" />
+                                </svg>
+                            </div>
+                        </div>
+                        <div class="x-axis-timeline">
+                            <span>Apr 21</span><span>Apr 28</span><span>May 5</span><span>May 12</span><span>May 19</span><span>May 26</span><span>Jun 2</span><span>Jun 9</span>
+                        </div>
+                        <div class="chart-legends-footer">
+                            <span class="legend-item"><span class="legend-dot color-fasting"></span> Fasting</span>
+                            <span class="legend-item"><span class="legend-dot color-postmeal"></span> Post Meal</span>
+                        </div>
+                    </div>
+
+                    <!-- Chart Module 3: Temperature -->
+                    <div class="chart-card">
+                        <div class="chart-card-top">
+                            <div class="chart-label-header">
+                                <div class="chart-icon-round icon-orange-bg"><i class="fa-solid fa-temperature-half text-orange-main"></i></div>
+                                <h3>Temperature <span class="unit-text">(°C)</span></h3>
+                            </div>
+                            <button class="add-reading-btn"><i class="fa-solid fa-plus"></i> Add Reading</button>
+                        </div>
+                        <div class="chart-main-value-group">
+                            <div class="chart-stat-number">36.6 <span class="sub-unit">°C</span></div>
+                            <span class="status-tag tag-green">Normal</span>
+                        </div>
+                        
+                        <div class="canvas-chart-wrapper">
+                            <div class="y-axis-labels">
+                                <span>39</span><span>38</span><span>37</span><span>36</span><span>35</span>
+                            </div>
+                            <div class="grid-and-vector">
+                                <svg class="chart-svg-layer" viewBox="0 0 500 120" preserveAspectRatio="none">
+                                    <line x1="0" y1="0" x2="500" y2="0" stroke="#F1F5F9" stroke-dasharray="3,3" />
+                                    <line x1="0" y1="30" x2="500" y2="30" stroke="#F1F5F9" stroke-dasharray="3,3" />
+                                    <line x1="0" y1="60" x2="500" y2="60" stroke="#E2E8F0" />
+                                    <line x1="0" y1="90" x2="500" y2="90" stroke="#F1F5F9" stroke-dasharray="3,3" />
+                                    <line x1="0" y1="120" x2="500" y2="120" stroke="#F1F5F9" stroke-dasharray="3,3" />
+                                    
+                                    <path d="M0,82 L40,78 L80,84 L120,80 L160,72 L200,68 L240,76 L280,70 L320,82 L360,74 L400,84 L440,78 L500,80 L500,120 L0,120 Z" fill="rgba(249, 115, 22, 0.03)" />
+                                    <path d="M0,82 L40,78 L80,84 L120,80 L160,72 L200,68 L240,76 L280,70 L320,82 L360,74 L400,84 L440,78 L500,80" fill="none" stroke="#F97316" stroke-width="2.5" />
+                                    
+                                    <circle cx="40" cy="78" r="3.5" fill="#F97316" /><circle cx="120" cy="80" r="3.5" fill="#F97316" /><circle cx="200" cy="68" r="3.5" fill="#F97316" /><circle cx="280" cy="70" r="3.5" fill="#F97316" /><circle cx="360" cy="74" r="3.5" fill="#F97316" /><circle cx="440" cy="78" r="3.5" fill="#F97316" />
+                                </svg>
+                            </div>
+                        </div>
+                        <div class="x-axis-timeline">
+                            <span>Apr 21</span><span>Apr 28</span><span>May 5</span><span>May 12</span><span>May 19</span><span>May 26</span><span>Jun 2</span><span>Jun 9</span>
+                        </div>
+                    </div>
+
+                    <!-- Chart Module 4: Heart Rate Grid Graphic -->
+                    <div class="chart-card">
+                        <div class="chart-card-top">
+                            <div class="chart-label-header">
+                                <div class="chart-icon-round icon-red-bg"><i class="fa-regular fa-heart text-danger"></i></div>
+                                <h3>Heart Rate <span class="unit-text">(bpm)</span></h3>
+                            </div>
+                            <button class="add-reading-btn"><i class="fa-solid fa-plus"></i> Add Reading</button>
+                        </div>
+                        <div class="chart-main-value-group">
+                            <div class="chart-stat-number">72 <span class="sub-unit">bpm</span></div>
+                            <span class="status-tag tag-green">Normal</span>
+                        </div>
+                        
+                        <div class="canvas-chart-wrapper">
+                            <div class="y-axis-labels">
+                                <span>120</span><span>100</span><span>80</span><span>60</span><span>40</span>
+                            </div>
+                            <div class="grid-and-vector">
+                                <svg class="chart-svg-layer" viewBox="0 0 500 120" preserveAspectRatio="none">
+                                    <line x1="0" y1="0" x2="500" y2="0" stroke="#F1F5F9" stroke-dasharray="3,3" />
+                                    <line x1="0" y1="30" x2="500" y2="30" stroke="#F1F5F9" stroke-dasharray="3,3" />
+                                    <line x1="0" y1="60" x2="500" y2="60" stroke="#E2E8F0" />
+                                    <line x1="0" y1="90" x2="500" y2="90" stroke="#F1F5F9" stroke-dasharray="3,3" />
+                                    <line x1="0" y1="120" x2="500" y2="120" stroke="#F1F5F9" stroke-dasharray="3,3" />
+                                    
+                                    <path d="M0,84 L40,86 L80,82 L120,78 L160,82 L200,76 L240,84 L280,74 L320,86 L360,80 L400,84 L440,88 L500,86 L500,120 L0,120 Z" fill="rgba(239, 68, 68, 0.03)" />
+                                    <path d="M0,84 L40,86 L80,82 L120,78 L160,82 L200,76 L240,84 L280,74 L320,86 L360,80 L400,84 L440,88 L500,86" fill="none" stroke="#EF4444" stroke-width="2.5" />
+                                    
+                                    <circle cx="120" cy="78" r="3.5" fill="#EF4444" /><circle cx="200" cy="76" r="3.5" fill="#EF4444" /><circle cx="280" cy="74" r="3.5" fill="#EF4444" /><circle cx="360" cy="80" r="3.5" fill="#EF4444" />
+                                </svg>
+                            </div>
+                        </div>
+                        <div class="x-axis-timeline">
+                            <span>Apr 21</span><span>Apr 28</span><span>May 5</span><span>May 12</span><span>May 19</span><span>May 26</span><span>Jun 2</span><span>Jun 9</span>
+                        </div>
+                    </div>
+
+                </div>
+            </section>
+
+            <!-- NEW SECTION: Recent 20 Sessions Log Records Table Frame Component -->
+            <section class="section-container">
+                <div class="table-header-wrapper">
+                    <h2 class="block-title">Recent 20 Sessions</h2>
+                    <p class="block-subtitle">Your latest 20 recorded readings</p>
+                </div>
+
+                <div class="table-scroll-frame">
+                    <table class="data-logs-table">
+                        <thead>
+                            <tr>
+                                <th>Date & Time</th>
+                                <th>Blood Pressure <span class="table-unit">(mmHg)</span></th>
+                                <th>Blood Sugar <span class="table-unit">(mg/dL)</span></th>
+                                <th>Temperature <span class="table-unit">(°C)</span></th>
+                                <th>Heart Rate <span class="table-unit">(bpm)</span></th>
+                                <th class="text-center">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td class="text-bold-slate">Jun 10, 2025 <span class="time-label">09:15 AM</span></td>
+                                <td>120/80</td>
+                                <td>98.6</td>
+                                <td>36.6</td>
+                                <td>72</td>
+                                <td class="actions-cell">
+                                    <button class="action-btn edit-icon"><i class="fa-regular fa-pen-to-square"></i></button>
+                                    <button class="action-btn delete-icon"><i class="fa-regular fa-trash-can"></i></button>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td class="text-bold-slate">Jun 9, 2025 <span class="time-label">08:45 AM</span></td>
+                                <td>118/78</td>
+                                <td>95.2</td>
+                                <td>36.7</td>
+                                <td>70</td>
+                                <td class="actions-cell">
+                                    <button class="action-btn edit-icon"><i class="fa-regular fa-pen-to-square"></i></button>
+                                    <button class="action-btn delete-icon"><i class="fa-regular fa-trash-can"></i></button>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td class="text-bold-slate">Jun 8, 2025 <span class="time-label">08:30 AM</span></td>
+                                <td>122/82</td>
+                                <td>101.3</td>
+                                <td>36.8</td>
+                                <td>74</td>
+                                <td class="actions-cell">
+                                    <button class="action-btn edit-icon"><i class="fa-regular fa-pen-to-square"></i></button>
+                                    <button class="action-btn delete-icon"><i class="fa-regular fa-trash-can"></i></button>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td class="text-bold-slate">Jun 7, 2025 <span class="time-label">09:10 AM</span></td>
+                                <td>119/79</td>
+                                <td>97.8</td>
+                                <td>36.5</td>
+                                <td>71</td>
+                                <td class="actions-cell">
+                                    <button class="action-btn edit-icon"><i class="fa-regular fa-pen-to-square"></i></button>
+                                    <button class="action-btn delete-icon"><i class="fa-regular fa-trash-can"></i></button>
+                                </td>
+                            </tr>
+                            <tr class="ellipsis-row">
+                                <td class="text-bold-slate">...</td>
+                                <td>...</td>
+                                <td>...</td>
+                                <td>...</td>
+                                <td>...</td>
+                                <td class="actions-cell">
+                                    <button class="action-btn edit-icon">...</button>
+                                    <button class="action-btn delete-icon">...</button>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td class="text-bold-slate">May 22, 2025 <span class="time-label">07:50 AM</span></td>
+                                <td>116/76</td>
+                                <td>93.1</td>
+                                <td>36.4</td>
+                                <td>68</td>
+                                <td class="actions-cell">
+                                    <button class="action-btn edit-icon"><i class="fa-regular fa-pen-to-square"></i></button>
+                                    <button class="action-btn delete-icon"><i class="fa-regular fa-trash-can"></i></button>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <!-- Dashboard Encryption Guard Rails Footer -->
+            <footer class="secure-footer">
+                <div class="footer-left">
+                    <div class="footer-icon-circle">
+                        <i class="fa-solid fa-shield-halved"></i>
+                    </div>
+                    <div>
+                        <h3>Your Health Data is Secure</h3>
+                        <p>All your medical information is encrypted and stored securely. We never share your data without your consent.</p>
+                    </div>
+                </div>
+                <div class="hipaa-badge">
+                    <i class="fa-solid fa-lock"></i>
+                    <div class="hipaa-text">
+                        <span class="hipaa-title">HIPAA</span>
+                        <span class="hipaa-sub">Compliant</span>
+                    </div>
+                </div>
+            </footer>
+        </main>
+    </div>
+
+</body>
+</html>

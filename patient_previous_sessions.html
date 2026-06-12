@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MediConnect - Patient Portal</title>
+    <link rel="stylesheet" href="patient_previous_sessions.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+</head>
+<body>
+
+<div class="dashboard-container">
+
+    <aside class="sidebar">
+        <div class="brand">
+            <div class="brand-logo">
+                <i data-lucide="heart-pulse"></i>
+            </div>
+            <span class="brand-name">MediConnect</span>
+        </div>
+
+        <nav class="nav-menu">
+            <a href="patient_medical_data.html" class="nav-item">
+                <i data-lucide="activity"></i>
+                <span>Medical Data</span>
+            </a>
+            <a href="patient_previous_sessions.html" class="nav-item active">
+                <i data-lucide="history"></i>
+                <span>Previous Sessions</span>
+            </a>
+            <a href="patient_sessions.html" class="nav-item">
+                <i data-lucide="video"></i>
+                <span>Active Sessions</span>
+            </a>
+            <a href="#" class="nav-item">
+                <i data-lucide="settings"></i>
+                <span>Settings</span>
+            </a>
+        </nav>
+
+        <div class="sidebar-footer">
+            <button class="logout-btn">
+                <i data-lucide="log-out"></i>
+                <span>Logout</span>
+            </button>
+        </div>
+    </aside>
+
+    <main class="main-content">
+
+        <header class="main-header">
+            <div class="welcome-text">
+                <h1>Previous Medical Sessions</h1>
+                <p>All your past consultations and records</p>
+            </div>
+            <div class="header-profile">
+                <div class="notification-bell">
+                    <i data-lucide="bell"></i>
+                    <span class="badge">2</span>
+                </div>
+                <div class="profile-card">
+                    <img src="https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&q=80&w=100" alt="Alex Mercer" class="avatar">
+                    <div class="profile-info">
+                        <span class="profile-name">Alex Mercer</span>
+                        <span class="profile-role">Patient</span>
+                    </div>
+                    <i data-lucide="chevron-down" class="dropdown-icon"></i>
+                </div>
+            </div>
+        </header>
+
+        <section class="table-section">
+            <div class="table-header">
+                <h2>Previous Sessions</h2>
+                <div class="table-actions">
+                    <div class="search-box">
+                        <i data-lucide="search"></i>
+                        <input type="text" placeholder="Search records...">
+                    </div>
+                    <button class="filter-btn">
+                        <i data-lucide="sliders-horizontal"></i>
+                    </button>
+                </div>
+            </div>
+
+            <div class="timeline">
+
+                <div class="session-card resolved">
+                    <div class="session-left">
+                        <div class="session-dot"></div>
+                        <div class="session-line"></div>
+                    </div>
+
+                    <div class="session-content">
+                        <div class="session-top">
+                            <div>
+                                <span class="session-id id-blue">#1001</span>
+                                <span class="dept-badge cardio">Cardiology</span>
+                            </div>
+                            <span class="status-pill resolved">Resolved</span>
+                        </div>
+
+                        <div class="session-main">
+                            <div class="doctor-block">
+                                <img src="https://images.unsplash.com/photo-1559839734-2b71ea197ec2?w=100" />
+                                <div>
+                                    <h4>Dr. Sarah Johnson</h4>
+                                    <p>City Care Clinic</p>
+                                </div>
+                            </div>
+
+                            <div class="meta-grid">
+                                <div>
+                                    <i data-lucide="activity"></i>
+                                    <span>Chest pain & BP check</span>
+                                </div>
+                                <div>
+                                    <i data-lucide="calendar"></i>
+                                    <span>May 24, 2025 → May 28, 2025</span>
+                                </div>
+                                <div>
+                                    <i data-lucide="database"></i>
+                                    <span>additional_vitals TEXT DEFAULT '{}'</span>
+                                </div>
+                            </div>
+
+                            <div class="vitals-preview">
+                                <span>BP: 120/80</span>
+                                <span>HR: 78</span>
+                                <span>Temp: 98.6°F</span>
+                            </div>
+                        </div>
+
+                        <div class="session-actions">
+                            <button class="btn-primary">
+                                <i data-lucide="download"></i> Download Report
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="session-card referred">
+                    <div class="session-left">
+                        <div class="session-dot"></div>
+                        <div class="session-line"></div>
+                    </div>
+
+                    <div class="session-content">
+                        <div class="session-top">
+                            <div>
+                                <span class="session-id id-purple">#1003</span>
+                                <span class="dept-badge neuro">Neurology</span>
+                            </div>
+                            <span class="status-pill referred">Referred</span>
+                        </div>
+
+                        <div class="session-main">
+                            <div class="doctor-block">
+                                <img src="https://images.unsplash.com/photo-1622253692010?w=100" />
+                                <div>
+                                    <h4>Dr. James Carter</h4>
+                                    <p>Neuro Care Hospital</p>
+                                </div>
+                            </div>
+
+                            <div class="meta-grid">
+                                <div>
+                                    <i data-lucide="alert-triangle"></i>
+                                    <span>Migraine + dizziness</span>
+                                </div>
+                                <div>
+                                    <i data-lucide="share-2"></i>
+                                    <span>Referral case (external hospital transfer)</span>
+                                </div>
+                                <div>
+                                    <i data-lucide="database"></i>
+                                    <span>additional_vitals TEXT DEFAULT '{}'</span>
+                                </div>
+                            </div>
+
+                            <div class="vitals-preview">
+                                <span>BP: 130/85</span>
+                                <span>HR: 92</span>
+                                <span>Temp: 99.1°F</span>
+                            </div>
+                        </div>
+
+                        <div class="session-actions">
+                            <button class="btn-primary">
+                                <i data-lucide="download"></i> Report
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </section>
+
+    </main>
+</div>
+
+<script>
+    lucide.createIcons();
+</script>
+
+</body>
+</html>
