@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>MediConnect - Consultation</title>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        body { margin: 0; background: #1a1a1a; color: white; font-family: 'Inter', sans-serif; height: 100vh; display: flex; overflow: hidden; }
+        
+        /* Layout */
+        .sidebar { width: 260px; background: #262626; display: flex; flex-direction: column; gap: 10px; padding: 15px; border-right: 1px solid #404040; }
+        .main-stage { flex: 1; display: flex; flex-direction: column; position: relative; }
+
+        /* Video Tiles */
+        .video-tile { background: #333; border-radius: 8px; aspect-ratio: 16/9; cursor: pointer; border: 2px solid transparent; display: flex; align-items: center; justify-content: center; position: relative; }
+        .video-tile:hover { border-color: #3b82f6; }
+        .video-tile.pinned { border: 2px solid #f59e0b; }
+
+        /* Main View */
+        .viewport { flex: 1; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; color: #666; }
+
+        /* Fixed Zoom-style Controls */
+        .toolbar { height: 80px; background: #000; display: flex; justify-content: center; align-items: center; gap: 40px; border-top: 1px solid #333; }
+        .ctrl-btn { display: flex; flex-direction: column; align-items: center; gap: 5px; color: white; cursor: pointer; border: none; background: none; font-size: 0.8rem; }
+        
+        /* Notes Panel */
+        #notesPanel { position: absolute; top: 0; right: -350px; width: 350px; height: 100%; background: white; color: #333; transition: 0.3s; box-shadow: -5px 0 15px rgba(0,0,0,0.3); z-index: 10; display: flex; flex-direction: column; }
+    </style>
+</head>
+<body>
+
+<div class="sidebar" id="sidebar">
+    <div class="video-tile pinned" onclick="pinVideo('Doctor')">Doctor</div>
+    <div class="video-tile" onclick="pinVideo('Patient')">Patient</div>
+    <div class="video-tile" onclick="pinVideo('Observer')">Observer</div>
+</div>
+
+<div class="main-stage">
+    <div class="viewport" id="mainView">Selected: Doctor</div>
+    
+    <div class="toolbar">
+        <button class="ctrl-btn"><i data-lucide="mic"></i>Mute</button>
+        <button class="ctrl-btn"><i data-lucide="video"></i>Stop Video</button>
+        <button class="ctrl-btn"><i data-lucide="monitor-up"></i>Share</button>
+        <button class="ctrl-btn" onclick="toggleNotes()"><i data-lucide="file-text"></i>Notes</button>
+        <button class="ctrl-btn" style="color: #ef4444;" onclick="location.href='report_submission.html'"><i data-lucide="phone-off"></i>End</button>
+    </div>
+</div>
+
+<div id="notesPanel">
+    <div style="padding: 15px; border-bottom: 1px solid #eee; display: flex; justify-content: space-between;">
+        <strong>Clinical Notes</strong>
+        <i data-lucide="x" onclick="toggleNotes()" style="cursor:pointer"></i>
+    </div>
+    <textarea style="flex:1; border:none; padding:15px; resize:none;"></textarea>
+</div>
+
+<script>
+    lucide.createIcons();
+
+    function pinVideo(name) {
+        document.getElementById('mainView').innerText = "Active Video: " + name;
+    }
+
+    function toggleNotes() {
+        const panel = document.getElementById('notesPanel');
+        panel.style.right = (panel.style.right === '0px') ? '-350px' : '0px';
+    }
+</script>
+</body>
+</html>
