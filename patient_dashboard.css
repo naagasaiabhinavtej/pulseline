@@ -452,6 +452,13 @@ body {
     gap: 12px;
 }
 
+.patient-cell img {
+    width: 40px;      /* controls size */
+    height: 40px;     /* same as width for square */
+    border-radius: 50%; /* makes it circular */
+    object-fit: cover;  /* makes image fit properly */
+}
+
 .table-avatar {
     width: 38px;
     height: 38px;

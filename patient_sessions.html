@@ -21,22 +21,22 @@
             </div>
 
             <nav class="nav-menu">
+                <a href="patient_sessions.html" class="nav-item active">
+                    <i data-lucide="video"></i>
+                    <span>Active Sessions</span>
+                </a>
                 <a href="patient_medical_data.html" class="nav-item">
                     <i data-lucide="activity"></i>
                     <span>Medical Data</span>
                 </a>
-                <a href="#" class="nav-item">
+                <a href="patient_previous_sessions.html" class="nav-item">
                     <i data-lucide="history"></i>
                     <span>Previous Sessions</span>
                 </a>
-                <a href="#" class="nav-item active">
-                    <i data-lucide="video"></i>
-                    <span>Active Sessions</span>
-                </a>
-                <a href="#" class="nav-item">
+                <!-- <a href="#" class="nav-item">
                     <i data-lucide="settings"></i>
                     <span>Settings</span>
-                </a>
+                </a> -->
             </nav>
 
             <div class="sidebar-footer">
@@ -55,10 +55,6 @@
                     <p>Your current ongoing medical consult tracks</p>
                 </div>
                 <div class="header-profile">
-                    <div class="notification-bell">
-                        <i data-lucide="bell"></i>
-                        <span class="badge">2</span>
-                    </div>
                     <div class="profile-card">
                         <img src="https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&q=80&w=100" alt="Alex Mercer" class="avatar">
                         <div class="profile-info">
@@ -123,9 +119,9 @@
                             <tr>
                                 <th>Session ID</th>
                                 <th>Assigned Doctor</th>
-                                <th>Scheduled Time</th>
+                                <th>Start Time</th>
                                 <th>Status</th>
-                                <th style="text-align: right;">Actions</th>
+                                <th style="text-align: right;" onclick = "">Actions</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -133,7 +129,7 @@
                                 <td><span class="session-id id-blue">MC-1001</span></td>
                                 <td>
                                     <div class="patient-cell">
-                                        <img src="https://images.unsplash.com/photo-1559839734-2b71ea197ec2?auto=format&fit=crop&q=80&w=100" alt="Dr. Sarah Johnson" class="table-avatar">
+                                        <img src="avatar_patients/young_girl.png">
                                         <div class="patient-info">
                                             <span class="p-name">Dr. Sarah Johnson</span>
                                             <span class="p-meta">Specialty: Cardiology</span>
@@ -150,7 +146,11 @@
                                     </div>
                                 </td>
                                 <td><span class="status-badge active-bg">Active</span></td>
-                                <td style="text-align: right;"><button class="action-btn"><i data-lucide="chevron-right"></i></button></td>
+                                <td style="text-align: right;">
+                                    <button class="action-btn" onclick="window.location.href='patient_session.html'" >
+                                        <i data-lucide="chevron-right"></i>
+                                    </button>
+                                </td>
                             </tr>
                             <tr>
                                 <td><span class="session-id id-purple">MC-1003</span></td>

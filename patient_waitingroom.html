@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MediConnect - Pre-Call Waiting Room</title>
+    <link rel="stylesheet" href="dashboard.css">
+    <link rel="stylesheet" href="telemetry_overlay.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+</head>
+<body>
+
+    <div class="dashboard-container">
+        
+        <aside class="sidebar">
+            <div class="brand">
+                <div class="brand-logo">
+                    <i data-lucide="heart-pulse"></i>
+                </div>
+                <span class="brand-name">MediConnect</span>
+            </div>
+
+            <nav class="nav-menu">
+                <a href="index.html" class="nav-item active">
+                    <i data-lucide="users"></i>
+                    <span>Active Sessions</span>
+                </a>
+                <a href="doctor_dashboard.html" class="nav-item">
+                    <i data-lucide="layout-dashboard"></i>
+                    <span>Dashboard</span>
+                </a>
+                <a href="#" class="nav-item">
+                    <i data-lucide="settings"></i>
+                    <span>Settings</span>
+                </a>
+            </nav>
+
+            <div class="sidebar-footer">
+                <button class="logout-btn">
+                    <i data-lucide="log-out"></i>
+                    <span>Logout</span>
+                </button>
+            </div>
+        </aside>
+
+        <main class="main-content">
+            
+            <header class="session-top-nav">
+                <a href="index.html" class="back-link">
+                    <i data-lucide="arrow-left"></i>
+                    <span>Back to Active Sessions</span>
+                </a>
+                <div class="header-profile">
+                    <div class="notification-bell">
+                        <i data-lucide="bell"></i>
+                        <span class="badge">3</span>
+                    </div>
+                    <div class="profile-card">
+                        <img src="https://images.unsplash.com/photo-1559839734-2b71ea197ec2?auto=format&fit=crop&q=80&w=100" alt="Doctor Profile" class="avatar">
+                        <div class="profile-info">
+                            <span class="profile-name">Dr. Sarah Johnson</span>
+                            <span class="profile-role">Doctor</span>
+                        </div>
+                        <i data-lucide="chevron-down" class="dropdown-icon"></i>
+                    </div>
+                </div>
+            </header>
+
+            <section class="patient-banner-card">
+                <div class="patient-identity">
+                    <img src="https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?auto=format&fit=crop&q=80&w=100" alt="John Doe" class="patient-avatar">
+                    <div class="patient-title">
+                        <h2>John Doe <span class="status-dot-active">Active</span></h2>
+                        <p>Age: 28 • Male</p>
+                    </div>
+                </div>
+                
+                <div class="meta-info-block">
+                    <span class="meta-label">Session ID</span>
+                    <div class="meta-value-code">
+                        <span>MC-1001</span>
+                        <i data-lucide="copy" class="copy-ic"></i>
+                    </div>
+                </div>
+
+                <div class="meta-info-block">
+                    <span class="meta-label">Start Time</span>
+                    <div class="meta-value">
+                        <i data-lucide="calendar"></i>
+                        <span>May 24, 2025 <small>10:15 AM</small></span>
+                    </div>
+                </div>
+
+                <div class="timer-tracker-box">
+                    <div class="timer-pulse-icon">
+                        <i data-lucide="clock"></i>
+                    </div>
+                    <div class="timer-content">
+                        <span class="timer-digits">12:45</span>
+                        <span class="timer-sub">Session in Progress</span>
+                    </div>
+                </div>
+            </section>
+
+            <div class="workspace-split-grid">
+                
+                <div class="communication-hub card-base">
+                    
+                    <div class="hub-tabs-navigation-container">
+                        <div class="left-tabs-group">
+                            <a href="patient_session.html" class="tab-trigger">
+                                <i data-lucide="message-square"></i>
+                                <span>Group Chat</span>
+                            </a>
+                        </div>
+
+                        <div class="right-actions-group">
+                            <button class="action-video-launch-btn active-state">
+                                <i data-lucide="video"></i>
+                                <span>In Waiting Room</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="waiting-room-container">
+                        <div class="media-preview-box">
+                            <video id="local-preview-mirror" autoplay muted></video>
+                            <div class="preview-overlay-controls">
+                                <button class="icon-toggle-circle"><i data-lucide="mic"></i></button>
+                                <button class="icon-toggle-circle"><i data-lucide="video"></i></button>
+                            </div>
+                        </div>
+                        
+                        <div class="telemetry-hardware-card">
+                            <h3>Hardware Telemetry</h3>
+                            <div class="telemetry-row passing"><i data-lucide="check-circle-2"></i> Camera: Active</div>
+                            <div class="telemetry-row passing"><i data-lucide="check-circle-2"></i> Mic: Authorized</div>
+                            
+                            <div class="participant-status-callout">
+                                <i data-lucide="info"></i>
+                                <span>Patient <strong>John Doe</strong> is inside the room awaiting connection.</span>
+                            </div>
+                            
+                            <button class="action-join-stream-btn" onclick="alert('Establishing streaming broadcast protocols...')">
+                                <span>Join Session Now</span>
+                                <i data-lucide="arrow-right"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <aside class="metadata-sidebar card-base">
+                    <div class="panel-section-title">
+                        <h3>Session Details</h3>
+                        <div class="panel-action-icons">
+                            <i data-lucide="activity" class="panel-ic"></i>
+                            <i data-lucide="heart" class="panel-ic"></i>
+                        </div>
+                    </div>
+
+                    <div class="details-vertical-list">
+                        <div class="detail-row">
+                            <span class="row-label">Session ID</span>
+                            <span class="row-value badge-id">MC-1001</span>
+                        </div>
+                        <div class="detail-row">
+                            <span class="row-label">Patient Name</span>
+                            <span class="row-value weight-bold">John Doe</span>
+                        </div>
+                        <div class="detail-row">
+                            <span class="row-label">Age / Gender</span>
+                            <span class="row-value">28 / Male</span>
+                        </div>
+                        <div class="detail-row">
+                            <span class="row-label">Start Time</span>
+                            <div class="row-value align-right-sub">
+                                <span class="weight-bold">May 24, 2025</span>
+                                <small>10:15 AM</small>
+                            </div>
+                        </div>
+                        <div class="detail-row">
+                            <span class="row-label">Status</span>
+                            <span class="status-pill-green">Active</span>
+                        </div>
+                        <div class="detail-row">
+                            <span class="row-label">Doctor</span>
+                            <div class="doctor-sub-profile">
+                                <img src="https://images.unsplash.com/photo-1559839734-2b71ea197ec2?auto=format&fit=crop&q=80&w=60" alt="Doctor avatar">
+                                <span>Dr. Sarah Johnson</span>
+                            </div>
+                        </div>
+                        <div class="detail-row notes-vertical-layout">
+                            <span class="row-label">Notes</span>
+                            <p class="row-paragraph-value">Discuss test results and follow-up treatment plan.</p>
+                        </div>
+                    </div>
+                </aside>
+
+            </div>
+        </main>
+    </div>
+
+    <script>
+        lucide.createIcons();
+        if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+            navigator.mediaDevices.getUserMedia({ video: true, audio: false })
+                .then(stream => { document.getElementById('local-preview-mirror').srcObject = stream; })
+                .catch(err => { console.warn("Camera pipeline visualization bypassed.", err); });
+        }
+    </script>
+</body>
+</html>
