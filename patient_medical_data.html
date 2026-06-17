@@ -21,17 +21,14 @@
                 </div>
             </div>
             <nav class="nav-menu">
-                <a href="patient_medical_data.html" class="nav-item active">
-                    <i class="fa-solid fa-wave-square"></i> Medical Data
-                </a>
-                <a href="#" class="nav-item">
-                    <i class="fa-solid fa-clock-rotate-left"></i> Previous Sessions
-                </a>
                 <a href="patient_sessions.html" class="nav-item">
                     <i class="fa-solid fa-video"></i> Active Sessions
                 </a>
-                <a href="#" class="nav-item">
-                    <i class="fa-solid fa-gear"></i> Settings
+                <a href="patient_medical_data.html" class="nav-item active">
+                    <i class="fa-solid fa-wave-square"></i> Medical Data
+                </a>
+                <a href="patient_previous_sessions.html" class="nav-item">
+                    <i class="fa-solid fa-clock-rotate-left"></i> Previous Sessions
                 </a>
             </nav>
             <button class="logout-btn">
@@ -49,11 +46,11 @@
                     <p>View your permanent records and update your health metrics manually.</p>
                 </div>
                 <div class="header-profile">
-                    <div class="notification-badge">
+                    <!-- <div class="notification-badge">
                         <i class="fa-regular fa-bell"></i>
                         <span class="badge">2</span>
-                    </div>
-                    <img src="https://via.placeholder.com/45" alt="Alex Mercer" class="avatar">
+                    </div> -->
+                    <img src="avatar_patients/adult_male.png" alt="Alex Mercer" class="avatar">
                     <div class="profile-info">
                         <span class="profile-name">Alex Mercer</span>
                         <span class="profile-role">Patient</span>
@@ -94,18 +91,26 @@
                     </div>
                 </div>
                 <!-- Widget Card 3: Health Status -->
-                <div class="widget-card">
-                    <div class="widget-icon icon-purple">
-                        <i class="fa-solid fa-shield-halved"></i>
-                    </div>
-                    <div class="widget-details">
-                        <span class="widget-label">Health Status</span>
-                        <div class="widget-value-group">
-                            <span class="widget-text-status">Stable <i class="fa-solid fa-circle-check text-green-check"></i></span>
-                        </div>
-                        <span class="widget-sub" style="margin-top: 4px;">Overall condition is good</span>
-                    </div>
+                <!-- Widget Card 3: Age -->
+        <div class="widget-card">
+            <div class="widget-icon icon-purple">
+                <i class="fa-solid fa-cake-candles"></i>
+            </div>
+            <div class="widget-details">
+                <span class="widget-label">Age</span>
+
+                <div class="widget-value-group">
+                    <span class="widget-number">28</span>
+                    <span class="widget-unit">yrs</span>
                 </div>
+
+                <span class="status-tag" style="background:#F5F3FF; color:#6D28D9;">
+                    Adult Stage
+                </span>
+
+                <span class="widget-sub">Born on May 14, 1998</span>
+            </div>
+        </div>
                 <!-- Widget Card 4: Last Checkup -->
                 <div class="widget-card">
                     <div class="widget-icon icon-orange">

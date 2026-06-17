@@ -23,21 +23,17 @@
             </div>
 
             <nav class="nav-menu">
+                <a href="patient_sessions.html" class="nav-item active">
+                    <i data-lucide="video"></i>
+                    <span>Active Sessions</span>
+                </a>
                 <a href="patient_medical_data.html" class="nav-item">
                     <i data-lucide="activity"></i>
                     <span>Medical Data</span>
                 </a>
-                <a href="#" class="nav-item">
+                <a href="patient_previous_sessions.html" class="nav-item">
                     <i data-lucide="history"></i>
                     <span>Previous Sessions</span>
-                </a>
-                <a href="#" class="nav-item active">
-                    <i data-lucide="video"></i>
-                    <span>Active Sessions</span>
-                </a>
-                <a href="#" class="nav-item">
-                    <i data-lucide="settings"></i>
-                    <span>Settings</span>
                 </a>
             </nav>
 
@@ -54,17 +50,17 @@
             
             <!-- Contextual Breadcrumb Header -->
             <header class="session-top-nav">
-                <a href="index.html" class="back-link">
+                <a href="patient_sessions.html" class="back-link">
                     <i data-lucide="arrow-left"></i>
                     <span>Back to Active Sessions</span>
                 </a>
                 <div class="header-profile">
-                    <div class="notification-bell">
+                    <!-- <div class="notification-bell">
                         <i data-lucide="bell"></i>
                         <span class="badge">3</span>
-                    </div>
+                    </div> -->
                     <div class="profile-card">
-                        <img src="https://images.unsplash.com/photo-1559839734-2b71ea197ec2?auto=format&fit=crop&q=80&w=100" alt="Doctor Profile" class="avatar">
+                        <img src="avatar_patients/adult_male.png" alt="Doctor Profile" class="avatar">
                         <div class="profile-info">
                             <span class="profile-name">Dr. Sarah Johnson</span>
                             <span class="profile-role">Doctor</span>
@@ -77,10 +73,11 @@
             <!-- Patient Quick-Card Banner -->
             <section class="patient-banner-card">
                 <div class="patient-identity">
-                    <img src="https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?auto=format&fit=crop&q=80&w=100" alt="John Doe" class="patient-avatar">
+                    <img src="avatar_doctors/old_male.png" alt="John Doe" class="patient-avatar">
                     <div class="patient-title">
                         <h2>John Doe <span class="status-dot-active">Active</span></h2>
-                        <p>Age: 28 • Male</p>
+                        <p>Assigned doctor • Female</p>
+                    
                     </div>
                 </div>
                 
@@ -150,7 +147,7 @@
 
                         <!-- Incoming Left Message Stream Bubble -->
                         <div class="chat-row message-incoming">
-                            <img src="https://images.unsplash.com/photo-1559839734-2b71ea197ec2?auto=format&fit=crop&q=80&w=100" alt="Doctor" class="msg-avatar">
+                            <img src="avatar_patients/adult_female.png" alt="Doctor" class="msg-avatar">
                             <div class="message-wrapper">
                                 <span class="sender-title">Dr. Sarah Johnson</span>
                                 <div class="bubble">
@@ -171,12 +168,12 @@
                                     </div>
                                 </div>
                             </div>
-                            <img src="https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?auto=format&fit=crop&q=80&w=100" alt="Patient" class="msg-avatar">
+                            <img src="avatar_patients/adult_male.png" alt="Patient" class="msg-avatar">
                         </div>
 
                         <!-- Incoming Doctor Reply Row Bubble -->
                         <div class="chat-row message-incoming">
-                            <img src="https://images.unsplash.com/photo-1559839734-2b71ea197ec2?auto=format&fit=crop&q=80&w=100" alt="Doctor" class="msg-avatar">
+                            <img src="avatar_doctors/old_male.png" alt="Doctor" class="msg-avatar">
                             <div class="message-wrapper">
                                 <span class="sender-title">Dr. Sarah Johnson</span>
                                 <div class="bubble">
@@ -197,7 +194,7 @@
                                     </div>
                                 </div>
                             </div>
-                            <img src="https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?auto=format&fit=crop&q=80&w=100" alt="Patient" class="msg-avatar">
+                            <img src="avatar_patients/adult_male.png" alt="Patient" class="msg-avatar">
                         </div>
                     </div>
 
@@ -249,16 +246,26 @@
                             <span class="status-pill-green">Active</span>
                         </div>
                         <div class="detail-row">
-                            <span class="row-label">Doctor</span>
+                            <span class="row-label">Doctor 1</span>
                             <div class="doctor-sub-profile">
-                                <img src="https://images.unsplash.com/photo-1559839734-2b71ea197ec2?auto=format&fit=crop&q=80&w=60" alt="Doctor avatar">
+                                <img src="avatar_doctors/old_male.png" alt="Doctor avatar">
                                 <span>Dr. Sarah Johnson</span>
                             </div>
                         </div>
-                        <div class="detail-row notes-vertical-layout">
-                            <span class="row-label">Notes</span>
-                            <p class="row-paragraph-value">Discuss test results and follow-up treatment plan.</p>
+                         <div class="detail-row">
+                            <span class="row-label">Doctor 2</span>
+                            <div class="doctor-sub-profile">
+                                <img src="avatar_doctors/old_female.png" alt="Doctor avatar">
+                                <span>Dr. Sarah Johnson</span>
+                            </div>
                         </div>
+            
+                    </div>
+                    <div class="detail-row notes-vertical-layout">
+                        <span class="row-label">Notes</span>
+                        <textarea 
+                            class="notes-box" 
+                            placeholder="Enter your notes here..."></textarea>
                     </div>
                 </aside>
 
