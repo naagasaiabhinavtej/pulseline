@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Create Session - MediConnect</title>
+
+<style>
+body {
+    margin: 0;
+    font-family: "Inter", sans-serif;
+    background: #f4f7fb;
+
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+/* 🔒 KEEP ORIGINAL CARD SIZE (DO NOT CHANGE) */
+.container {
+    width: 100%;
+    max-width: 900px;
+    height: 55vh;   /* fixed, stable */
+    background: white;
+    padding: 30px;
+    border-radius: 16px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+
+    display: flex;
+    flex-direction: column;
+}
+
+/* TITLE */
+h1 {
+    font-size: 26px;
+    color: #1f2a44;
+    margin: 0 0 18px 0; /* slightly tighter, clean */
+}
+
+/* FORM fills remaining space */
+form {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+/* GRID AREA (this is the key fix) */
+.form-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+
+    /* 👇 PERFECT CENTERING WITHOUT CHANGING CARD SIZE */
+    margin: auto 0;
+}
+
+/* FIELD STRUCTURE */
+.field {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+/* LABEL */
+label {
+    font-size: 13px;
+    color: #6b7a90;
+    font-weight: 500;
+}
+
+/* INPUTS */
+input, select {
+    padding: 12px;
+    border-radius: 10px;
+    border: 1px solid #dbe3ee;
+    outline: none;
+    font-size: 14px;
+    transition: 0.2s;
+}
+
+input:focus, select:focus {
+    border-color: #4f7cff;
+    box-shadow: 0 0 0 3px rgba(79,124,255,0.15);
+}
+
+/* BUTTON (natural bottom alignment) */
+button {
+    margin-top: auto;   /* pushes button to bottom cleanly */
+    width: 100%;
+    padding: 14px;
+    border: none;
+    border-radius: 10px;
+    background: linear-gradient(135deg, #4f7cff, #6aa6ff);
+    color: white;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: 0.3s;
+}
+
+button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 20px rgba(79,124,255,0.25);
+}
+</style>
+</head>
+
+<body>
+
+<div class="container">
+    <h1>➕ Create New Session</h1>
+
+    <form id="sessionForm">
+        <div class="form-grid">
+
+            <div class="field">
+                <label>Health ID</label>
+                <input type="text" name="health_id" required>
+            </div>
+
+            <div class="field">
+                <label>Clinic ID</label>
+                <input type="text" name="clinic_id" required>
+            </div>
+
+            <div class="field">
+                <label>Department</label>
+                <select name="department" required>
+                    <option value="">Select Department</option>
+                    <option>General_Medicine</option>
+                    <option>Ophthalmology</option>
+                    <option>Otolaryngology</option>
+                    <option>Cardiology</option>
+                    <option>Orthopedics</option>
+                    <option>Neurology</option>
+                    <option>Gastroenterology</option>
+                    <option>Dermatology</option>
+                    <option>OB-GYN</option>
+                    <option>Pediatrics</option>
+                    <option>Psychiatry</option>
+                    <option>Urology</option>
+                </select>
+            </div>
+
+            <div class="field">
+                <label>Assigned Doctor ID</label>
+                <input type="text" name="assigned_doctor_id" required>
+            </div>
+
+        </div>
+
+        <button type="submit">Create Session</button>
+    </form>
+</div>
+
+<script>
+document.getElementById("sessionForm").addEventListener("submit", async function(e) {
+    e.preventDefault();
+
+    const formData = Object.fromEntries(new FormData(this));
+
+    try {
+        const res = await fetch("/api/create-session", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(formData)
+        });
+
+        const data = await res.json();
+
+        localStorage.setItem("session_result", JSON.stringify(data));
+
+        window.location.href = "success_failure.html?status=success";
+
+    } catch (err) {
+        localStorage.setItem("session_result", JSON.stringify({
+            error: true,
+            message: err.message
+        }));
+
+        window.location.href = "success_failure.html?status=failed";
+    }
+});
+</script>
+
+</body>
+</html>

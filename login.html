@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MediConnect Registration</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+    * { margin:0; padding:0; box-sizing:border-box; font-family:'Inter',sans-serif; }
+    body { background:#f8fbff; width:100%; height:100vh; overflow:hidden; }
+
+    .container { width:100%; height:100vh; display:flex; }
+
+    /* Left Panel: Increased to 40% */
+    .left-panel {
+        width: 40%;
+        background: linear-gradient(165deg, #2563eb, #1d4ed8);
+        color: white;
+        padding: 80px;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+    }
+
+    .logo-container { display: flex; align-items: center; gap: 15px; font-size: 34px; font-weight: 700; margin-bottom: 60px; }
+    .left-panel h1 { font-size: 42px; line-height: 1.2; margin-bottom: 30px; }
+    .left-panel p { font-size: 18px; line-height: 1.6; color: #dbeafe; margin-bottom: 50px; }
+    .feature { display: flex; align-items: center; gap: 20px; margin-bottom: 30px; font-size: 18px; }
+    .feature span { background: rgba(255,255,255,0.15); padding: 12px; border-radius: 12px; font-size: 22px; }
+
+    /* Right Panel: Reduced to 60% */
+    .right-panel { width: 60%; background: white; padding: 80px 100px; overflow-y: auto; }
+    .header { margin-bottom: 45px; }
+    .header h2 { font-size: 48px; color: #0f172a; font-weight: 700; }
+    .header p { font-size: 18px; color: #64748b; margin-top: 10px; }
+
+    .role-tabs { display: flex; background: #eff6ff; border-radius: 16px; padding: 8px; margin-bottom: 45px; width: 400px; }
+    .role-btn { flex: 1; padding: 18px; border: none; background: transparent; cursor: pointer; border-radius: 12px; font-weight: 600; font-size: 16px; }
+    .role-btn.active { background: #2563eb; color: white; }
+
+    .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; max-width: 900px; }
+    .full { grid-column: span 2; }
+    input, select, textarea { width: 100%; padding: 20px; border: 1px solid #cbd5e1; border-radius: 14px; outline: none; font-size: 16px; }
+    .submit-btn { width: 100%; max-width: 900px; padding: 20px; margin-top: 30px; border: none; border-radius: 14px; background: #2563eb; color: white; font-weight: 600; font-size: 18px; cursor: pointer; }
+
+    .success-box { display: none; text-align: center; margin-top: 80px; }
+    .success-icon { font-size: 90px; margin-bottom: 25px; }
+    .success-box h2 { font-size: 44px; margin-bottom: 15px; }
+    .success-box p { font-size: 20px; color: #475569; margin-bottom: 10px; }
+    .redirect { margin-top: 30px; color: #2563eb; font-weight: 600; font-size: 18px; }
+</style>
+</head>
+<body>
+
+<div class="container">
+    <div class="left-panel">
+        <div class="logo-container"><span>🏥</span> MediConnect</div>
+        <h1>Healthcare Registration Portal</h1>
+        <p>Securely onboard as a doctor or patient and start managing consultations and medical records efficiently.</p>
+        <div class="features">
+            <div class="feature"><span>🔒</span> Secure Data Encryption</div>
+            <div class="feature"><span>🩺</span> Real-time Session Management</div>
+            <div class="feature"><span>📋</span> Medical Timeline Tracking</div>
+        </div>
+    </div>
+
+    <div class="right-panel">
+        <div id="formSection">
+            <div class="header">
+                <h2>Create Your Account</h2>
+                <p>Select your role and complete your profile details.</p>
+            </div>
+            <div class="role-tabs">
+                <button class="role-btn active" id="doctorBtn" onclick="setRole('doctor')">Doctor</button>
+                <button class="role-btn" id="patientBtn" onclick="setRole('patient')">Patient</button>
+            </div>
+            <form id="registerForm">
+                <div id="doctorFields" class="form-grid">
+                    <input type="text" placeholder="Full Name" required>
+                    <select><option>General Medicine</option><option>Cardiology</option></select>
+                    <input type="text" placeholder="Contact Number">
+                    <input type="number" placeholder="Assigned Clinic ID">
+                </div>
+                <div id="patientFields" class="form-grid" style="display:none;">
+                    <input type="text" placeholder="Full Name" required>
+                    <input type="date">
+                    <select><option>Male</option><option>Female</option></select>
+                    <select><option>A+</option><option>O+</option></select>
+                    <input type="number" placeholder="Height (cm)">
+                    <input type="number" placeholder="Weight (kg)">
+                    <textarea class="full" placeholder="Medical History"></textarea>
+                    <input class="full" type="text" placeholder="Emergency Contact">
+                </div>
+                <button type="submit" class="submit-btn">Complete Registration</button>
+            </form>
+        </div>
+        <div class="success-box" id="successBox"></div>
+    </div>
+</div>
+
+<script>
+let currentRole = "doctor";
+function setRole(role){
+    currentRole = role;
+    document.getElementById("doctorFields").style.display = role === "doctor" ? "grid" : "none";
+    document.getElementById("patientFields").style.display = role === "patient" ? "grid" : "none";
+    document.getElementById("doctorBtn").classList.toggle("active", role === "doctor");
+    document.getElementById("patientBtn").classList.toggle("active", role === "patient");
+}
+
+document.getElementById("registerForm").addEventListener("submit", function(e){
+    e.preventDefault();
+    document.getElementById("formSection").style.display = "none";
+    let successBox = document.getElementById("successBox");
+    
+    if(currentRole === "doctor"){
+        successBox.innerHTML = `
+            <div class="success-icon">🩺</div>
+            <h2>Welcome Doctor</h2>
+            <p><strong>Doctor ID:</strong> DOC-204</p>
+            <div class="redirect">Redirecting to dashboard in 5 seconds...</div>`;
+        setTimeout(() => window.location.href = "index.html", 5000);
+    } else {
+        successBox.innerHTML = `
+            <div class="success-icon">💙</div>
+            <h2>Welcome to MediConnect</h2>
+            <p><strong>Patient ID:</strong> PAT-551</p>
+            <div class="redirect">Redirecting to your sessions in 5 seconds...</div>`;
+        setTimeout(() => window.location.href = "patient_sessions.html", 5000);
+    }
+    successBox.style.display = "block";
+});
+</script>
+</body>
+</html>

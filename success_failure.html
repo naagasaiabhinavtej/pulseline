@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Session Status</title>
+<style>
+    body { margin: 0; font-family: "Inter", sans-serif; background: #f4f7fb; height: 100vh; display: flex; justify-content: center; align-items: center; }
+    .card { width: 500px; background: white; border-radius: 16px; padding: 40px; box-shadow: 0 4px 20px rgba(0,0,0,0.05); text-align: center; }
+    
+    .icon-wrapper { width: 80px; height: 80px; margin: 0 auto 20px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 40px; }
+    .success .icon-wrapper { background: #e6f7ef; color: #27c485; }
+    .failed .icon-wrapper { background: #fee4e2; color: #f04438; }
+
+    h1 { margin: 10px 0 10px; font-size: 24px; color: #1a1a1a; font-weight: 600; }
+    p { margin-bottom: 25px; color: #667085; font-size: 14px; }
+    .name { color: #27c485; font-weight: 600; }
+
+    /* Success Info Grid */
+    .info-table { background: #fcfcfd; border: 1px solid #eaecf0; border-radius: 8px; text-align: left; margin-bottom: 25px; }
+    .row { display: flex; align-items: center; padding: 12px 16px; border-bottom: 1px solid #eaecf0; }
+    .row:last-child { border-bottom: none; }
+    .label { color: #667085; font-size: 13px; width: 140px; }
+    .value { color: #1a1a1a; font-size: 13px; font-weight: 500; }
+
+    /* Security Box */
+    .security-box { background: #f0f7ff; border-radius: 6px; padding: 10px; color: #1570ef; font-size: 12px; margin-bottom: 25px; }
+
+    /* Progress Bar */
+    .bar { margin: 25px 0; height: 6px; background: #e5e7eb; border-radius: 50px; overflow: hidden; }
+    .fill { height: 100%; width: 0%; animation: fill 3s linear forwards; }
+    .success .fill { background: #27c485; }
+    .failed .fill { background: #f04438; }
+    @keyframes fill { from { width: 0%; } to { width: 100%; } }
+
+    .redirect-text { font-size: 12px; color: #667085; }
+</style>
+</head>
+<body>
+
+<div id="statusCard" class="card">
+    <div id="icon" class="icon-wrapper"></div>
+    <h1 id="title">Processing...</h1>
+    <p id="message"></p>
+    
+    <div id="successDetails" style="display:none;">
+        <div class="info-table">
+            <div class="row"><div class="label">Session ID</div><div class="value" id="val-sid"></div></div>
+            <div class="row"><div class="label">Clinic</div><div class="value" id="val-clinic"></div></div>
+            <div class="row"><div class="label">Doctor</div><div class="value" id="val-doctor"></div></div>
+            <div class="row"><div class="label">Date & Time</div><div class="value" id="val-dt"></div></div>
+        </div>
+        <div class="security-box">🛡️ Your session has been saved securely in the system.</div>
+    </div>
+
+    <div class="bar"><div class="fill"></div></div>
+    <div class="redirect-text">Redirecting to dashboard...</div>
+</div>
+
+<script>
+    const params = new URLSearchParams(window.location.search);
+    const status = params.get('status');
+    const data = JSON.parse(localStorage.getItem("session_result") || "{}");
+    
+    const card = document.getElementById('statusCard');
+    const icon = document.getElementById('icon');
+    const title = document.getElementById('title');
+    const message = document.getElementById('message');
+    const successDetails = document.getElementById('successDetails');
+
+    if (status === 'success') {
+        card.className = 'card success';
+        icon.innerHTML = '✓';
+        title.innerText = 'Session Created Successfully!';
+        message.innerHTML = `A new session has been created for <span class="name">${data.patient_name || 'the patient'}</span>`;
+        
+        document.getElementById('val-sid').innerText = data.session_id || 'N/A';
+        document.getElementById('val-clinic').innerText = data.clinic || 'N/A';
+        document.getElementById('val-doctor').innerText = data.doctor || 'N/A';
+        document.getElementById('val-dt').innerText = new Date().toLocaleString();
+        
+        successDetails.style.display = 'block';
+    } else {
+        card.className = 'card failed';
+        icon.innerHTML = '✕';
+        title.innerText = 'Session Creation Failed';
+        message.innerText = data.message || 'An unexpected error occurred.';
+    }
+
+    setTimeout(() => { window.location.href = "index.html"; }, 3000);
+</script>
+</body>
+</html>
