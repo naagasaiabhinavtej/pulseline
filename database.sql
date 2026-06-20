@@ -1,9 +1,9 @@
 -- patients table
 CREATE TABLE patients (
-    health_id VARCHAR(50) PRIMARY KEY,
+    health_id VARCHAR(50) PRIMARY KEY AUTOINCREMENT,
     name VARCHAR(100) NOT NULL,
     date_of_birth DATE NOT NULL,
-    gender VARCHAR(20) NOT NULL CHECK (gender IN ('male', 'female', 'other')),
+    gender VARCHAR(20) NOT NULL CHECK (gender IN ('Male', 'Female', 'Other')),
     blood_group VARCHAR(10) CHECK (blood_group IN ('A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-')),
     height REAL, -- Stored in cm
     weight REAL, -- Stored in kg
