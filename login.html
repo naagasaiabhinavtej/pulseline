@@ -22,7 +22,12 @@
         flex-direction: column;
         justify-content: center;
     }
-
+    .error {
+        color: red;
+        font-size: 13px;
+        margin-top: 4px;
+        min-height: 16px;
+    }
     .logo-container { display: flex; align-items: center; gap: 15px; font-size: 34px; font-weight: 700; margin-bottom: 60px; }
     .left-panel h1 { font-size: 42px; line-height: 1.2; margin-bottom: 30px; }
     .left-panel p { font-size: 18px; line-height: 1.6; color: #dbeafe; margin-bottom: 50px; }
@@ -100,12 +105,13 @@
         <button class="role-btn" id="patientBtn" onclick="setRole('patient')">Patient</button>
     </div>
 
-    <form>
+    <form id="form">
 
         <!-- REGISTER (UNCHANGED) -->
         <div id="doctorFields" class="form-grid">
-            <input type="text" placeholder="Full Name" class="reg-only" required>
-            <select class="reg-only" required>
+            <input type="text" placeholder="Full Name" class="reg-only" id='name1' required>
+            <div id="nameError" class="error"></div>
+            <select class="reg-only" id='specialisation' required>
                 <option value="" selected disabled>Select Specialization</option>
                 <option>General Medicine</option>
                 <option>Cardiology</option>
@@ -119,16 +125,20 @@
                 <option>Psychiatry</option>
                 <option>Urology</option>
             </select>
-            <input type="text" placeholder="Contact Number" class="reg-only" required>
-            <input type="text" placeholder="Assigned Clinic ID" class="reg-only" required>
-            <input type="password" placeholder="Password" class="full reg-only" requred>
+            <div id="specialisationError" class="error"></div>
+            <input type="text" placeholder="Contact Number" class="reg-only" id = 'contact' required>
+            <div id="contactError" class="error"></div>
+            <input type="text" placeholder="Assigned Clinic ID" class="reg-only" id="clinic_id" required>
+            <div id="clinicError" class="error"></div>
+            <input type="password" placeholder="Password" class="full reg-only" id="password_by_user1" required>
+            <div id="passwordError" class="error"></div>
         </div>
 
         <div id="patientFields" class="form-grid" style="display:none;">
-            <input type="text" placeholder="Full Name" class="reg-only" required>
-            <input type="date" class="reg-only" required>
-            <select class="reg-only"><option>Male</option><option>Female</option><option>Other</option></select>
-            <select class="reg-only" required>
+            <input type="text" placeholder="Full Name" class="reg-only" id="name2" required>
+            <input type="date" class="reg-only" id="date_of_birth" required>
+            <select class="reg-only" id="gender"><option>Male</option><option>Female</option><option>Other</option></select>
+            <select class="reg-only" id="blood_group" required>
                 <option value="" selected disabled>Blood Group</option>
                 <option>A+</option>
                 <option>O+</option>
@@ -139,16 +149,19 @@
                 <option>B-</option>
                 <option>AB-</option>
             </select>
-            <input type="number" placeholder="Height (cm)" class="reg-only" required>
-            <input type="number" placeholder="Weight (kg)" class="reg-only" required>
-            <textarea class="full reg-only" placeholder="Medical History"></textarea>
-            <input type="password" placeholder="Password" class="full reg-only" required>
+            <input type="number" placeholder="Height (cm)" class="reg-only" id="height" required>
+            <input type="number" placeholder="Weight (kg)" class="reg-only" id="weight" required>
+            <textarea class="full reg-only" placeholder="Allergies (if any)" id="allergies"></textarea>
+            <textarea class="full reg-only" placeholder="Medical History" id="medical_history"></textarea>
+            <input type="password" placeholder="Password" class="full reg-only" id="password_by_user2" required>
         </div>
 
         <!-- LOGIN (UPDATED DYNAMIC LABELS) -->
         <div id="loginFields" class="form-grid" style="display:none;">
             <input type="number" id="loginId" placeholder="Doctor ID" required>
-            <input type="password" id="loginPassword" placeholder="Password" class="full" required>
+            <div id="iderror" style="color:red; font-size:14px; margin-top:5px;"></div>
+            <input type="password" id="loginPassword" placeholder="Password" class="full" maxlength="32" required>
+            <div id="password_error" style="color:red; font-size:14px; margin-top:5px;"></div>
         </div>
 
         <button type="submit" class="submit-btn" id="submitBtn" required>
@@ -261,23 +274,36 @@ async function logintransition()
     else return;
 }
 logintransition();
-
+const form = document.getElementById("form");
 const a = document.getElementsByClassName("submit-btn");
 const b = document.getElementById("loginId");
 const c = document.getElementById("loginPassword");
-const x = addEventListener("click", async(e)=>
+const d = document.getElementById("name1");
+const e1 = document.getElementById("specialisation");
+const f = document.getElementById("contact");
+const g = document.getElementById("clinic_id");
+const h = document.getElementById("password_by_user1");
+const i = document.getElementById("name2");
+const j = document.getElementById("date_of_birth");
+const k = document.getElementById("gender");
+const l = document.getElementById("blood_group");
+const m = document.getElementById("height");
+const n = document.getElementById("weight");
+const o = document.getElementById("password_by_user2");
+h.addEventListener("input", validatepassword);
+form.addEventListener("submit", async(e)=>
 {   
-    e.preventDefault(); //avoids the browser to do anything
+    e.preventDefault(); //avoids the browser to do anything like in forms after that browswer gives submitted etc
     if(isLogin)
     {
-        const id = b.value;
-        const password = c.value;
-        if(validateform())
+        const id = b.value.trim();
+        const password = c.value.trim();
+        if(validateform1())
         {
             const answer = await fetch("/login",{
                 method : "POST",
                 headers:{
-                    "Content_Type":"application/json"
+                    "Content-Type":"application/json"
                 },
                 body:JSON.stringify({
                     person: currentRole,
@@ -302,12 +328,192 @@ const x = addEventListener("click", async(e)=>
     {
         if(currentRole === "doctor")
         {
-            const name = 
+            const name = d.value.trim();
+            const specialisation = e1.value.trim();
+            const contact = f.value.trim();
+            const assigned_clinic_id = g.value.trim();
+            const password = h.value.trim();
+            if(validateform2())
+            {
+                const results = await fetch("/register", {
+                    method : "POST",
+                    headers:{
+                        "Content-Type":"application/json"
+                    },
+                    body: JSON.stringify({
+                        person:"doctor",
+                        name:name,
+                        specialisation:specialisation,
+                        contact:contact,
+                        assigned_clinic_id:assigned_clinic_id,
+                        password:password
+                    })
+                });
+                if(results.ok)
+                {
+                    const data = await results.json();
+                    window.location.href = "index.html";
+                }
+                else
+                {
+                    const error = await results.json();
+                    console.log("error");
+                }
+            }
+        }
+        else
+        {
+            const name = i.value.trim();
+            const date_of_birth = j.value.trim();
+            const gender = k.value.trim();
+            const blood_group  = l.value.trim();
+            const height = m.value.trim();
+            const weight = n.value.trim();
+            const password = o.value.trim();
+            if(validateform2())
+            {
+                const results = await fetch("/register", {
+                    method : "POST",
+                    headers:{
+                        "Content-Type":"application/json"
+                    },
+                    body: JSON.stringify({
+                        person:"patient",
+                        name:name,
+                        date_of_birth:date_of_birth,
+                        gender:gender,
+                        blood_group:blood_group,
+                        height:height,
+                        weight:weight,
+                        password:password
+                    })
+                });
+                if(results.ok)
+                {
+                    const data = await results.json();
+                    window.location.href = "patient_sessions.html";
+                }
+                else
+                {
+                    const error = await results.json();
+                    console.log("error");
+                }
+            }
         }
     }
 });
+function validateform1()
+{
+    document.getElementById("iderror").textContent = "";
+    document.getElementById("password_error").textContent = "";
+    const id = b.value.trim();
+    const password = c.value.trim();
+    const iderror = document.getElementById("iderror");
+    const password_error = document.getElementById("password_error");
+    if(id === "")
+    {
+        iderror.textContent = "Please enter your ID";
+        return false;
+    }
+    if(password === "")
+    {
+        password_error.textContent = "Please enter your Password";
+        return false;
+    }
+    return true;    
+}
+function validateform2()
+{
+    if(currentRole === 'doctor')
+    {
+        const name = d.value.trim();
+        const specialisation = e1.value.trim();
+        const contact = f.value.trim();
+        const assigned_clinic_id = g.value.trim();
+        const password = h.value.trim();
+        if(name === "")
+        {
+            document.getElementById("nameError").textContent = "Please enter full name";
+            return false;  
+        }
+        if(specialisation === "")
+        {
+            document.getElementById("specialisationError").textContent = "Select a specialization";
+            return false; 
+        }
+        if(contact === "")
+        {
+            document.getElementById("contactError").textContent = "Enter valid contact number";
+            return false; 
+        }
+        if(assigned_clinic_id === "")
+        {
+            document.getElementById("clinicError").textContent = "Clinic ID is required";
+            return false; 
+        }
+        //validation for password
+        const b = document.getElementById("passwordError")
+        const hasUppercase = /[A-Z]/.test(password);
+        const hasNumber = /[0-9]/.test(password);
+        const hasSymbol = /[!@#$%^&*(),.?":{}|<>]/.test(password);
+        if(password === "")
+        {
+            b.textContent = "Please enter your password";
+            return false;
+        }
+        else if(password.length>=32)
+        {
+            b.textContent = "Only 32 chars allowed";
+            return false;
+        }
+        else if(!hasUppercase)
+        {
+            b.textContent = "Password should have atleast one Capital character";
+            return false;
+        }
+        else if(!hasNumber)
+        {
+            b.textContent = "Password should have atleast one number";
+            return false;
+        }
+        else if(!hasSymbol)
+        {
+            b.textContent = "Password should have atleast one symbol";
+            return false;
+        }
+    }
+    else if(currentRole === 'patient')
+    {
 
-
+    }
+    return true;
+}
+function validatepassword()
+{
+    const b = document.getElementById("passwordError");
+    const password = h.value.trim();
+    let size = password.length;
+    const hasUppercase = /[A-Z]/.test(password);
+    const hasNumber = /[0-9]/.test(password);
+    const hasSymbol = /[!@#$%^&*(),.?":{}|<>]/.test(password);
+    if(!hasUppercase)
+    {
+        b.textContent = "Password should have atleast one Capital character";
+    }
+    else if(!hasNumber)
+    {
+        b.textContent = "Password should have atleast one number";
+    }
+    else if(!hasSymbol)
+    {
+        b.textContent = "Password should have atleast one symbol";
+    }
+    else if(size>=32)
+    {
+        b.textContent = "Password can have max of 32chars only";
+    }
+    return;
+}
 </script>
 
 </body>
