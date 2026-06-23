@@ -71,6 +71,7 @@
         font-size:18px;
         cursor:pointer;
     }
+    .hidden-field { display: none !important; }
 </style>
 </head>
 
@@ -136,8 +137,11 @@
 
         <div id="patientFields" class="form-grid" style="display:none;">
             <input type="text" placeholder="Full Name" class="reg-only" id="name2" required>
+            <div id="name2error" class="error"></div>
             <input type="date" class="reg-only" id="date_of_birth" required>
+            <div id="date_of_birtherror" class="error"></div>
             <select class="reg-only" id="gender"><option>Male</option><option>Female</option><option>Other</option></select>
+            <div id="gendererror" class="error"></div>
             <select class="reg-only" id="blood_group" required>
                 <option value="" selected disabled>Blood Group</option>
                 <option>A+</option>
@@ -149,11 +153,17 @@
                 <option>B-</option>
                 <option>AB-</option>
             </select>
+            <div id="bloodgrouperror" class="error"></div>
             <input type="number" placeholder="Height (cm)" class="reg-only" id="height" required>
+            <div id="heighterror" class="error"></div>
             <input type="number" placeholder="Weight (kg)" class="reg-only" id="weight" required>
+            <div id="weighterror" class="error"></div>
+            <input type = "number" placeholder="Emergency Contact No" class="full reg-only" id="emergency_contact" required>
+            <div id="emergency_contacterror" class="error"></div>
             <textarea class="full reg-only" placeholder="Allergies (if any)" id="allergies"></textarea>
             <textarea class="full reg-only" placeholder="Medical History" id="medical_history"></textarea>
             <input type="password" placeholder="Password" class="full reg-only" id="password_by_user2" required>
+            <div id="passworderror2" class="error"></div>
         </div>
 
         <!-- LOGIN (UPDATED DYNAMIC LABELS) -->
@@ -177,9 +187,36 @@
 let currentRole = "doctor";
 let isLogin = false;
 
+function updateRequiredFields() {
+    // Clear required properties from every input element first
+    document.querySelectorAll("#form input, #form select").forEach(field => {
+        field.required = false;
+    });
+
+    if (isLogin) {
+        document.getElementById("loginId").required = true;
+        document.getElementById("loginPassword").required = true;
+    } else {
+        if (currentRole === "doctor") {
+            document.getElementById("name1").required = true;
+            document.getElementById("specialisation").required = true;
+            document.getElementById("contact").required = true;
+            document.getElementById("clinic_id").required = true;
+            document.getElementById("password_by_user1").required = true;
+        } else if (currentRole === "patient") {
+            document.getElementById("name2").required = true;
+            document.getElementById("date_of_birth").required = true;
+            document.getElementById("blood_group").required = true;
+            document.getElementById("height").required = true;
+            document.getElementById("weight").required = true;
+            document.getElementById("emergency_contact").required = true;
+            document.getElementById("password_by_user2").required = true;
+        }
+    }
+}
 function setRole(role){
     currentRole = role;
-
+    clearErrors();
     document.getElementById("doctorBtn").classList.toggle("active", role === "doctor");
     document.getElementById("patientBtn").classList.toggle("active", role === "patient");
 
@@ -189,6 +226,7 @@ function setRole(role){
         document.getElementById("doctorFields").style.display = role === "doctor" ? "grid" : "none";
         document.getElementById("patientFields").style.display = role === "patient" ? "grid" : "none";
     }
+    updateRequiredFields();
 }
 
 function updateLoginPlaceholders(){
@@ -203,7 +241,7 @@ function updateLoginPlaceholders(){
 
 function toggleAuth(){
     isLogin = !isLogin;
-
+    clearErrors();
     document.getElementById("title").innerText =
         isLogin ? "Sign In" : "Create Your Account";
 
@@ -222,12 +260,14 @@ function toggleAuth(){
         document.getElementById("patientFields").style.display = "none";
         document.getElementById("loginFields").style.display = "grid";
         updateLoginPlaceholders();
+        regFields.forEach(f => f.classList.add("hidden-field"));
     } else {
-        document.getElementById("loginFields").style.display = "none";
+        regFields.forEach(f => f.classList.remove("hidden-field"));
         setRole(currentRole);
+        
     }
 
-    regFields.forEach(f => f.style.display = isLogin ? "none" : "block");
+    updateRequiredFields();
 }
 
 async function refreshtoken()
@@ -247,6 +287,9 @@ async function refreshtoken()
     {
         return null;
     }
+}
+function clearErrors() {
+    document.querySelectorAll(".error").forEach(el => el.textContent = "");
 }
 async function logintransition()
 {
@@ -289,8 +332,13 @@ const k = document.getElementById("gender");
 const l = document.getElementById("blood_group");
 const m = document.getElementById("height");
 const n = document.getElementById("weight");
+const p = document.getElementById("emergency_contact");
 const o = document.getElementById("password_by_user2");
+const q = document.getElementById("allergies");
+const r = document.getElementById("medical_history");
 h.addEventListener("input", validatepassword);
+o.addEventListener("input", validatepassword);
+updateRequiredFields();
 form.addEventListener("submit", async(e)=>
 {   
     e.preventDefault(); //avoids the browser to do anything like in forms after that browswer gives submitted etc
@@ -367,8 +415,11 @@ form.addEventListener("submit", async(e)=>
             const date_of_birth = j.value.trim();
             const gender = k.value.trim();
             const blood_group  = l.value.trim();
+            const emergency_contact = p.value.trim();
             const height = m.value.trim();
             const weight = n.value.trim();
+            const allergies = q.value.trim();
+            const medical_data = r.value.trim();
             const password = o.value.trim();
             if(validateform2())
             {
@@ -383,8 +434,11 @@ form.addEventListener("submit", async(e)=>
                         date_of_birth:date_of_birth,
                         gender:gender,
                         blood_group:blood_group,
+                        emergency_contact:emergency_contact,
                         height:height,
                         weight:weight,
+                        allergies:allergies,
+                        medical_data:medical_data,
                         password:password
                     })
                 });
@@ -431,6 +485,12 @@ function validateform2()
         const contact = f.value.trim();
         const assigned_clinic_id = g.value.trim();
         const password = h.value.trim();
+        const b2 = document.getElementById("passwordError")
+        b2.textContent="";
+        document.getElementById("nameError").textContent = "";
+        document.getElementById("specialisationError").textContent = "";
+        document.getElementById("contactError").textContent = "";
+        document.getElementById("clinicError").textContent = "";
         if(name === "")
         {
             document.getElementById("nameError").textContent = "Please enter full name";
@@ -452,46 +512,141 @@ function validateform2()
             return false; 
         }
         //validation for password
-        const b = document.getElementById("passwordError")
         const hasUppercase = /[A-Z]/.test(password);
         const hasNumber = /[0-9]/.test(password);
         const hasSymbol = /[!@#$%^&*(),.?":{}|<>]/.test(password);
         if(password === "")
         {
-            b.textContent = "Please enter your password";
+            b2.textContent = "Please enter your password";
             return false;
         }
         else if(password.length>=32)
         {
-            b.textContent = "Only 32 chars allowed";
+            b2.textContent = "Only 32 chars allowed";
             return false;
         }
         else if(!hasUppercase)
         {
-            b.textContent = "Password should have atleast one Capital character";
+            b2.textContent = "Password should have atleast one Capital character";
             return false;
         }
         else if(!hasNumber)
         {
-            b.textContent = "Password should have atleast one number";
+            b2.textContent = "Password should have atleast one number";
             return false;
         }
         else if(!hasSymbol)
         {
-            b.textContent = "Password should have atleast one symbol";
+            b2.textContent = "Password should have atleast one symbol";
             return false;
         }
+        else b2.textContent = "";
+        return true;
     }
     else if(currentRole === 'patient')
     {
-
+        const name = i.value.trim();
+        const date_of_birth = j.value.trim();
+        const gender = k.value.trim();
+        const blood_group  = l.value.trim();
+        const emergency_contact = p.value.trim();
+        const height = m.value.trim();
+        const weight = n.value.trim();
+        const allergies = q.value.trim();
+        const medical_data = r.value.trim();
+        const password = o.value.trim();
+        const b2 = document.getElementById("passworderror2")
+        b2.textContent = "";
+        document.getElementById("name2error").textContent = "";
+        document.getElementById("date_of_birtherror").textContent = "";
+        document.getElementById("gendererror").textContent = "";
+        document.getElementById("bloodgrouperror").textContent = "";
+        document.getElementById("emergency_contacterror").textContent = "";
+        document.getElementById("heighterror").textContent = "";
+        document.getElementById("weighterror").textContent = "";
+        if(name === "")
+        {
+            document.getElementById("name2error").textContent = "Please enter full name";
+            return false;
+        }
+        if(date_of_birth === "")
+        {
+            document.getElementById("date_of_birtherror").textContent = "Please enter your date of birth";
+            return false;
+        }
+        if(gender === "")
+        {
+            document.getElementById("gendererror").textContent = "Please enter your gender";
+            return false;
+        }
+        if(blood_group === "")
+        {
+            document.getElementById("bloodgrouperror").textContent = "Please enter your blood group";
+            return false;
+        }
+        if(emergency_contact === "")
+        {
+            document.getElementById("emergency_contacterror").textContent = "Please enter your emergency contact";
+            return false;
+        }
+        if(height === "")
+        {
+            document.getElementById("heighterror").textContent = "Please enter your height";
+            return false;
+        }
+        if(weight === "")
+        {
+            document.getElementById("weighterror").textContent = "Please enter your weight";
+            return false;
+        }
+        const hasUppercase = /[A-Z]/.test(password);
+        const hasNumber = /[0-9]/.test(password);
+        const hasSymbol = /[!@#$%^&*(),.?":{}|<>]/.test(password);
+        if(password === "")
+        {
+            b2.textContent = "Please enter your password";
+            return false;
+        }
+        else if(password.length>=32)
+        {
+            b2.textContent = "Only 32 chars allowed";
+            return false;
+        }
+        else if(!hasUppercase)
+        {
+            b2.textContent = "Password should have atleast one Capital character";
+            return false;
+        }
+        else if(!hasNumber)
+        {
+            b2.textContent = "Password should have atleast one number";
+            return false;
+        }
+        else if(!hasSymbol)
+        {
+            b2.textContent = "Password should have atleast one symbol";
+            return false;
+        }
+        else
+        { b2.textContent = "";
+        return true;}
     }
     return true;
 }
 function validatepassword()
 {
-    const b = document.getElementById("passwordError");
-    const password = h.value.trim();
+    let b;
+    let password;
+    if(currentRole === "doctor")
+    {
+        b = document.getElementById("passwordError");
+        password = h.value.trim();
+    }
+    else 
+    {
+        b = document.getElementById("passworderror2");
+        password = o.value.trim();
+    }
     let size = password.length;
     const hasUppercase = /[A-Z]/.test(password);
     const hasNumber = /[0-9]/.test(password);
@@ -512,6 +667,7 @@ function validatepassword()
     {
         b.textContent = "Password can have max of 32chars only";
     }
+    else b.textContent = "";
     return;
 }
 </script>
