@@ -158,7 +158,7 @@
             <div id="heighterror" class="error"></div>
             <input type="number" placeholder="Weight (kg)" class="reg-only" id="weight" required>
             <div id="weighterror" class="error"></div>
-            <input type = "number" placeholder="Emergency Contact No" class="full reg-only" id="emergency_contact" required>
+            <input type = "text" placeholder="Emergency Contact No" class="full reg-only" id="emergency_contact" required>
             <div id="emergency_contacterror" class="error"></div>
             <textarea class="full reg-only" placeholder="Allergies (if any)" id="allergies"></textarea>
             <textarea class="full reg-only" placeholder="Medical History" id="medical_history"></textarea>
@@ -206,6 +206,7 @@ function updateRequiredFields() {
         } else if (currentRole === "patient") {
             document.getElementById("name2").required = true;
             document.getElementById("date_of_birth").required = true;
+            document.getElementById("gender").required = true;
             document.getElementById("blood_group").required = true;
             document.getElementById("height").required = true;
             document.getElementById("weight").required = true;
@@ -369,6 +370,7 @@ form.addEventListener("submit", async(e)=>
             {
                 const error = await answer.json();
                 console.log(error);
+                document.getElementById("iderror").textContent = error.detail || "Login failed. Check your credentials.";
             }
         }            
     }
@@ -405,7 +407,8 @@ form.addEventListener("submit", async(e)=>
                 else
                 {
                     const error = await results.json();
-                    console.log("error");
+                    console.log(error);
+                    document.getElementById("nameError").textContent = error.detail || "Registration failed. Please try again.";
                 }
             }
         }
@@ -450,7 +453,8 @@ form.addEventListener("submit", async(e)=>
                 else
                 {
                     const error = await results.json();
-                    console.log("error");
+                    console.log(error);
+                    document.getElementById("name2error").textContent = error.detail || "Registration failed. Please try again.";
                 }
             }
         }
@@ -501,9 +505,9 @@ function validateform2()
             document.getElementById("specialisationError").textContent = "Select a specialization";
             return false; 
         }
-        if(contact === "")
+        if(contact === "" || !/^\d{10}$/.test(contact))
         {
-            document.getElementById("contactError").textContent = "Enter valid contact number";
+            document.getElementById("contactError").textContent = "Enter 10digit valid contact number";
             return false; 
         }
         if(assigned_clinic_id === "")
@@ -512,17 +516,23 @@ function validateform2()
             return false; 
         }
         //validation for password
-        const hasUppercase = /[A-Z]/.test(password);
-        const hasNumber = /[0-9]/.test(password);
-        const hasSymbol = /[!@#$%^&*(),.?":{}|<>]/.test(password);
         if(password === "")
         {
             b2.textContent = "Please enter your password";
             return false;
         }
-        else if(password.length>=32)
+        //empty strings pass these regex
+        const hasUppercase = /[A-Z]/.test(password);
+        const hasNumber = /[0-9]/.test(password);
+        const hasSymbol = /[!@#$%^&*(),.?":{}|<>]/.test(password);
+        if(password.length>32)
         {
             b2.textContent = "Only 32 chars allowed";
+            return false;
+        }
+        else if(password.length < 8)
+        {
+            b2.textContent = "Password must be at least 8 characters";
             return false;
         }
         else if(!hasUppercase)
@@ -584,9 +594,9 @@ function validateform2()
             document.getElementById("bloodgrouperror").textContent = "Please enter your blood group";
             return false;
         }
-        if(emergency_contact === "")
+        if(emergency_contact === "" || !/^\d{10}$/.test(emergency_contact) )
         {
-            document.getElementById("emergency_contacterror").textContent = "Please enter your emergency contact";
+            document.getElementById("emergency_contacterror").textContent = "Please enter a valid 10digit emergency contact";
             return false;
         }
         if(height === "")
@@ -599,17 +609,22 @@ function validateform2()
             document.getElementById("weighterror").textContent = "Please enter your weight";
             return false;
         }
-        const hasUppercase = /[A-Z]/.test(password);
-        const hasNumber = /[0-9]/.test(password);
-        const hasSymbol = /[!@#$%^&*(),.?":{}|<>]/.test(password);
         if(password === "")
         {
             b2.textContent = "Please enter your password";
             return false;
         }
-        else if(password.length>=32)
+        const hasUppercase = /[A-Z]/.test(password);
+        const hasNumber = /[0-9]/.test(password);
+        const hasSymbol = /[!@#$%^&*(),.?":{}|<>]/.test(password);
+        if(password.length>32)
         {
             b2.textContent = "Only 32 chars allowed";
+            return false;
+        }
+        else if(password.length < 8)
+        {
+            b2.textContent = "Password must be at least 8 characters";
             return false;
         }
         else if(!hasUppercase)
@@ -647,11 +662,24 @@ function validatepassword()
         b = document.getElementById("passworderror2");
         password = o.value.trim();
     }
+    if(password === "")
+    {
+        b.textContent = "";
+        return;
+    }
     let size = password.length;
     const hasUppercase = /[A-Z]/.test(password);
     const hasNumber = /[0-9]/.test(password);
     const hasSymbol = /[!@#$%^&*(),.?":{}|<>]/.test(password);
-    if(!hasUppercase)
+    if(size>32)
+    {
+        b.textContent = "Password can have max of 32chars only";
+    }
+    else if(size < 8)
+    {
+        b.textContent = "Password must be at least 8 characters";
+    }
+    else if(!hasUppercase)
     {
         b.textContent = "Password should have atleast one Capital character";
     }
@@ -662,10 +690,6 @@ function validatepassword()
     else if(!hasSymbol)
     {
         b.textContent = "Password should have atleast one symbol";
-    }
-    else if(size>=32)
-    {
-        b.textContent = "Password can have max of 32chars only";
     }
     else b.textContent = "";
     return;

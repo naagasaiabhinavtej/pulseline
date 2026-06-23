@@ -93,7 +93,7 @@
                         <span class="badge">3</span>
                     </div> -->
                     <div class="profile-card">
-                        <img src="https://images.unsplash.com/photo-1559839734-2b71ea197ec2?auto=format&fit=crop&q=80&w=100" alt="Dr. Sarah Johnson" class="avatar">
+                        <img src="https://images.unsplash.com/photo-1559839734-2b71ea197ec2?auto=format&fit=crop&q=80&w=100" alt="_______" class="avatar">
                         <div class="profile-info">
                             <span class="profile-name">Dr. Sarah Johnson</span>
                             <span class="profile-role">Doctor</span>
@@ -112,7 +112,7 @@
                         </div>
                         <div class="stat-text">
                             <span class="stat-title color-blue">Active Sessions</span>
-                            <span class="stat-number">4</span>
+                            <span class="stat-number" id="stat1">4</span>
                         </div>
                     </div>
                     <div class="progress-container">
@@ -152,7 +152,7 @@
                         </div>
                         <div class="stat-text">
                             <span class="stat-title color-green">Completed Today</span>
-                            <span class="stat-number">6</span>
+                            <span class="stat-number" id="stat2">6</span>
                         </div>
                     </div>
                     <div class="progress-container">
@@ -299,6 +299,158 @@
 
     <script>
         lucide.createIcons();
+        let accessToken = null;
+        async function refreshtoken()
+        {
+            const result = await fetch("/refresh",
+                {
+                    method:"GET",
+                    credentials: "include"
+                });
+            if(result.ok)
+            {
+                const data = await result.json();
+                accessToken = data.access_token;
+                return accessToken;
+            }
+            else
+            {
+                window.location.href="login.html";
+                return null;
+            }
+        }
+        async function giveData()
+        {
+            const result = await fetch("/index",
+            {
+                method:"GET",
+                headers:{
+                    "Authorization":`Bearer ${accessToken}`
+                }
+            });
+            if(result.status === 401)
+            {
+                const data = await refreshtoken();
+                if(!data) return;
+            }
+            const finalresult = await fetch("/index",
+            {
+                method:"GET",
+                headers:{
+                    "Authorization":`Bearer ${accessToken}`
+                }
+            });
+            return finalresult;
+        }
+        const heading = document.querySelector("h1"); // no by tag name because it always returns list no matter what happens
+        const avatare = document.querySelector(".avatar");
+        const profileName = document.querySelector(".profile-name");
+        const statNumber1 = document.getElementById("stat1");
+        const statNumber2 = document.getElementById("stat2");
+        const tablename = document.querySelector(".sessions-table tbody");
+        let active_sessions = null;
+        let completed_today = null;
+        async function askData()
+        {
+            const result = await giveData();
+            if(!result || !result.ok) return;
+            const data = await result.json();
+            const doctorName = data.doctorName;
+            const avatar = data.avatar;
+            const currentSessions = data.currentSessions;
+            heading.textContent = `Welcome, Dr. ${doctorName}`;
+            if(avatar === "first")
+            {
+                avatare.setAttribute("src", "avatar_doctors/adult-female.png");
+            }
+            else if(avatar === "second")
+            {
+                avatare.setAttribute("src", "avatar_doctors/adult-male.png");
+            }
+            else if(avatar === "third")
+            {
+                avatare.setAttribute("src", "avatar_doctors/old-female.png");
+            }
+            else if(avatar === "fourth")
+            {
+                avatare.setAttribute("src", "avatar_doctors/old-male.png");
+            }
+            let size = currentSessions.length;
+            profileName.textContent = `${doctorName}`;
+            statNumber1.textContent = `${size}`;
+            statNumber2.textContent = "0";
+            active_sessions = size;
+            completed_today = 0;
+            tablename.replaceChildren(); //can use tbody.innerHTML = ""
+            let count = 0;
+            let presentColor = null;
+            currentSessions.forEach(element => {
+                if(count%4 === 0)
+                {
+                    presentColor = "blue";
+                }
+                else if(count%4=== 1)
+                {
+                    presentColor = "green";
+                }
+                else if(count%4=== 2)
+                {
+                    presentColor = "purple";
+                }
+                else if(count%4=== 3)
+                {
+                    presentColor = "orange";
+                }
+                //can use this but space
+                // const colors = ["blue", "green", "purple", "orange"];
+                // const presentColor = colors[count % 4];
+                count++;
+                let avatarId = null;
+                if(element.avatarId === "first")
+                {
+                    avatarId = "avatar-doctors/adult_female.png";
+                }
+                else if(element.avatarId === "second")
+                {
+                    avatarId = "avatar-doctors/adult_male.png";
+                }
+                else if(element.avatarId === "third")
+                {
+                    avatarId = "avatar-doctors/old_female.png"; 
+                }   
+                else if(element.avatarId === "fourth")
+                {
+                    avatarId = "avatar-doctors/old_male.png";
+                }
+                let row = document.createElement("tr");
+                row.innerHTML = `
+                                <td><span class="session-id id-${presentColor}">${element.sessionId}</span></td>
+                                <td>
+                                    <div class="patient-cell">
+                                        <img src="${avatarId}" alt="${element.patientName}" class="table-avatar">
+                                        <div class="patient-info">
+                                            <span class="p-name">${element.patientName}</span>
+                                            <span class="p-meta">Age: ${element.patientAge} • ${element.patientGender}</span>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="time-cell">
+                                        <i data-lucide="calendar"></i>
+                                        <div>
+                                            <div class="date-text">${element.sessionStartdate}</div>
+                                            <div class="time-text">${element.sessionStarttime}</div>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td><span class="status-badge active-bg">Active</span></td>
+                                <td style="text-align: right;"><button onclick="window.location.href='session_detail.html'" class="action-btn"><i data-lucide="chevron-right"></i></button></td>
+                            `
+                tablename.appendChild(row);
+            });
+            lucide.createIcons();
+        }
+        document.addEventListener("DOMContentLoaded", askData);
     </script>
 </body>
 </html>

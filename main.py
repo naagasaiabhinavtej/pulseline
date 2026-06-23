@@ -14,7 +14,7 @@ app.add_middleware(
     allow_headers = ["*"],
     allow_methods = ["*"],
 )
-
+@app.get
 @app.post("/api/sessions/start")
 def make_session(health_id:str = Form(...), clinic_id:str = Form(...), department:str = Form(...), assigned_doctor_id:str = Form(...)):
     #make check when unkown patient_name comes or unknown_doc_name or clinic name comes
