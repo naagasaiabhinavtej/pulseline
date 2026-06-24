@@ -73,7 +73,7 @@
             </nav>
 
             <div class="sidebar-footer">
-                <button class="logout-btn">
+                <button onclick="window.location.href='login.html'"class="logout-btn">
                     <i data-lucide="log-out"></i>
                     <span>Logout</span>
                 </button>
@@ -116,7 +116,7 @@
                         </div>
                     </div>
                     <div class="progress-container">
-                        <div class="progress-bar bg-blue" style="width: 35%;"></div>
+                        <div class="progress-bar bg-blue" style="width: 100%;"></div>
                     </div>
                 </div>
 
@@ -167,8 +167,8 @@
                     <h2>Active Sessions</h2>
                     <div class="table-actions">
                         <div class="search-box">
-                            <i data-lucide="search"></i>
-                            <input type="text" placeholder="Search session or patient...">
+                            <i data-lucide="search"></i>    
+                            <input id="searchInput" type="text" placeholder="Search session or patient...">
                         </div>
                         <button class="filter-btn">
                             <i data-lucide="sliders-horizontal"></i>
@@ -319,6 +319,18 @@
                 return null;
             }
         }
+        function getColor(index) 
+        {
+            const colors = ["blue", "green", "purple", "orange"];
+            return colors[index % 4];
+        }
+        function getAvatar(id) 
+        {
+            if (id === "first") return "avatar_doctors/adult-female.png";
+            if (id === "second") return "avatar_doctors/adult-male.png";
+            if (id === "third") return "avatar_doctors/old-female.png";
+            if (id === "fourth") return "avatar_doctors/old-male.png";
+        }
         async function giveData()
         {
             const result = await fetch("/index",
@@ -342,14 +354,20 @@
             });
             return finalresult;
         }
+        //names should be written
         const heading = document.querySelector("h1"); // no by tag name because it always returns list no matter what happens
         const avatare = document.querySelector(".avatar");
         const profileName = document.querySelector(".profile-name");
         const statNumber1 = document.getElementById("stat1");
         const statNumber2 = document.getElementById("stat2");
+        const statTitle = document.querySelector(".stat-title");
+        const progressBar = document.querySelectorAll(".progress-bar");
         const tablename = document.querySelector(".sessions-table tbody");
+        const searchInput = document.getElementById("searchInput");
+        const filterButton = document.querySelector(".filter-btn");
         let active_sessions = null;
         let completed_today = null;
+        let sessions = null;
         async function askData()
         {
             const result = await giveData();
@@ -358,6 +376,7 @@
             const doctorName = data.doctorName;
             const avatar = data.avatar;
             const currentSessions = data.currentSessions;
+            sessions = currentSessions;
             heading.textContent = `Welcome, Dr. ${doctorName}`;
             if(avatar === "first")
             {
@@ -378,9 +397,28 @@
             let size = currentSessions.length;
             profileName.textContent = `${doctorName}`;
             statNumber1.textContent = `${size}`;
-            statNumber2.textContent = "0";
+            statTitle.classList.remove("color-blue", "color-orange", "color-red", "color-blues");
+            progressBar[0].classList.remove("color-blue", "color-orange", "color-red", "color-blues");
+            if(size <= 7)
+            {
+                statTitle.classList.add("color-blue");
+                progressBar[0].classList.add("color-blue");           
+            }
+            else if(size>7 && size <= 14)
+            {
+                statTitle.classList.add("color-orange");
+                progressBar[0].classList.add("color-orange");
+            }
+            else if(size>14)
+            {
+                statTitle.classList.add("color-red");
+                progressBar[0].classList.add("color-red");
+            }
             active_sessions = size;
             completed_today = 0;
+            progressBar[0].style.width = `${Math.min(size*5, 100)}%`;   //Math.min
+            progressBar[1].style.width = size>0? `${(completed_today*100)/size}%`: "100%";
+            statNumber2.textContent = "0";
             tablename.replaceChildren(); //can use tbody.innerHTML = ""
             let count = 0;
             let presentColor = null;
@@ -451,6 +489,66 @@
             lucide.createIcons();
         }
         document.addEventListener("DOMContentLoaded", askData);
+        let result;
+        //clear timout so that searches dont happen always but happens when he clicks
+        searchInput.addEventListener("input", ()=>
+        {
+            clearTimeout(result);
+            result = setTimeout(()=>
+            {
+                findsessions(searchInput.value);
+            }, 300);
+        });
+        //search when pressed enter
+        searchInput.addEventListener("keydown", (e)=>
+        {
+            if(e.key == "Enter")
+            {
+                clearTimeout(result);
+               findsessions(searchInput.value); 
+            }
+        });
+        function findsessions(s)
+        {
+            if (!Array.isArray(sessions)) return; // so that when user immediately types but till nwo give data or others dont upload
+            s = s.toLowerCase().trim();
+            let searchedSessions = sessions.filter((ele)=>
+            {
+                return ele.sessionId.toLowerCase().includes(s) || ele.patientName.toLowerCase().includes(s);
+            });
+            let presentColor = getColor(index);
+            let avatarId = getAvatar(element.avatarId);
+            tablename.innerHTML = "";
+            searchedSessions.forEach((element)=>
+            {
+                let row = document.createElement("tr");
+                row.innerHTML = `
+                                <td><span class="session-id id-${presentColor}">${element.sessionId}</span></td>
+                                <td>
+                                    <div class="patient-cell">
+                                        <img src="${avatarId}" alt="${element.patientName}" class="table-avatar">
+                                        <div class="patient-info">
+                                            <span class="p-name">${element.patientName}</span>
+                                            <span class="p-meta">Age: ${element.patientAge} • ${element.patientGender}</span>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="time-cell">
+                                        <i data-lucide="calendar"></i>
+                                        <div>
+                                            <div class="date-text">${element.sessionStartdate}</div>
+                                            <div class="time-text">${element.sessionStarttime}</div>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td><span class="status-badge active-bg">Active</span></td>
+                                <td style="text-align: right;"><button onclick="window.location.href='session_detail.html'" class="action-btn"><i data-lucide="chevron-right"></i></button></td>
+                            `
+                tablename.appendChild(row);
+            });
+            return;
+        }
     </script>
 </body>
 </html>

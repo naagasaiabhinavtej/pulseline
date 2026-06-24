@@ -319,7 +319,10 @@ body {
 }
 
 .color-blue { color: #1a73e8; }
+.color-blues {color: #1a73e8; }
+.color-orange {color: rgb(245, 167, 23); }
 .color-green { color: #137333; }
+.color-red {color:rgba(255, 0, 0, 0.9); }
 
 .stat-number {
     font-size: 38px;
@@ -344,6 +347,9 @@ body {
 }
 
 .progress-bar.bg-blue { background-color: #1a73e8; }
+.progress-bar.bg-blues { background-color: #1a73e8; }
+.progress-bar.bg-orange { background-color: orange; }
+.progress-bar.bg-red { background-color: red; }
 .progress-bar.bg-green { background-color: #137333; }
 
 /* Premium Center Motivational Hero Banner */
