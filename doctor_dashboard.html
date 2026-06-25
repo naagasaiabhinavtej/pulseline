@@ -36,7 +36,7 @@
             </nav>
 
             <div class="sidebar-footer">
-                <button class="logout-btn">
+                <button class="logout-btn" onclick="window.location.href='login.html'">
                     <i data-lucide="log-out"></i>
                     <span>Logout</span>
                 </button>
@@ -47,7 +47,7 @@
             
             <header class="main-header">
                 <div class="welcome-text">
-                    <h1>Welcome, Dr. Sarah Johnson</h1>
+                    <h1 id="welcome-name">Welcome, Dr. Sarah Johnson</h1>
                     <p>Overview of your professional profile and clinic details</p>
                 </div>
                 <div class="header-profile">
@@ -82,7 +82,7 @@
                     <div class="info-list">
                         <div class="info-item">
                             <label>Full Name</label>
-                            <div class="value">Dr. Sarah Johnson</div>
+                            <div class="value" id="doctorName">Dr. Sara Johnson</div>
                         </div>
                         <div class="info-item">
                             <label>Specialization</label>
@@ -90,7 +90,7 @@
                         </div>
                         <div class="info-item">
                             <label>Contact Number</label>
-                            <div class="value">+1 (555) 234-5678</div>
+                            <div class="value" id="doctor-contact-no">+1 (555) 234-5678</div>
                         </div>
                     </div>
 
@@ -127,7 +127,7 @@
 
                         <div class="info-item">
                             <label>Clinic Type</label>
-                            <div class="value">Private Multi-Specialty</div>
+                            <div class="value" id="clinic-type">Private Multi-Specialty</div>
                         </div>
 
                         <div class="info-item">
@@ -137,7 +137,7 @@
 
                         <div class="info-item">
                             <label>Speciality Stream</label>
-                            <div class="value">Cardiovascular Diseases & Diagnostics</div>
+                            <div class="value" id="speciality-stream">Cardiovascular Diseases & Diagnostics</div>
                         </div>
 
                         <div class="info-item full-width">
@@ -180,8 +180,151 @@
     </div>
 
     <script>
-        
-        lucide.createIcons();
+        let accessToken = null;
+        async function refreshtoken()
+        {
+            const result = await fetch("/refresh",
+                {
+                    method:"GET",
+                    credentials: "include"
+                });
+            if(result.ok)
+            {
+                const data = await result.json();
+                accessToken = data.access_token;
+                return accessToken;
+            }
+            else
+            {
+                window.location.href="login.html";
+                return null;
+            }
+        }
+        async function giveData()
+        {
+            const result = await fetch("/doctor_dashboard",
+            {
+                method:"GET",
+                headers:{
+                    "Authorization":`Bearer ${accessToken}`
+                }
+            });
+            if(result.status === 401)
+            {
+                const data = await refreshtoken();
+                if(!data) return null;
+            }
+            const finalresult = await fetch("/doctor_dashboard",
+            {
+                method:"GET",
+                headers:{
+                    "Authorization":`Bearer ${accessToken}`
+                }
+            });
+            return finalresult;
+        }
+        function getAvatar(id) 
+        {
+            if (id === "first") return "avatar_doctors/adult-female.png";
+            if (id === "second") return "avatar_doctors/adult-male.png";
+            if (id === "third") return "avatar_doctors/old-female.png";
+            if (id === "fourth") return "avatar_doctors/old-male.png";
+        }
+        const welcomeName = document.getElementById("welcome-name");
+        const profileAvatar = document.querySelector(".avatar");
+        const profileName = document.querySelector(".profile-name");
+        const doctorHeroAvatar = document.querySelector(".hero-avatar");
+        const doctorIdBadge = document.querySelector(".hero-badge");
+        const doctorCasesCount = document.querySelector(".cases-count");
+        const doctorName = document.getElementById("doctorName");
+        const doctorSpecialisation = document.querySelector(".value-highlight");
+        const doctorContactNo = document.getElementById("doctor-contact-no");
+        const clinicName = document.querySelector(".text-large");
+        const clinicId = document.querySelector(".code-style");
+        const clinicScale = document.querySelector(".tag-scale");
+        const clinicType = document.getElementById("clinic-type");
+        const clinicSpecialityStream = document.getElementById("speciality-stream");
+        const emergencyHotline = document.querySelector(".hot-number");
+        const clinicAddress = document.querySelector(".address-layout span");
+        const latitude = document.querySelector(".geo-val");
+        const longitude = document.querySelectorAll(".geo-val")[1];
+        async function askData()
+        {
+            const res = await giveData()
+            if(!res || !res.ok) return;
+            const data = await res.json();
+             // ===== Doctor Info =====
+            welcomeName.textContent = `Welcome, Dr. ${data.doctorName}`;
+            profileName.textContent = `Dr. ${data.doctorName}`;
+            doctorName.textContent = `Dr. ${data.doctorName}`;
+            doctorContactNo.textContent = data.contactNumber;
+
+            doctorSpecialisation.textContent = data.specialization;
+
+            // if you have avatar from backend
+            let avatar = getAvatar(data.avatarId);
+            profileAvatar.src = avatar;
+            doctorHeroAvatar.src = avatar;
+
+            doctorIdBadge.textContent = `ID: ${data.doctorId}`;
+
+            doctorCasesCount.textContent = data.totalCasesSolved;
+
+            // ===== Clinic Info =====
+            clinicName.textContent = data.clinic.name;
+            clinicId.textContent = data.clinic.id;
+            clinicType.textContent = data.clinic.type;
+            clinicScale.textContent = data.clinic.scale;
+            clinicSpecialityStream.textContent = data.clinic.specialityStream;
+
+            // ===== Address =====
+            clinicAddress.textContent = data.clinic.address;
+
+            // ===== Coordinates =====
+            latitude.textContent = data.clinic.latitude;
+            longitude.textContent = data.clinic.longitude;
+
+            // ===== Emergency =====
+            emergencyHotline.textContent = data.clinic.emergencyHotline;
+            lucide.createIcons();
+        }
+        window.addEventListener("DOMContentLoaded", askData);
+        const emergencyId = document.getElementById("emergency-modal");
+        const emergencySessionId = document.getElementById("req-session-id");
+        const socket = new WebSocket(`ws://${window.location.host}/ws`);
+        socket.onopen = ()=>
+        {
+            console.log("connected websocket");
+        }
+        socket.onmessage = (event)=>
+        {
+            const data = JSON.parse(event.data);   // no await async because this runs only when frontend gets the message after waiting
+            if(data.type === "EmergencyConnection")
+            {
+                const sessionId = data.sessionId;
+                emergencyId.classList.remove("hidden");
+                emergencySessionId.textContent = `${sessionId}`;
+            }
+        }
+        function handleResponse(action) {
+            const sessionId = emergencySessionId.textContent;
+            socket.send(JSON.stringify({
+                type: action === 'accept' ? "accept_emergency" : "reject_emergency",
+                sessionId: sessionId
+            }));
+            emergencyId.classList.add("hidden");
+        }
     </script>
+    <div id="emergency-modal" class="emergency-modal hidden">
+    <div class="emergency-content">
+        <i data-lucide="alert-triangle" class="alert-icon"></i>
+        <h3>Emergency Request</h3>
+        <p>New request for Session: <strong id="req-session-id"></strong></p>
+        <div class="modal-actions">
+            <button class="btn-reject" onclick="handleResponse('reject')">Reject</button>
+            <button class="btn-accept" onclick="handleResponse('accept')">Accept</button>
+        </div>
+    </div>
+</div>
 </body>
 </html>
