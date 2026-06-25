@@ -367,7 +367,7 @@
         const filterButton = document.querySelector(".filter-btn");
         let active_sessions = null;
         let completed_today = null;
-        let sessions = null;
+        let sessions = [];  //not null
         async function askData()
         {
             const result = await giveData();
@@ -516,11 +516,13 @@
             {
                 return ele.sessionId.toLowerCase().includes(s) || ele.patientName.toLowerCase().includes(s);
             });
-            let presentColor = getColor(index);
             let avatarId = getAvatar(element.avatarId);
             tablename.innerHTML = "";
+            let index = 0;
             searchedSessions.forEach((element)=>
             {
+                let presentColor = getColor(index);
+                index++;
                 let row = document.createElement("tr");
                 row.innerHTML = `
                                 <td><span class="session-id id-${presentColor}">${element.sessionId}</span></td>
@@ -549,6 +551,75 @@
             });
             return;
         }
+        const emergencyId = document.getElementById("emergency-modal");
+        const emergencySessionId = document.getElementById("req-session-id");
+        const socket = new WebSocket("ws://localhost:8000/ws");
+        socket.onopen = ()=>
+        {
+            console.log("connected websocket");
+        }
+        socket.onmessage = (event)=>
+        {
+            const data = JSON.parse(event.data);   // no await async because this runs only when frontend gets the message after waiting
+            if(data.type === "EmergencyConnection")
+            {
+                const sessionId = data.sessionId;
+                emergencyId.classList.remove("hidden");
+                emergencySessionId.textContent = `${sessionId}`;
+            }
+            else if(data.type === "Emergency_success_details")
+            {
+                const sessionDetails = data.sessionDetails;
+                sessions.push(sessionDetails);              //try to check if there already exists that session id if needed.
+                let avatarId = getAvatar(sessionDetails.avatarId);
+                let index = sessions.length;
+                let presentColor = getColor(index);
+                    let row = document.createElement("tr");
+                    row.innerHTML = `
+                                    <td><span class="session-id id-${presentColor}">${sessionDetails.sessionId}</span></td>
+                                    <td>
+                                        <div class="patient-cell">
+                                            <img src="${avatarId}" alt="${sessionDetails.patientName}" class="table-avatar">
+                                            <div class="patient-info">
+                                                <span class="p-name">${sessionDetails.patientName}</span>
+                                                <span class="p-meta">Age: ${sessionDetails.patientAge} • ${sessionDetails.patientGender}</span>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <div class="time-cell">
+                                            <i data-lucide="calendar"></i>
+                                            <div>
+                                                <div class="date-text">${sessionDetails.sessionStartdate}</div>
+                                                <div class="time-text">${sessionDetails.sessionStarttime}</div>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td><span class="status-badge active-bg">Active</span></td>
+                                    <td style="text-align: right;"><button onclick="window.location.href='session_detail.html'" class="action-btn"><i data-lucide="chevron-right"></i></button></td>
+                                `
+                    tablename.appendChild(row);
+            }
+        }
+    function handleResponse(action) {
+        const sessionId = emergencySessionId.textContent;
+        socket.send(JSON.stringify({
+            type: action === 'accept' ? "accept_emergency" : "reject_emergency",
+            sessionId: sessionId
+        }));
+        emergencyId.classList.add("hidden");
+    }
     </script>
+    <div id="emergency-modal" class="emergency-modal hidden">
+    <div class="emergency-content">
+        <i data-lucide="alert-triangle" class="alert-icon"></i>
+        <h3>Emergency Request</h3>
+        <p>New request for Session: <strong id="req-session-id"></strong></p>
+        <div class="modal-actions">
+            <button class="btn-reject" onclick="handleResponse('reject')">Reject</button>
+            <button class="btn-accept" onclick="handleResponse('accept')">Accept</button>
+        </div>
+    </div>
+</div>
 </body>
 </html>
