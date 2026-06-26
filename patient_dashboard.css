@@ -445,6 +445,9 @@ body {
     background: #faf5ff;
     color: #6b21a8;
 }
+.id-orange { background-color: #fff7ed; color: #9a3412; }
+.id-green { background-color: #ecfdf5; color: #065f46; }
+
 
 .patient-cell {
     display: flex;
@@ -561,4 +564,116 @@ body {
     .patient-quote-text {
         font-size: 16px;
     }
+}
+.session-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  backdrop-filter: blur(10px);
+  background: rgba(0, 0, 0, 0.35);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 9999;
+}
+
+.hidden {
+  display: none;
+}
+
+.session-popup {
+  width: 420px;
+  background: white;
+  border-radius: 20px;
+  padding: 30px;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.25);
+  animation: popupScale 0.3s ease;
+}
+
+@keyframes popupScale {
+  from {
+    transform: scale(0.85);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+.session-header h2 {
+  margin: 0;
+  font-size: 26px;
+  color: #222;
+}
+
+.session-header p {
+  margin-top: 8px;
+  color: #666;
+  font-size: 14px;
+}
+
+.session-details {
+  margin-top: 25px;
+}
+
+.detail-row {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 16px;
+  padding: 12px 15px;
+  background: #f7f8fa;
+  border-radius: 10px;
+}
+
+.detail-row span {
+  color: #777;
+}
+
+.detail-row strong {
+  color: #111;
+}
+
+.session-timer {
+  margin-top: 20px;
+  text-align: center;
+  font-weight: bold;
+  color: #d32f2f;
+  font-size: 18px;
+}
+
+.session-actions {
+  display: flex;
+  gap: 15px;
+  margin-top: 25px;
+}
+
+.session-actions button {
+  flex: 1;
+  padding: 14px;
+  border: none;
+  border-radius: 12px;
+  cursor: pointer;
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.accept-btn {
+  background: #28a745;
+  color: white;
+}
+
+.accept-btn:hover {
+  background: #218838;
+}
+
+.reject-btn {
+  background: #dc3545;
+  color: white;
+}
+
+.reject-btn:hover {
+  background: #c82333;
 }

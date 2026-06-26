@@ -553,7 +553,7 @@
         }
         const emergencyId = document.getElementById("emergency-modal");
         const emergencySessionId = document.getElementById("req-session-id");
-        const socket = new WebSocket("ws://localhost:8000/ws");
+        const socket = new WebSocket(`ws://${window.location.host}/ws`);
         socket.onopen = ()=>
         {
             console.log("connected websocket");
@@ -572,7 +572,7 @@
                 const sessionDetails = data.sessionDetails;
                 sessions.push(sessionDetails);              //try to check if there already exists that session id if needed.
                 let avatarId = getAvatar(sessionDetails.avatarId);
-                let index = sessions.length;
+                let index = sessions.length-1;
                 let presentColor = getColor(index);
                     let row = document.createElement("tr");
                     row.innerHTML = `

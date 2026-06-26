@@ -105,7 +105,7 @@
                     <div class="table-actions">
                         <div class="search-box">
                             <i data-lucide="search"></i>
-                            <input type="text" placeholder="Search doctor or specialty...">
+                            <input id="searchInput" type="text" placeholder="Search doctor or specialty...">
                         </div>
                         <button class="filter-btn">
                             <i data-lucide="sliders-horizontal"></i>
@@ -185,10 +185,352 @@
                 </div>
             </section>
         </main>
+</div>
+    <div id="sessionOverlay" class="session-overlay hidden">
+    <div class="session-popup">
+
+        <div class="session-header">
+            <h2>New Session Request</h2>
+            <p>Your doctor has started a new consultation session.</p>
+        </div>
+
+        <div class="session-details">
+            <div class="detail-row">
+                <span>Doctor</span>
+                <strong id="doctorName">Dr. John Doe</strong>
+            </div>
+
+            <div class="detail-row">
+                <span>Clinic</span>
+                <strong id="clinicName">Apollo Clinic</strong>
+            </div>
+
+            <div class="detail-row">
+                <span>Department</span>
+                <strong id="departmentName">Cardiology</strong>
+            </div>
+        </div>
+
+        <div class="session-timer">
+            Expires in: <span id="timer">05:00</span>
+        </div>
+
+        <div class="session-actions">
+            <button class="accept-btn" onclick="acceptSession()">Accept</button>
+            <button class="reject-btn" onclick="rejectSession()">Reject</button>
+        </div>
+
     </div>
+</div>
 
     <script>
         lucide.createIcons();
+        let accessToken = null;
+        async function refreshtoken()
+        {
+            const result = await fetch("/refresh",
+                {
+                    method:"GET",
+                    credentials: "include"
+                });
+            if(result.ok)
+            {
+                const data = await result.json();
+                accessToken = data.access_token;
+                return accessToken;
+            }
+            else
+            {
+                window.location.href="login.html";
+                return null;
+            }
+        }
+        function getColor(index) 
+        {
+            const colors = ["blue", "green", "purple", "orange"];
+            return colors[index % 4];
+        }
+        function getAvatar(id) 
+        {
+            if (id === "first") return "avatar_patients/adult-female.png";
+            if (id === "second") return "avatar_patients/adult-male.png";
+            if (id === "third") return "avatar_patients/old-female.png";
+            if (id === "fourth") return "avatar_patients/old-male.png";
+            if (id === "fifth") return "avatar_patients/young-boy.png";
+            if (id === "sixth") return "avatar_patients/young-girl.png";            
+        }
+        async function giveData()
+        {
+            const result = await fetch("/patient_sessions",
+            {
+                method:"GET",
+                headers:{
+                    "Authorization":`Bearer ${accessToken}`
+                }
+            });
+            if(result.status === 401)
+            {
+                const data = await refreshtoken();
+                if(!data) return;
+            }
+            const finalresult = await fetch("/patient_sessions",
+            {
+                method:"GET",
+                headers:{
+                    "Authorization":`Bearer ${accessToken}`
+                }
+            });
+            return finalresult;
+        }
+        //names should be written
+        const heading = document.querySelector(".welcome-text"); // no by tag name because it always returns list no matter what happens
+        const avatare = document.querySelector(".avatar");
+        const profileName = document.querySelector(".profile-name");
+        const tablename = document.querySelector(".sessions-table tbody");
+        const searchInput = document.getElementById("searchInput");
+        const filterButton = document.querySelector(".filter-btn");
+        const logout = document.querySelector(".logout-btn");
+        const sessionOverlay = document.getElementById("sessionOverlay");
+        const doctorNameEl = document.getElementById("doctorName");
+        const clinicNameEl = document.getElementById("clinicName");
+        const departmentNameEl = document.getElementById("departmentName");
+        const timerEl = document.getElementById("timer");
+        const acceptBtn = document.querySelector(".accept-btn");
+        const rejectBtn = document.querySelector(".reject-btn");
+        let active_sessions = null;
+        let sessions = [];  //not null
+        let requestId = null;
+        async function askData()
+        {
+            const result = await giveData();
+            if(!result || !result.ok) return;
+            const data = await result.json();
+            const patientName = data.patientName;
+            const avatar = data.avatar;
+            const currentSessions = data.currentSessions;
+            sessions = currentSessions;
+            heading.textContent = `Welcome, ${patientName}`;
+            avatare.setAttribute("src", getAvatar(avatar));
+            let size = currentSessions.length;
+            profileName.textContent = `${patientName}`;
+            active_sessions = size;
+            tablename.replaceChildren(); //can use tbody.innerHTML = ""
+            let count = 0;
+            let presentColor = null;
+            currentSessions.forEach(element => {
+                presentColor = getColor(count);
+                //can use this but space
+                // const colors = ["blue", "green", "purple", "orange"];
+                // const presentColor = colors[count % 4];
+                count++;
+                let avatarId = getAvatar(element.avatarId);
+                let row = document.createElement("tr");
+                row.innerHTML = `
+                                <td><span class="session-id id-${presentColor}">${element.sessionId}</span></td>
+                                <td>
+                                    <div class="patient-cell">
+                                        <img src=${avatarId} alt="${element.doctorName}">
+                                        <div class="patient-info">
+                                            <span class="p-name">${element.doctorName}</span>
+                                            <span class="p-meta">Specialty: ${element.doctorSpeciality}</span>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="time-cell">
+                                        <i data-lucide="calendar"></i>
+                                        <div>
+                                            <div class="date-text">${element.sessionStartdate}</div>
+                                            <div class="time-text">${element.sessionStarttime}</div>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td><span class="status-badge active-bg">Active</span></td>
+                                <td style="text-align: right;"><button onclick="window.location.href='patient_session.html'" class="action-btn"><i data-lucide="chevron-right"></i></button></td>
+                            `
+                tablename.appendChild(row);
+            });
+            lucide.createIcons();
+        }
+        document.addEventListener("DOMContentLoaded", askData);
+        let result;
+        //clear timout so that searches dont happen always but happens when he clicks
+        searchInput.addEventListener("input", ()=>
+        {
+            clearTimeout(result);
+            result = setTimeout(()=>
+            {
+                findsessions(searchInput.value);
+            }, 300);
+        });
+        //search when pressed enter
+        searchInput.addEventListener("keydown", (e)=>
+        {
+            if(e.key == "Enter")
+            {
+                clearTimeout(result);
+               findsessions(searchInput.value); 
+            }
+        });
+        function findsessions(s)
+        {
+            if (!Array.isArray(sessions)) return; // so that when user immediately types but till nwo give data or others dont upload
+            s = s.toLowerCase().trim();
+            let searchedSessions = sessions.filter((ele)=>
+            {
+                return ele.sessionId.toLowerCase().includes(s) || ele.doctorName.toLowerCase().includes(s);
+            });
+            let avatarId = getAvatar(element.avatarId);
+            tablename.innerHTML = "";
+            let index = 0;
+            searchedSessions.forEach((element)=>
+            {
+                let presentColor = getColor(index);
+                index++;
+                let row = document.createElement("tr");
+                row.innerHTML = `
+                                <td><span class="session-id id-${presentColor}">${element.sessionId}</span></td>
+                                <td>
+                                    <div class="patient-cell">
+                                        <img src=${avatarId} alt="${element.doctorName}">
+                                        <div class="patient-info">
+                                            <span class="p-name">${element.doctorName}</span>
+                                            <span class="p-meta">Specialty: ${element.doctorSpeciality}</span>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="time-cell">
+                                        <i data-lucide="calendar"></i>
+                                        <div>
+                                            <div class="date-text">${element.sessionStartdate}</div>
+                                            <div class="time-text">${element.sessionStarttime}</div>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td><span class="status-badge active-bg">Active</span></td>
+                                <td style="text-align: right;"><button onclick="window.location.href='patient_session.html'" class="action-btn"><i data-lucide="chevron-right"></i></button></td>
+                            `
+                tablename.appendChild(row);
+            });
+            return;
+        }
+
+        const socket = new WebSocket(`ws://${window.location.host}/ws`);
+        socket.onopen = ()=>
+        {
+            console.log("connected websocket");
+        }
+        socket.onmessage = (event)=>
+        {
+            const data = JSON.parse(event.data);   // no await async because this runs only when frontend gets the message after waiting
+            if(data.type === "session_making_details")
+            {
+                sessionOverlay.classList.remove("hidden");
+                const doctor = data.doctorName;
+                const clinic = data.clinicName;
+                const department = data.department;
+                requestId = data.requestId;
+                doctorNameEl.textContent = `${doctor}`;
+                clinicNameEl.textContent = `${clinic}`;
+                departmentNameEl.textContent = `${department}`;
+                //timer
+                let second = 300;
+                let timer = setInterval(displayTimer, 1000);
+                let minutes, seconds;
+                function displayTimer()
+                {
+                    minutes = Math.floor(second/60);  // to get nos rounded off
+                    seconds = second%60;
+                    timerEl.textContent = `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+                    second--;
+                    if(second<0)
+                    {
+                        clearInterval(timer);
+                        rejectSession();
+                        console.log("timer ended");
+                    }
+                }
+
+            }
+            else if(data.type === "session_add_details")
+            {
+                const sessionDetails = data.sessionDetails;
+                sessions.push(sessionDetails);              //try to check if there already exists that session id if needed.
+                let avatarId = getAvatar(sessionDetails.avatarId);
+                let index = sessions.length-1;
+                let presentColore = getColor(index);
+                    let row = document.createElement("tr");
+                    row.innerHTML = `
+                                <td><span class="session-id id-${presentColore}">${sessionDetails.sessionId}</span></td>
+                                <td>
+                                    <div class="patient-cell">
+                                        <img src=${avatarId} alt="${sessionDetails.doctorName}">
+                                        <div class="patient-info">
+                                            <span class="p-name">${sessionDetails.doctorName}</span>
+                                            <span class="p-meta">Specialty: ${sessionDetails.doctorSpeciality}</span>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="time-cell">
+                                        <i data-lucide="calendar"></i>
+                                        <div>
+                                            <div class="date-text">${sessionDetails.sessionStartdate}</div>
+                                            <div class="time-text">${sessionDetails.sessionStarttime}</div>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td><span class="status-badge active-bg">Active</span></td>
+                                <td style="text-align: right;"><button onclick="window.location.href='patient_session.html'" class="action-btn"><i data-lucide="chevron-right"></i></button></td>
+                            `
+                    tablename.appendChild(row);
+            }
+        }
+    async function acceptSession()
+    {
+        const result = await fetch("/sessionvalidatation", {
+            method:"POST",
+            headers:{
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${accessToken}`
+            },
+            body:JSON.stringify({
+                message:"success",
+                requestId:requestId})
+        });
+        if(result.ok)
+        {
+            sessionOverlay.classList.add("hidden");
+        }
+        else 
+        {
+            console.log("Error:", data.message || "Something went wrong");
+        }
+        return;
+    }
+    async function rejectSession()
+    {
+        const result = await fetch("/sessionvalidatation", {
+            method:"POST",
+            headers:{
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${accessToken}`
+            },
+            body:JSON.stringify({
+                message:"failure",
+                requestId:requestId})
+        });
+        if(result.ok)
+        {
+            sessionOverlay.classList.add("hidden");
+        }
+        else 
+        {
+            console.log("Error:", data.message || "Something went wrong");
+        }
+        return;
+    }
     </script>
 </body>
 </html>
