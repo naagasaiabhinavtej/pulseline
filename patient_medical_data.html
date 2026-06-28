@@ -296,7 +296,9 @@
                                 <div class="chart-icon-round icon-purple-bg"><i class="fa-solid fa-heart-pulse text-purple-main"></i></div>
                                 <h3>Blood Pressure <span class="unit-text">(mmHg)</span></h3>
                             </div>
-                            <button class="add-reading-btn"><i class="fa-solid fa-plus"></i> Add Reading</button>
+                            <button class="add-reading-btn" onclick="openModal('bp')">
+                                <i class="fa-solid fa-plus"></i> Add Reading
+                            </button>
                         </div>
                         <div class="chart-main-value-group">
                             <div class="chart-stat-number">120/80 <span class="sub-unit">mmHg</span></div>
@@ -309,6 +311,7 @@
                                 <span>160/100</span><span>140/90</span><span>120/80</span><span>100/60</span><span>80/40</span>
                             </div>
                             <div class="grid-and-vector">
+                                <div class="chart-container" id="chartContainer">
                                 <svg class="chart-svg-layer" viewBox="0 0 500 120" preserveAspectRatio="none">
                                     <!-- Grid Dotted Paths lines -->
                                     <line x1="0" y1="0" x2="500" y2="0" stroke="#F1F5F9" stroke-dasharray="3,3" />
@@ -330,10 +333,11 @@
                                     <circle cx="60" cy="35" r="3.5" fill="#7C3AED" /><circle cx="120" cy="45" r="3.5" fill="#7C3AED" /><circle cx="180" cy="32" r="3.5" fill="#7C3AED" /><circle cx="240" cy="30" r="3.5" fill="#7C3AED" /><circle cx="300" cy="42" r="3.5" fill="#7C3AED" /><circle cx="360" cy="38" r="3.5" fill="#7C3AED" /><circle cx="420" cy="48" r="3.5" fill="#7C3AED" /><circle cx="500" cy="55" r="3.5" fill="#7C3AED" />
                                     <circle cx="60" cy="65" r="3.5" fill="#4F46E5" /><circle cx="120" cy="70" r="3.5" fill="#4F46E5" /><circle cx="180" cy="62" r="3.5" fill="#4F46E5" /><circle cx="240" cy="64" r="3.5" fill="#4F46E5" /><circle cx="300" cy="72" r="3.5" fill="#4F46E5" /><circle cx="360" cy="66" r="3.5" fill="#4F46E5" /><circle cx="420" cy="74" r="3.5" fill="#4F46E5" /><circle cx="500" cy="82" r="3.5" fill="#4F46E5" />
                                 </svg>
+                                </div>
                             </div>
                         </div>
                         <div class="x-axis-timeline">
-                            <span>Apr 21</span><span>Apr 28</span><span>May 5</span><span>May 12</span><span>May 19</span><span>May 26</span><span>Jun 2</span><span>Jun 9</span>
+                            <span>Apr 21</span><span>Apr 28</span><span>May 5</span><span>May 12</span><span>May 19</span><span>May 26</span><span>Jun 2</span><span>jun 21 </span>
                         </div>
                         <div class="chart-legends-footer">
                             <span class="legend-item"><span class="legend-dot color-systolic"></span> Systolic</span>
@@ -348,8 +352,9 @@
                                 <div class="chart-icon-round icon-green-bg"><i class="fa-solid fa-droplet text-green-main"></i></div>
                                 <h3>Blood Sugar <span class="unit-text">(mg/dL)</span></h3>
                             </div>
-                            <button class="add-reading-btn"><i class="fa-solid fa-plus"></i> Add Reading</button>
-                        </div>
+                            <button class="add-reading-btn" onclick="openModal('sugar')">
+                                <i class="fa-solid fa-plus"></i> Add Reading
+                            </button>                        </div>
                         <div class="chart-main-value-group">
                             <div class="chart-stat-number">98.6 <span class="sub-unit">mg/dL</span></div>
                             <span class="status-tag tag-green">Normal</span>
@@ -392,8 +397,10 @@
                                 <div class="chart-icon-round icon-orange-bg"><i class="fa-solid fa-temperature-half text-orange-main"></i></div>
                                 <h3>Temperature <span class="unit-text">(°C)</span></h3>
                             </div>
-                            <button class="add-reading-btn"><i class="fa-solid fa-plus"></i> Add Reading</button>
-                        </div>
+                                <button class="add-reading-btn" onclick="openModal('temp')">
+                                    <i class="fa-solid fa-plus"></i> Add Reading
+                                </button>                        
+                            </div>
                         <div class="chart-main-value-group">
                             <div class="chart-stat-number">36.6 <span class="sub-unit">°C</span></div>
                             <span class="status-tag tag-green">Normal</span>
@@ -430,8 +437,10 @@
                                 <div class="chart-icon-round icon-red-bg"><i class="fa-regular fa-heart text-danger"></i></div>
                                 <h3>Heart Rate <span class="unit-text">(bpm)</span></h3>
                             </div>
-                            <button class="add-reading-btn"><i class="fa-solid fa-plus"></i> Add Reading</button>
-                        </div>
+                                <button class="add-reading-btn" onclick="openModal('heart')">
+                                    <i class="fa-solid fa-plus"></i> Add Reading
+                                </button>                       
+                            </div>
                         <div class="chart-main-value-group">
                             <div class="chart-stat-number">72 <span class="sub-unit">bpm</span></div>
                             <span class="status-tag tag-green">Normal</span>
@@ -576,6 +585,128 @@
             </footer>
         </main>
     </div>
+    //reading modal
+    <div id="readingModal" class="modal-overlay">
+    <div class="modal-box">
+        <div class="modal-header">
+            <h2 id="modalTitle">Add Reading</h2>
+            <button class="close-modal" onclick="closeModal()">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+        </div>
 
+        <form id="readingForm">
+            <div id="dynamicFields"></div>
+
+            <div class="modal-buttons">
+                <button type="button" class="cancel-btn" onclick="closeModal()">
+                    Cancel
+                </button>
+                <button type="submit" class="save-btn">
+                    Save Reading
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+<script>
+const modal = document.getElementById("readingModal");
+const modalTitle = document.getElementById("modalTitle");
+const dynamicFields = document.getElementById("dynamicFields");
+
+function openModal(type) {
+    modal.classList.add("active");
+    dynamicFields.innerHTML = "";
+
+    if (type === "bp") {
+        modalTitle.innerText = "Add Blood Pressure Reading";
+
+        dynamicFields.innerHTML = `
+            <div class="form-group">
+                <label>Systolic (mmHg)</label>
+                <input type="number" placeholder="e.g. 120">
+            </div>
+            <div class="form-group">
+                <label>Diastolic (mmHg)</label>
+                <input type="number" placeholder="e.g. 80">
+            </div>
+        `;
+    }
+
+    if (type === "sugar") {
+        modalTitle.innerText = "Add Blood Sugar Reading";
+
+        dynamicFields.innerHTML = `
+            <div class="form-group">
+                <label>Blood Sugar (mg/dL)</label>
+                <input type="number" placeholder="e.g. 98.6">
+            </div>
+        `;
+    }
+
+    if (type === "temp") {
+        modalTitle.innerText = "Add Temperature Reading";
+
+        dynamicFields.innerHTML = `
+            <div class="form-group">
+                <label>Temperature (°C)</label>
+                <input type="number" step="0.1" placeholder="e.g. 36.6">
+            </div>
+        `;
+    }
+
+    if (type === "heart") {
+        modalTitle.innerText = "Add Heart Rate Reading";
+
+        dynamicFields.innerHTML = `
+            <div class="form-group">
+                <label>Heart Rate (bpm)</label>
+                <input type="number" placeholder="e.g. 72">
+            </div>
+        `;
+    }
+}
+
+function closeModal() {
+    modal.classList.remove("active");
+}
+const chart = document.querySelector("#chartContainer");
+
+let startX = 0;
+let currentTranslate = 0;
+let isDragging = false;
+
+chart.addEventListener("touchstart", (e) => {
+    startX = e.touches[0].clientX;
+    isDragging = true;
+});
+
+chart.addEventListener("touchmove", (e) => {
+    if (!isDragging) return;
+
+    const currentX = e.touches[0].clientX;
+    const diff = currentX - startX;
+
+    // move chart horizontally
+    chart.style.transform = `translateX(${currentTranslate + diff}px)`;
+});
+
+chart.addEventListener("touchend", (e) => {
+    const endX = e.changedTouches[0].clientX;
+    const diff = endX - startX;
+
+    currentTranslate += diff;
+
+    isDragging = false;
+
+    // optional: snap back limits (prevents over sliding)
+    const maxMove = 0;
+    const minMove = -300; // adjust based on your graph width
+
+    if (currentTranslate > maxMove) currentTranslate = maxMove;
+    if (currentTranslate < minMove) currentTranslate = minMove;
+
+    chart.style.transform = `translateX(${currentTranslate + diff}px)`;});
+</script>
 </body>
 </html>
