@@ -1382,3 +1382,71 @@ a,
 @media (max-width: 1024px) {
     .vitals-input-matrix-grid { grid-template-columns: repeat(2, 1fr); }
 }
+/* New Button Styling */
+.send-data-action-btn {
+    background-color: #f1f5f9;
+    border: none;
+    width: 42px;
+    height: 42px;
+    border-radius: 50%;
+    color: #2563eb; /* Blue color to stand out as a primary action */
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background-color 0.2s ease;
+}
+
+.send-data-action-btn:hover {
+    background-color: #e2e8f0;
+}
+
+.send-data-action-btn i {
+    width: 20px;
+    height: 20px;
+}
+/* Emergency Button Styles */
+.emergency-action-btn {
+    width: 100%;
+    background-color: #fee2e2;
+    border: 1px solid #fecaca;
+    color: #b91c1c;
+    padding: 12px;
+    border-radius: 10px;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    transition: all 0.2s ease;
+}
+
+.emergency-action-btn:hover {
+    background-color: #fca5a5;
+    color: #7f1d1d;
+}
+
+.referral-status-hidden {
+    display: none;
+}
+.referral-status-visible {
+    display: block;
+    margin-top: 10px;
+    padding: 10px;
+    background-color: #dcfce7;
+    border-radius: 8px;
+    color: #15803d;
+    font-size: 13px;
+    font-weight: 500;
+    text-align: center;
+}
+
+/* Styling for the button when it is disabled */
+.emergency-action-btn:disabled {
+    background-color: #f1f5f9; /* Light grey background */
+    border-color: #e2e8f0;      /* Light border */
+    color: #94a3b8;            /* Muted text color */
+    cursor: not-allowed;       /* Shows 'no' icon on hover */
+    opacity: 0.7;
+}

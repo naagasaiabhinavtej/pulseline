@@ -63,7 +63,7 @@
                         <img src="avatar_patients/adult_male.png" alt="Doctor Profile" class="avatar">
                         <div class="profile-info">
                             <span class="profile-name">Dr. Sarah Johnson</span>
-                            <span class="profile-role">Doctor</span>
+                            <span class="profile-role">Patient</span>
                         </div>
                         <i data-lucide="chevron-down" class="dropdown-icon"></i>
                     </div>
@@ -76,11 +76,10 @@
                     <img src="avatar_doctors/old_male.png" alt="John Doe" class="patient-avatar">
                     <div class="patient-title">
                         <h2>John Doe <span class="status-dot-active">Active</span></h2>
-                        <p>Assigned doctor • Female</p>
+                        <p>Assigned Doctor</p>
                     
                     </div>
-                </div>
-                
+                </div>      
                 <div class="meta-info-block">
                     <span class="meta-label">Session ID</span>
                     <div class="meta-value-code">
@@ -203,6 +202,9 @@
                         <button class="attachment-action-btn">
                             <i data-lucide="paperclip"></i>
                         </button>
+                        <button class="send-data-action-btn" title="Send Medical Data">
+                            <i data-lucide="activity"></i>
+                        </button>
                         <input type="text" placeholder="Type your message..." class="message-input-field">
                         <button class="send-action-submit-btn">
                             <span>Send</span>
@@ -248,14 +250,12 @@
                         <div class="detail-row">
                             <span class="row-label">Doctor 1</span>
                             <div class="doctor-sub-profile">
-                                <img src="avatar_doctors/old_male.png" alt="Doctor avatar">
                                 <span>Dr. Sarah Johnson</span>
                             </div>
                         </div>
                          <div class="detail-row">
                             <span class="row-label">Doctor 2</span>
                             <div class="doctor-sub-profile">
-                                <img src="avatar_doctors/old_female.png" alt="Doctor avatar">
                                 <span>Dr. Sarah Johnson</span>
                             </div>
                         </div>
@@ -279,6 +279,127 @@
             if (confirm("Do you want to establish an encrypted video call channel for Session MC-1001?")) {
                 window.location.href = "patient_waitingroom.html";
             }
+        }
+        let accessToken = null;
+        async function refreshtoken()
+        {
+            const result = await fetch("/refresh",
+                {
+                    method:"GET",
+                    credentials: "include"
+                });
+            if(result.ok)
+            {
+                const data = await result.json();
+                accessToken = data.access_token;
+                return accessToken;
+            }
+            else
+            {
+                window.location.href="login.html";
+                return null;
+            }
+        }
+        function getColor(index) 
+        {
+            const colors = ["blue", "green", "purple", "orange"];
+            return colors[index % 4];
+        }
+        function getAvatar(id) 
+        {
+            if (id === "first") return "avatar_patients/adult-female.png";
+            if (id === "second") return "avatar_patients/adult-male.png";
+            if (id === "third") return "avatar_patients/old-female.png";
+            if (id === "fourth") return "avatar_patients/old-male.png";
+            if (id === "fifth") return "avatar_patients/young-boy.png";
+            if (id === "sixth") return "avatar_patients/young-girl.png";            
+        }
+        async function giveData()
+        {
+            const result = await fetch("/patient_sessions",
+            {
+                method:"GET",
+                headers:{
+                    "Authorization":`Bearer ${accessToken}`
+                }
+            });
+            if(result.status === 401)
+            {
+                const data = await refreshtoken();
+                if(!data) return;
+            }
+            const finalresult = await fetch("/patient_sessions",
+            {
+                method:"GET",
+                headers:{
+                    "Authorization":`Bearer ${accessToken}`
+                }
+            });
+            return finalresult;
+        }
+        const logoutBtn = document.querySelector(".logout-btn");
+        const profileName = document.querySelector(".profile-name");
+        const dropdownIcon = document.querySelector(".dropdown-icon");
+        const patientAvatar = document.querySelector(".avatar");
+        const doctorAvatar = document.querySelector(".patient-avatar");
+        const patientName = document.querySelector(".patient-title h2");
+        const patientGender = document.querySelector(".patient-title p");
+        const sessionIdValue = document.querySelector(".meta-value-code span");
+        const startDatValue = document.querySelector(".meta-value span");
+        const startTimeValue = document.querySelector("meta-value small");
+        const timerDigits = document.querySelector(".timer-digits");
+        const chatDateSeparator = document.querySelector(".chat-date-separator span");
+        const notesBox = document.querySelector(".notes-box");
+        const metasessionIdValue = document.querySelector(".badge-id");
+        const patientNameValue = document.querySelector(
+            '.detail-row:nth-child(2) .row-value'
+        );
+        const ageGenderValue = document.querySelector(
+            '.detail-row:nth-child(3) .row-value'
+        );
+        const startDateValue = document.querySelector(
+            '.detail-row:nth-child(4) .weight-bold'
+        );
+        const metastartTimeValue = document.querySelector(
+            '.detail-row:nth-child(4) small'
+        );
+        const doctor1Value = document.querySelector(
+            '.detail-row:nth-child(6) .doctor-sub-profile span'
+        );
+        const doctor2Value = document.querySelector(
+            '.detail-row:nth-child(7) .doctor-sub-profile span'
+        );
+        const chatDateText = document.querySelector(".chat-date-separator span");
+        const attachmentActionBtn = document.querySelector(".attachment-action-btn");
+        const sendDataActionBtn = document.querySelector(".send-data-action-btn");
+        const messageInputField = document.querySelector(".message-input-field");
+        const sendActionSubmitBtn = document.querySelector(".send-action-submit-btn");
+        let messageList = [];
+        async function askdata()
+        {
+            const result = await giveData();
+            if(!result || !result.ok) return;
+            const data = await result.json();
+            const doctor1Name = data.doctor1Name;
+            const doctor2Name = data.doctor2Name;
+            const name = data.name;
+            const patientName = data.patientName;
+            const pavatarId = data.pavatarId;
+            const davatarId = data.davatarId;
+            const sessionId = data.sessionId;
+            const startDate = data.startDate;
+            const startTime = data.startTime;
+            const age_gender = data.age_gender;
+            const notes = data.notes;
+            const messages = data.messages;
+            messageList = messages;
+            profileName.textContent = name;
+            patientAvatar.src = getAvatar(pavatarId);
+            doctorAvatar.src = getAvatar(davatarId);
+            sessionId.textContent = sessionId;
+            startDatValue.textContent = startDate;
+            startTimeValue.textContent = startTime;
+            notesBox.textContent = notes;
         }
     </script>
 </body>
