@@ -199,9 +199,12 @@
 
                     <!-- Input Dispatch Footer Actions Tray Area -->
                     <footer class="chat-input-bar">
+                        <div class="file-preview-box"></div>
+                        <div class="input-row">
                         <button class="attachment-action-btn">
                             <i data-lucide="paperclip"></i>
                         </button>
+                         <input type="file" id="filePicker" hidden multiple accept=".pdf, .jpg, .png, .doc, .docx">
                         <button class="send-data-action-btn" title="Send Medical Data">
                             <i data-lucide="activity"></i>
                         </button>
@@ -210,6 +213,7 @@
                             <span>Send</span>
                             <i data-lucide="send"></i>
                         </button>
+                        </div>
                     </footer>
                 </div>
 
@@ -346,7 +350,7 @@
         const patientGender = document.querySelector(".patient-title p");
         const sessionIdValue = document.querySelector(".meta-value-code span");
         const startDatValue = document.querySelector(".meta-value span");
-        const startTimeValue = document.querySelector("meta-value small");
+        const startTimeValue = document.querySelector(".meta-value small");
         const timerDigits = document.querySelector(".timer-digits");
         const chatDateSeparator = document.querySelector(".chat-date-separator span");
         const notesBox = document.querySelector(".notes-box");
@@ -369,12 +373,15 @@
         const doctor2Value = document.querySelector(
             '.detail-row:nth-child(7) .doctor-sub-profile span'
         );
-        const chatDateText = document.querySelector(".chat-date-separator span");
         const attachmentActionBtn = document.querySelector(".attachment-action-btn");
         const sendDataActionBtn = document.querySelector(".send-data-action-btn");
         const messageInputField = document.querySelector(".message-input-field");
         const sendActionSubmitBtn = document.querySelector(".send-action-submit-btn");
+        const copyIc = document.querySelector(".copy-ic");
+        const filePicker = document.querySelector("#filePicker");
+        const filePreviewBox = document.querySelector(".file-preview-box");
         let messageList = [];
+        let selectedFiles = []; //so that you can get files already on the text board
         async function askdata()
         {
             const result = await giveData();
@@ -383,7 +390,7 @@
             const doctor1Name = data.doctor1Name;
             const doctor2Name = data.doctor2Name;
             const name = data.name;
-            const patientName = data.patientName;
+            const patientFullName = data.patientName;
             const pavatarId = data.pavatarId;
             const davatarId = data.davatarId;
             const sessionId = data.sessionId;
@@ -396,11 +403,124 @@
             profileName.textContent = name;
             patientAvatar.src = getAvatar(pavatarId);
             doctorAvatar.src = getAvatar(davatarId);
-            sessionId.textContent = sessionId;
             startDatValue.textContent = startDate;
             startTimeValue.textContent = startTime;
-            notesBox.textContent = notes;
+            notesBox.value = notes;
+            sessionIdValue.textContent = sessionId;
+            metasessionIdValue.textContent = sessionId;
+            patientNameValue.textContent = patientFullName;
+            ageGenderValue.textContent = age_gender;
+            startDateValue.textContent = startDate;
+            metastartTimeValue.textContent = startTime;
+            doctor1Value.textContent = doctor1Name;
+            doctor2Value.textContent = doctor2Name;
+            patientName.innerHTML = `${doctor1Name} <span class="status-dot-active">Active</span>`;
+
         }
+        copyIc.addEventListener("click", async ()=>
+        {
+            const sessionCode = sessionIdValue.textContent;
+            await navigator.clipboard.writeText(sessionCode);  //copies text into clipboard as navigation is a browser property
+            copyIc.setAttribute("data-lucide", "check");         //lucide is a built in symbols instead of us to design
+            lucide.createIcons();
+            setTimeout(()=>
+            {
+                console.log("timeout fired");
+                copyIc.setAttribute("data-lucide", "copy");
+                lucide.createIcons();
+            }, 1000);
+        });
+        attachmentActionBtn.addEventListener("click", ()=>
+        {
+            filePicker.click();
+        });
+        filePicker.addEventListener("change", () => {
+
+            const files = Array.from(filePicker.files);
+
+            files.forEach((file) => {
+
+                const isDuplicate = selectedFiles.some(f =>
+                    f.name === file.name &&
+                    f.size === file.size &&
+                    f.type === file.type
+                );
+
+                if (!isDuplicate) {
+                    selectedFiles.push(file);
+                }
+            });
+
+            renderFiles();
+            filePicker.value = "";
+        });
+function renderFiles() 
+{
+    filePreviewBox.innerHTML = "";
+
+    selectedFiles.forEach((file, index) => {
+
+        let iconName = "file";
+
+        if (file.type.includes("image")) iconName = "image";
+        else if (file.type.includes("video")) iconName = "video";
+        else if (file.type.includes("audio")) iconName = "music";
+        else if (file.type.includes("pdf")) iconName = "file-text";
+
+        const filechip = document.createElement("div");
+        filechip.classList.add("file-chip");
+
+        filechip.innerHTML = `
+            <i data-lucide="${iconName}" class="file-icon"></i>
+            <span>${file.name}</span>
+            <button class="remove-file">✕</button>
+        `;
+
+        // remove file
+        filechip.querySelector(".remove-file").addEventListener("click", () => {
+            selectedFiles.splice(index, 1);
+            renderFiles();
+        });
+
+        filePreviewBox.append(filechip);
+    });
+
+    lucide.createIcons();
+}
+let notesSaveTimeout = null;
+
+notesBox.addEventListener("input", () => {
+
+    clearTimeout(notesSaveTimeout);
+
+    notesSaveTimeout = setTimeout(async () => {
+
+        const payload = {
+            sessionId: sessionIdValue.textContent,
+            notes: notesBox.value.trim(),
+            updatedAt: new Date().toISOString()
+        };
+
+        try {
+            const res = await fetch("/notes/update", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "Authorization": `Bearer ${accessToken}`
+                },
+                body: JSON.stringify(payload)
+            });
+
+            if (!res.ok) {
+                console.log("Notes update failed");
+            }
+
+        } catch (err) {
+            console.error("Network error:", err);
+        }
+
+    }, 800);
+});
     </script>
 </body>
 </html>
