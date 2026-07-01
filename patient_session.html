@@ -150,6 +150,7 @@
                             <div class="message-wrapper">
                                 <span class="sender-title">Dr. Sarah Johnson</span>
                                 <div class="bubble">
+                                    <div class="attachments-container"></div>
                                     <p>Hello John, how are you feeling today?</p>
                                     <span class="timestamp">10:30 AM</span>
                                 </div>
@@ -160,6 +161,7 @@
                         <div class="chat-row message-outgoing">
                             <div class="message-wrapper">
                                 <div class="bubble">
+                                    <div class="attachments-container"></div>
                                     <p>I am feeling better than yesterday, but still have some pain.</p>
                                     <div class="bubble-status">
                                         <span class="timestamp">10:31 AM</span>
@@ -176,6 +178,7 @@
                             <div class="message-wrapper">
                                 <span class="sender-title">Dr. Sarah Johnson</span>
                                 <div class="bubble">
+                                    <div class="attachments-container"></div>
                                     <p>Please upload your recent test report.</p>
                                     <span class="timestamp">10:32 AM</span>
                                 </div>
@@ -186,6 +189,7 @@
                         <div class="chat-row message-outgoing">
                             <div class="message-wrapper">
                                 <div class="bubble">
+                                    <div class="attachments-container"></div>
                                     <p>Sure, I will upload it.</p>
                                     <div class="bubble-status">
                                         <span class="timestamp">10:32 AM</span>
@@ -373,6 +377,7 @@
         const doctor2Value = document.querySelector(
             '.detail-row:nth-child(7) .doctor-sub-profile span'
         );
+        const chatBox = document.querySelector(".chat-viewport-window");
         const attachmentActionBtn = document.querySelector(".attachment-action-btn");
         const sendDataActionBtn = document.querySelector(".send-data-action-btn");
         const messageInputField = document.querySelector(".message-input-field");
@@ -382,6 +387,8 @@
         const filePreviewBox = document.querySelector(".file-preview-box");
         let messageList = [];
         let selectedFiles = []; //so that you can get files already on the text board
+        // let recentDate = null; dont use this because sometimes backend may send the text late but before that forward dates gets uploaded and it will create a mess the late becasue of network speed, delays etc
+        let user_id = null;
         async function askdata()
         {
             const result = await giveData();
@@ -390,6 +397,7 @@
             const doctor1Name = data.doctor1Name;
             const doctor2Name = data.doctor2Name;
             const name = data.name;
+            user_id = data.user_id;
             const patientFullName = data.patientName;
             const pavatarId = data.pavatarId;
             const davatarId = data.davatarId;
@@ -415,7 +423,62 @@
             doctor1Value.textContent = doctor1Name;
             doctor2Value.textContent = doctor2Name;
             patientName.innerHTML = `${doctor1Name} <span class="status-dot-active">Active</span>`;
-
+            showAllMessages();
+            startTimer();
+        }
+        function showAllMessages()      
+        {
+            chatBox.innerHTML = "";
+            let makehtml = "";
+            let recentDate = null;
+            messageList.forEach((message)=>
+            {
+                if(recentDate === null || recentDate!=message.date)
+                {
+                    recentDate = message.date;
+                    makehtml += `<div class="chat-date-separator">
+                                    <span>${recentDate}</span>
+                                </div>`
+                }
+                let bluetick; //in backend please have a list of who saw it but here send true or false
+                let avatarsrc = getAvatar(message.avatarId);
+                if(message.bluetick)
+                {
+                bluetick = "read-receipt";
+                }
+                else bluetick = "delivered";
+                if(message.sender_id === user_id)
+                {
+                    makehtml +=` <div class="chat-row message-outgoing">
+                                    <div class="message-wrapper">
+                                        <div class="bubble">
+                                            <p>${message.chattext}</p>
+                                            <div class="bubble-status">
+                                                <span class="timestamp">${message.timestamp}</span>
+                                                <i data-lucide="check-check" class=${bluetick}></i>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <img src=${avatarsrc} alt="Patient" class="msg-avatar">
+                                </div>
+                            `;
+                }
+                else 
+                {
+                    makehtml += `<div class="chat-row message-incoming">
+                                    <img src=${avatarsrc} alt="Doctor" class="msg-avatar">
+                                    <div class="message-wrapper">
+                                        <span class="sender-title">${message.senderName}</span>
+                                        <div class="bubble">
+                                            <p>${message.chattext}</p>
+                                            <span class="timestamp">${message.timestamp}</span>
+                                        </div>
+                                    </div>
+                                </div>
+`;
+                }
+            });
+            chatBox.innerHTML = makehtml;
         }
         copyIc.addEventListener("click", async ()=>
         {
@@ -436,11 +499,11 @@
         });
         filePicker.addEventListener("change", () => {
 
-            const files = Array.from(filePicker.files);
+            const files = Array.from(filePicker.files);  //to convert into array
 
             files.forEach((file) => {
 
-                const isDuplicate = selectedFiles.some(f =>
+                const isDuplicate = selectedFiles.some(f =>                //checks condition whether it satifies or not and return true false
                     f.name === file.name &&
                     f.size === file.size &&
                     f.type === file.type
@@ -478,7 +541,7 @@ function renderFiles()
 
         // remove file
         filechip.querySelector(".remove-file").addEventListener("click", () => {
-            selectedFiles.splice(index, 1);
+            selectedFiles.splice(index, 1);   //splice(index, deletcount, insertthis....) same order if only certain amount is given
             renderFiles();
         });
 
@@ -519,8 +582,10 @@ notesBox.addEventListener("input", () => {
             console.error("Network error:", err);
         }
 
-    }, 800);
+    }, 5000);
 });
+    
+
     </script>
 </body>
 </html>

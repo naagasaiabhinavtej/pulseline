@@ -441,7 +441,11 @@ a,
     height: 14px;
     color: #38bdf8;
 }
-
+.delivered{
+    width:14px;
+    height:14px;
+    color:rgba(255,255,255,0.9);
+}
 /* Chat Input Bottom Bar Footer */
 .chat-input-bar {
     display: flex;
@@ -1494,4 +1498,46 @@ a,
 }
 .file-chip:hover {
     background: #e9ecef;
+}
+.attachments-container:empty {
+    display: none;
+}
+/* ================================
+   CHAT ATTACHMENTS (ONLY ADDITION)
+   ================================ */
+
+.attachments-container {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    margin-top: 8px;
+}
+
+/* file inside chat bubble */
+.chat-file-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+
+    padding: 8px 10px;
+    border-radius: 10px;
+
+    font-size: 13px;
+    max-width: 220px;
+
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* incoming message file */
+.message-incoming .chat-file-item {
+    background: #eef2f7;
+    color: #1e293b;
+}
+
+/* outgoing message file */
+.message-outgoing .chat-file-item {
+    background: rgba(255, 255, 255, 0.18);
+    color: #ffffff;
 }

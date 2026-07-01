@@ -116,7 +116,7 @@ CREATE INDEX idx_attachment_session ON session_attachments(message_id);
 CREATE TABLE session_messages(
     message_id INTEGER PRIMARY KEY AUTOINCREMENT,
     session_id INTEGER NOT NULL,
-    uploaded_by VARCHAR(50) NOT NULL CHECK (uploaded_by IN ('local_clinic', 'major_hospital')),
+    uploaded_by VARCHAR(50) NOT NULL,
     message TEXT,
     uploaded_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (session_id) REFERENCES consultation_sessions(session_id)
