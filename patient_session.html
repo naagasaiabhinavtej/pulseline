@@ -324,7 +324,7 @@
         }
         async function giveData()
         {
-            const result = await fetch("/patient_sessions",
+            const result = await fetch("/patient_session",
             {
                 method:"GET",
                 headers:{
@@ -336,7 +336,7 @@
                 const data = await refreshtoken();
                 if(!data) return;
             }
-            const finalresult = await fetch("/patient_sessions",
+            const finalresult = await fetch("/patient_session",
             {
                 method:"GET",
                 headers:{
@@ -389,6 +389,7 @@
         let selectedFiles = []; //so that you can get files already on the text board
         // let recentDate = null; dont use this because sometimes backend may send the text late but before that forward dates gets uploaded and it will create a mess the late becasue of network speed, delays etc
         let user_id = null;
+        let avatarSrc = "";
         async function askdata()
         {
             const result = await giveData();
@@ -424,7 +425,21 @@
             doctor2Value.textContent = doctor2Name;
             patientName.innerHTML = `${doctor1Name} <span class="status-dot-active">Active</span>`;
             showAllMessages();
-            startTimer();
+            avatarSrc = patientAvatar.src;
+            let merged_start = new Date(`${startDate}T${startTime}`);             //T is a seperator
+            startTimer(merged_start);
+            setInterval(startTimer, 1000, merged_start );     //setInterval(startTimer, 1000, arg1, arg2, arg3);
+        }
+        document.addEventListener("DOMContentLoaded", askData);
+        function startTimer(merged_start)
+        {
+            let now = new Date();
+            let diff = Math.floor((now - merged_start)/1000);        //returns in milliseconds if subtracted hence /1000
+            let days = Math.floor(diff/86400);
+            let hours = Math.floor((diff%86400)/3600);
+            let minutes = Math.floor((diff%3600)/60);
+            let seconds = diff%60;
+            timerDigits.textContent = `${days}D:${String(hours).padStart(2, "0")}:${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`;
         }
         function showAllMessages()      
         {
@@ -440,6 +455,13 @@
                                     <span>${recentDate}</span>
                                 </div>`
                 }
+                let filePath = "";
+                if(message.file_name)
+                {
+                    filePath = `<a href="/${message.file_Path}" target = "_blank">         
+                                    📄 ${message.file_name}
+                                </a>` //backend has to be careful while giving the filepath as people can get into the folders of the servers
+                }
                 let bluetick; //in backend please have a list of who saw it but here send true or false
                 let avatarsrc = getAvatar(message.avatarId);
                 if(message.bluetick)
@@ -449,27 +471,33 @@
                 else bluetick = "delivered";
                 if(message.sender_id === user_id)
                 {
-                    makehtml +=` <div class="chat-row message-outgoing">
+                    makehtml +=` <div class="chat-row message-outgoing" data-id="${message.tempId}">
                                     <div class="message-wrapper">
                                         <div class="bubble">
+                                            <div class="attachments-container">${filePath}</div>
                                             <p>${message.chattext}</p>
                                             <div class="bubble-status">
                                                 <span class="timestamp">${message.timestamp}</span>
-                                                <i data-lucide="check-check" class=${bluetick}></i>
+                                                <i data-lucide="check-check" class="${bluetick}"></i>
                                             </div>
                                         </div>
                                     </div>
-                                    <img src=${avatarsrc} alt="Patient" class="msg-avatar">
+                                    <img src="${avatarsrc}" alt="Patient" class="msg-avatar">
                                 </div>
                             `;
                 }
                 else 
                 {
-                    makehtml += `<div class="chat-row message-incoming">
+                    socket.send(JSON.stringify({
+                        type:"read",
+                        message:message.tempId
+                    }));
+                    makehtml += `<div class="chat-row message-incoming" data-id="${message.tempId}>
                                     <img src=${avatarsrc} alt="Doctor" class="msg-avatar">
                                     <div class="message-wrapper">
                                         <span class="sender-title">${message.senderName}</span>
                                         <div class="bubble">
+                                            <div class="attachments-container">${filePath}</div>
                                             <p>${message.chattext}</p>
                                             <span class="timestamp">${message.timestamp}</span>
                                         </div>
@@ -479,6 +507,7 @@
                 }
             });
             chatBox.innerHTML = makehtml;
+            chatBox.scrollTop = chatBox.scrollHeight;  //shows the bottom message for the user scrollTop means how much dowwn you scrolled and scroll height is the total length of the chatbox
         }
         copyIc.addEventListener("click", async ()=>
         {
@@ -584,8 +613,220 @@ notesBox.addEventListener("input", () => {
 
     }, 5000);
 });
-    
 
-    </script>
+//websocket setup
+const socket = new WebSocket("`ws://${window.location.host}/ws`");
+messageInputField.addEventListener("keydown", (e) => {
+    if (e.key === "Enter") {
+        e.preventDefault();
+        handleSend();
+    }
+});
+
+sendActionSubmitBtn.addEventListener("click", handleSend);
+
+function handleSend() {
+    const text = messageInputField.value.trim();
+    if (!text && selectedFiles.length === 0) return;
+    const files = [...selectedFiles];           //if you copy directly both will point to the same element so if selectedFiles = [] then it means files = []
+
+    // CASE 1: NO FILES → just text message
+    if (files.length === 0) {
+        const tempId = crypto.randomUUID();    //so that frontend knows next which message to change when websocket send it
+        showMessage({
+            tempId,
+            sender_id: user_id,
+            chattext: text,
+            files: [],
+            timestamp: new Date().toLocaleTimeString(),
+            status: "sending"
+        });
+
+        socket.send(JSON.stringify({
+            type: "new_message",
+            tempId,
+            text,
+            files: [],
+            sessionId: sessionIdValue.textContent,
+            timestamp: new Date().toISOString(),
+            sender_id: user_id
+        }));
+
+        messageInputField.value = "";
+        return;
+    }
+
+    // CASE 2: FILES EXIST → text only goes to FIRST file
+    files.forEach((file, index) => {
+
+        const tempId = crypto.randomUUID();
+        const fileObj = {
+            name: file.name,
+            type: file.type
+        };
+
+        showMessage({
+            tempId,
+            sender_id: user_id,
+            chattext: index === 0 ? text : "",   // 👈 ONLY FIRST FILE GETS TEXT
+            files: [fileObj],
+            timestamp: new Date().toLocaleTimeString(),
+            status: "sending"
+        });
+
+        socket.send(JSON.stringify({
+            type: "new_message",
+            tempId,
+            text: index === 0 ? text : "",
+            files: [fileObj],
+            sessionId: sessionIdValue.textContent,
+            timestamp: new Date().toISOString(),
+            sender_id: user_id
+        }));
+    });
+
+    // cleanup
+    selectedFiles = [];
+    renderFiles();
+    messageInputField.value = "";
+}
+
+function showMessage({
+    sender_id,
+    chattext = "",
+    files = [],
+    avatarId = null,
+    senderName = "",
+    timestamp = "",
+    status = "sent",   // "sent" | "sending" | "delivered" | "read"
+    tempId = ""
+}) {
+    const chatBox = document.querySelector(".chat-viewport-window");
+    const isOutgoing = sender_id === user_id;
+    const avatar = avatarId ? getAvatar(avatarId) : avatarsrc;
+    // file (ONE file per message)
+    const file = files?.[0];
+    const fileHTML = file?.file_Path
+        ? `<a href="${file.file_Path}" target="_blank">
+              📄 ${file.file_name}
+           </a>`
+        : "";
+    // tick system (WhatsApp style)
+    let tickIcon = "check";
+    let tickClass = "sending";
+    if (status === "delivered") 
+    {
+        tickIcon = "check-check";
+        tickClass = "delivered";
+    } 
+    else if (status === "read") 
+    {
+        tickIcon = "check-check";
+        tickClass = "read-receipt";
+    }
+
+    const tickHTML = isOutgoing
+        ? `<i data-lucide="${tickIcon}" class="${tickClass}"></i>`
+        : "";
+
+    // OUTGOING HTML
+    const outgoingHTML = `
+        <div class="chat-row message-outgoing" data-id="${tempId}">
+
+            <div class="message-wrapper">
+                <div class="bubble">
+
+                    <div class="attachments-container">
+                        ${fileHTML}
+                    </div>
+
+                    <p>${chattext}</p>
+
+                    <div class="bubble-status">
+                        <span class="timestamp">${timestamp}</span>
+                        ${tickHTML}
+                    </div>
+
+                </div>
+            </div>
+
+            <img src="${avatar}" class="msg-avatar">
+
+        </div>
+    `;
+
+    // INCOMING HTML
+    const incomingHTML = `
+        <div class="chat-row message-incoming">
+
+            <img src="${avatar}" class="msg-avatar">
+
+            <div class="message-wrapper">
+
+                <span class="sender-title">${senderName}</span>
+
+                <div class="bubble">
+
+                    <div class="attachments-container">
+                        ${fileHTML}
+                    </div>
+
+                    <p>${chattext}</p>
+
+                    <span class="timestamp">${timestamp}</span>
+
+                </div>
+            </div>
+
+        </div>
+    `;
+
+    chatBox.insertAdjacentHTML("beforeend", isOutgoing ? outgoingHTML : incomingHTML);  //because we are sending strings but if you want to send the objects like div and div.innerHtml then you can use appendchild
+    lucide.createIcons();
+}
+socket.onmessage((message)=>{
+    const data = JSON.parse(message.data); //as message is like object having data, websokcet no, and additional details.
+    if(data.type === "delivered" || data.type === "read")
+    {
+        const msg = querySelector(`[data-id=${data.tempId}] i`);
+        if(msg)
+        {
+            msg.setAttribute("data-lucide", "check-check");
+            msg.className = data.type === "read" ? "read-receipt" : "delivered";
+            lucide.createIcons(); 
+            msg.closest(".chat-row").setAttribute("data-id", data.messageId);    //closest() shows the recent top data which has this class name
+        }
+    }
+    else if(message.type === "sent")
+    {
+        showMessage(data);
+        socket.send(JSON.stringify({
+            type:"read",
+            message:data.messageId
+        }));
+    }
+});
+sendDataActionBtn.addEventListener("click", ()=>
+{
+    socket.send(JSON.stringify({
+        type:"patient_medical_history"
+    }));
+});
+socket.onmessage = (message)=>
+{
+    const data = JSON.parse(message.data);
+    if(data.type === "patient_medical_file")
+    {
+        selectedFiles.push(data.file);                                    
+        messageInputField.value = "My Medical History ⤴";           
+        renderFiles(); 
+        handleSend();
+        //data.file = {
+        // name: "report.pdf",
+        // type: "application/pdf"
+        // }
+    }
+};
+</script>
 </body>
 </html>

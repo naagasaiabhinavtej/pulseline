@@ -563,3 +563,10 @@ a,
     line-height: 1.5; 
     color: #475569; 
 }
+.telemetry-row.passing {
+    color: #22c55e;
+}
+
+.telemetry-row.warning {
+    color: #ef4444;
+}

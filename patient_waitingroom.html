@@ -72,7 +72,7 @@
                     <img src="https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?auto=format&fit=crop&q=80&w=100" alt="John Doe" class="patient-avatar">
                     <div class="patient-title">
                         <h2>John Doe <span class="status-dot-active">Active</span></h2>
-                        <p>Age: 28 • Male</p>
+                        <p>Assigned Doctor</p>
                     </div>
                 </div>
                 
@@ -127,8 +127,8 @@
                         <div class="media-preview-box">
                             <video id="local-preview-mirror" autoplay muted></video>
                             <div class="preview-overlay-controls">
-                                <button class="icon-toggle-circle"><i data-lucide="mic"></i></button>
-                                <button class="icon-toggle-circle"><i data-lucide="video"></i></button>
+                                <button class="icon-toggle-circle"><i id="mic-icon" data-lucide="mic"></i></button>
+                                <button class="icon-toggle-circle"><i id="video-icon" data-lucide="video"></i></button>
                             </div>
                         </div>
                         
@@ -139,7 +139,7 @@
                             
                             <div class="participant-status-callout">
                                 <i data-lucide="info"></i>
-                                <span>Patient <strong>John Doe</strong> is inside the room awaiting connection.</span>
+                                <span>Patient <strong>John Doe</strong> and Doctor<strong>Abhinav tej </strong>is inside the room awaiting connection.</span>
                             </div>
                             
                             <button class="action-join-stream-btn" onclick="alert('Establishing streaming broadcast protocols...')">
@@ -149,7 +149,6 @@
                         </div>
                     </div>
                 </div>
-
                 <aside class="metadata-sidebar card-base">
                     <div class="panel-section-title">
                         <h3>Session Details</h3>
@@ -184,16 +183,21 @@
                             <span class="status-pill-green">Active</span>
                         </div>
                         <div class="detail-row">
-                            <span class="row-label">Doctor</span>
-                            <div class="doctor-sub-profile">
-                                <img src="https://images.unsplash.com/photo-1559839734-2b71ea197ec2?auto=format&fit=crop&q=80&w=60" alt="Doctor avatar">
+                            <span class="row-label">Doctor 1</span>
+                            <div class="doctor-sub-profile" id="Doctor1">
                                 <span>Dr. Sarah Johnson</span>
                             </div>
                         </div>
-                        <div class="detail-row notes-vertical-layout">
-                            <span class="row-label">Notes</span>
-                            <p class="row-paragraph-value">Discuss test results and follow-up treatment plan.</p>
+                          <div class="detail-row">
+                            <span class="row-label">Doctor 2</span>
+                            <div class="doctor-sub-profile" id="Doctor2">
+                                <span>Dr. Sarah Johnson</span>
+                            </div>
                         </div>
+                        <!-- <div class="detail-row notes-vertical-layout">
+                            <span class="row-label">Notes</span>
+                            <p class="row-paragraph-value">Discuss tet results and follow-up treatment plan.</p>
+                        </div> -->
                     </div>
                 </aside>
 
@@ -203,10 +207,216 @@
 
     <script>
         lucide.createIcons();
-        if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
-            navigator.mediaDevices.getUserMedia({ video: true, audio: false })
-                .then(stream => { document.getElementById('local-preview-mirror').srcObject = stream; })
+        let accessToken = null;
+        async function refreshtoken()
+        {
+            const result = await fetch("/refresh",
+                {
+                    method:"GET",
+                    credentials: "include"
+                });
+            if(result.ok)
+            {
+                const data = await result.json();
+                accessToken = data.access_token;
+                return accessToken;
+            }
+            else
+            {
+                window.location.href="login.html";
+                return null;
+            }
+        }
+        function getColor(index) 
+        {
+            const colors = ["blue", "green", "purple", "orange"];
+            return colors[index % 4];
+        }
+        function getAvatar(id) 
+        {
+            if (id === "first") return "avatar_patients/adult-female.png";
+            if (id === "second") return "avatar_patients/adult-male.png";
+            if (id === "third") return "avatar_patients/old-female.png";
+            if (id === "fourth") return "avatar_patients/old-male.png";
+            if (id === "fifth") return "avatar_patients/young-boy.png";
+            if (id === "sixth") return "avatar_patients/young-girl.png";            
+        }
+        async function giveData()
+        {
+            const result = await fetch("/patient_session",
+            {
+                method:"GET",
+                headers:{
+                    "Authorization":`Bearer ${accessToken}`
+                }
+            });
+            if(result.status === 401)
+            {
+                const data = await refreshtoken();
+                if(!data) return;
+            }
+            const finalresult = await fetch("/patient_session",
+            {
+                method:"GET",
+                headers:{
+                    "Authorization":`Bearer ${accessToken}`
+                }
+            });
+            return finalresult;
+        }
+        const micButton = document.querySelector(
+            ".preview-overlay-controls .icon-toggle-circle:first-child"
+        );
+        const videoButton = document.querySelector(
+            ".preview-overlay-controls .icon-toggle-circle:last-child"
+        );
+        const localPreview = document.getElementById("local-preview-mirror");
+        const sessionIdTop = document.querySelector(
+            ".meta-value-code span"
+        );
+        const sessionStartTop = document.querySelector(
+            ".meta-value span"
+        );
+        const timerDigits = document.querySelector(".timer-digits");
+        const doctorAvatar = document.querySelector(".patient-avatar");
+        const doctorName = document.querySelector(
+            ".patient-title h2"
+        );
+        const cameraStatus = document.querySelectorAll(".telemetry-row")[0];
+        const micStatus = document.querySelectorAll(".telemetry-row")[1];
+        const participantStatusBox = document.querySelector(
+            ".participant-status-callout span"
+        );
+        const joinButton = document.querySelector(
+            ".action-join-stream-btn"
+        );
+        const joinButtonText = document.querySelector(
+            ".action-join-stream-btn span"
+        );
+        const sessionIdSide = document.querySelector(".badge-id");
+        const patientNameSide = document.querySelector(
+            ".detail-row:nth-child(2) .row-value"
+        );
+        const patientAgeGenderSide = document.querySelector(
+            ".detail-row:nth-child(3) .row-value"
+        );
+        const startDateSide = document.querySelector(
+            ".detail-row:nth-child(4) .weight-bold"
+        );
+        const startTimeSide = document.querySelector(
+            ".detail-row:nth-child(4) small"
+        );
+        const Doctor1 = document.getElementById("Doctor1");
+        const Doctor2 = document.getElementById("Doctor2");
+        const PatientName = document.querySelector(
+            ".doctor-sub-profile span"
+        );
+        const headerPatientAvatar = document.querySelector(
+            ".profile-card .avatar"
+        );
+        const headerPatientName = document.querySelector(
+            ".profile-name"
+        );
+        const micIcon = document.getElementById("mic-icon");
+        const videoIcon = document.getElementById("video-icon");
+        let localStream;
+        if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) 
+        {
+            navigator.mediaDevices.getUserMedia({ video:true, audio: true })
+                .then(stream => {
+                    localStream = stream;
+                     document.getElementById('local-preview-mirror').srcObject = stream; }
+                    )
                 .catch(err => { console.warn("Camera pipeline visualization bypassed.", err); });
+        }
+        micButton.addEventListener("click", toggleMic);
+        videoButton.addEventListener("click", toggleVideo);
+        function toggleMic()
+        {
+            if(!localStream) return;
+
+            const audioTrack = localStream.getAudioTracks()[0];
+            if(!audioTrack) return;
+
+            audioTrack.enabled = !audioTrack.enabled;
+
+            // ICON UPDATE
+            micIcon.setAttribute(
+                "data-lucide",
+                audioTrack.enabled ? "mic" : "mic-off"
+            );
+
+            lucide.createIcons();
+
+            // 🔥 TELEMETRY UPDATE
+            if(audioTrack.enabled)
+            {
+                micStatus.classList.remove("warning");
+                micStatus.classList.add("passing");
+
+                micStatus.innerHTML = `
+                    <i data-lucide="check-circle-2"></i>
+                    Mic: Active
+                `;
+            }
+            else
+            {
+                micStatus.classList.remove("passing");
+                micStatus.classList.add("warning");
+
+                micStatus.innerHTML = `
+                    <i data-lucide="mic-off"></i>
+                    Mic: Muted
+                `;
+            }
+
+            lucide.createIcons();
+        }
+        function toggleVideo()
+        {
+            if(!localStream) return;
+
+            const videoTrack = localStream.getVideoTracks()[0];
+            if(!videoTrack) return;
+
+            videoTrack.enabled = !videoTrack.enabled;
+
+            videoIcon.setAttribute(
+                "data-lucide",
+                videoTrack.enabled ? "video" : "video-off"
+            );
+
+            lucide.createIcons();
+
+            // 🔥 TELEMETRY UPDATE
+            if(videoTrack.enabled)
+            {
+                cameraStatus.classList.remove("warning");
+                cameraStatus.classList.add("passing");
+
+                cameraStatus.innerHTML = `
+                    <i data-lucide="check-circle-2"></i>
+                    Camera: Active
+                `;
+            }
+            else
+            {
+                cameraStatus.classList.remove("passing");
+                cameraStatus.classList.add("warning");
+
+                cameraStatus.innerHTML = `
+                    <i data-lucide="video-off"></i>
+                    Camera: Off
+                `;
+            }
+
+            lucide.createIcons();
+        }
+        async function askData()
+        {
+            const res = await giveData();
+            if(!res || !res.ok) return;
+
         }
     </script>
 </body>
