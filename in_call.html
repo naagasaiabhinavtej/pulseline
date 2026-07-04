@@ -13,12 +13,53 @@
 
         /* Video Tiles */
         .video-tile { background: #333; border-radius: 8px; aspect-ratio: 16/9; cursor: pointer; border: 2px solid transparent; display: flex; align-items: center; justify-content: center; position: relative; }
-        .video-tile:hover { border-color: #3b82f6; }
-        .video-tile.pinned { border: 2px solid #f59e0b; }
-
+        .video-tile:hover { border-color: #4b8ced; }
+        .video-tile.pinned { border: 2px solid #f5f2ee; }
+        .video-tile video,
+        .viewport video{
+            width:100%;
+            height:100%;
+            object-fit:cover;
+            border-radius:8px;
+        }
+        .participant-name{
+            position:absolute;
+            bottom:10px;
+            left:10px;
+            background:rgba(0,0,0,0.55);
+            padding:5px 10px;
+            border-radius:5px;
+            font-size:14px;
+            z-index:20;
+        }
+        .main-participant-name{
+            font-size:18px;
+        }
+        .camera-off-overlay{
+            position:absolute;
+            inset:0;
+            display:none;
+            justify-content:center;
+            align-items:center;
+            background:#333;
+            z-index:10;
+        }
+        .camera-off-overlay svg{
+            width:42px;
+            height:42px;
+        }
         /* Main View */
-        .viewport { flex: 1; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; color: #666; }
+        .viewport{
+            flex:1;
+            display:flex;
+            align-items:center;
+            justify-content:center;
+            font-size:1.5rem;
+            color:#666;
 
+            position:relative;
+            overflow:hidden;
+        }
         /* Fixed Zoom-style Controls */
         .toolbar { height: 80px; background: #000; display: flex; justify-content: center; align-items: center; gap: 40px; border-top: 1px solid #333; }
         .ctrl-btn { display: flex; flex-direction: column; align-items: center; gap: 5px; color: white; cursor: pointer; border: none; background: none; font-size: 0.8rem; }
@@ -30,13 +71,48 @@
 <body>
 
 <div class="sidebar" id="sidebar">
-    <div class="video-tile pinned" onclick="pinVideo('Doctor')">Doctor</div>
-    <div class="video-tile" onclick="pinVideo('Patient')">Patient</div>
-    <div class="video-tile" onclick="pinVideo('Observer')">Observer</div>
+    <div class="video-tile pinned" onclick="pinVideo('patient')">
+        <video id="patientVideo" autoplay playsinline muted></video>
+        <div class="camera-off-overlay" id="patientCameraOff">
+            <i data-lucide="video-off"></i>
+        </div>
+        <div class="participant-name" id="patientName">
+            Patient
+        </div>
+    </div>
+
+    <div class="video-tile" onclick="pinVideo('doctor1')">
+        <video id="doctor1Video" autoplay playsinline muted></video>
+        <div class="camera-off-overlay" id="doctor1CameraOff">
+            <i data-lucide="video-off"></i>
+        </div>
+        <div class="participant-name" id="doctor1Name">
+            Doctor 1
+        </div>
+    </div>
+
+    <div class="video-tile" onclick="pinVideo('doctor2')">
+        <video id="doctor2Video" autoplay playsinline muted></video>
+        <div class="camera-off-overlay" id="doctor2CameraOff">
+            <i data-lucide="video-off"></i>
+        </div>
+        <div class="participant-name" id="doctor2Name">
+            Doctor 2
+        </div>
+    </div>
+
 </div>
 
 <div class="main-stage">
-    <div class="viewport" id="mainView">Selected: Doctor</div>
+    <div class="viewport">
+        <video id="mainVideo" autoplay playsinline></video>
+        <div class="camera-off-overlay main-camera-off" id="mainCameraOff">
+            <i data-lucide="video-off"></i>
+        </div>
+        <div class="participant-name main-participant-name" id="mainParticipantName">
+            Patient
+        </div>
+    </div>
     
     <div class="toolbar">
         <button class="ctrl-btn"><i data-lucide="mic"></i>Mute</button>
@@ -52,14 +128,17 @@
         <strong>Clinical Notes</strong>
         <i data-lucide="x" onclick="toggleNotes()" style="cursor:pointer"></i>
     </div>
-    <textarea style="flex:1; border:none; padding:15px; resize:none;"></textarea>
+    <textarea style="flex:1; border:none; padding:15px; resize:none;">These notes are not permanent, just for temporary purpose</textarea>
 </div>
 
 <script>
     lucide.createIcons();
-
+    // document.getElementById("patientCameraOff").style.display = "none";
+    // document.getElementById("doctor1CameraOff").style.display = "none";
+    // document.getElementById("doctor2CameraOff").style.display = "none";
+    // document.getElementById("mainCameraOff").style.display = "none";
     function pinVideo(name) {
-        document.getElementById('mainView').innerText = "Active Video: " + name;
+        // document.getElementById('mainView').innerText = "Active Video: " + name;
     }
 
     function toggleNotes() {

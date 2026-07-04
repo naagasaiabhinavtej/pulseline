@@ -47,7 +47,7 @@
         <main class="main-content">
             
             <header class="session-top-nav">
-                <a href="index.html" class="back-link">
+                <a href="patient_sessions.html" class="back-link">
                     <i data-lucide="arrow-left"></i>
                     <span>Back to Active Sessions</span>
                 </a>
@@ -317,8 +317,8 @@
         const headerPatientName = document.querySelector(
             ".profile-name"
         );
-        const micIcon = document.getElementById("mic-icon");
-        const videoIcon = document.getElementById("video-icon");
+        // const micIcon = document.getElementById("mic-icon");
+        // const videoIcon = document.getElementById("video-icon");
         let localStream;
         if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) 
         {
@@ -341,12 +341,12 @@
             audioTrack.enabled = !audioTrack.enabled;
 
             // ICON UPDATE
-            micIcon.setAttribute(
-                "data-lucide",
-                audioTrack.enabled ? "mic" : "mic-off"
-            );
+            micButton.innerHTML = `
+                <i data-lucide="${audioTrack.enabled ? "mic" : "mic-off"}"></i>
+            `;
 
             lucide.createIcons();
+
 
             // 🔥 TELEMETRY UPDATE
             if(audioTrack.enabled)
@@ -381,14 +381,12 @@
 
             videoTrack.enabled = !videoTrack.enabled;
 
-            videoIcon.setAttribute(
-                "data-lucide",
-                videoTrack.enabled ? "video" : "video-off"
-            );
+            videoButton.innerHTML = `
+                <i data-lucide="${videoTrack.enabled ? "video" : "video-off"}"></i>
+            `;
 
             lucide.createIcons();
 
-            // 🔥 TELEMETRY UPDATE
             if(videoTrack.enabled)
             {
                 cameraStatus.classList.remove("warning");
