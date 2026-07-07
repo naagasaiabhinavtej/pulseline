@@ -279,9 +279,9 @@
                         <p class="block-subtitle">Track your vital signs over time. Add new readings to keep your data up to date.</p>
                     </div>
                     <div class="timeframe-selector">
-                        <button class="time-btn">7D</button>
+                        <button class="time-btn active">7D</button>
                         <button class="time-btn">30D</button>
-                        <button class="time-btn active">90D</button>
+                        <!-- <button class="time-btn active">90D</button> -->
                         <button class="time-btn">All</button>
                     </div>
                 </div>
@@ -307,38 +307,18 @@
                         
                         <!-- Embedded Visual Vector Data Rendering Layer Graph Component -->
                         <div class="canvas-chart-wrapper">
-                            <div class="y-axis-labels">
+                            <!-- <div class="y-axis-labels">
                                 <span>160/100</span><span>140/90</span><span>120/80</span><span>100/60</span><span>80/40</span>
-                            </div>
+                            </div> -->
                             <div class="grid-and-vector">
                                 <div class="chart-container" id="chartContainer">
-                                <svg class="chart-svg-layer" viewBox="0 0 500 120" preserveAspectRatio="none">
-                                    <!-- Grid Dotted Paths lines -->
-                                    <line x1="0" y1="0" x2="500" y2="0" stroke="#F1F5F9" stroke-dasharray="3,3" />
-                                    <line x1="0" y1="30" x2="500" y2="30" stroke="#F1F5F9" stroke-dasharray="3,3" />
-                                    <line x1="0" y1="60" x2="500" y2="60" stroke="#E2E8F0" />
-                                    <line x1="0" y1="90" x2="500" y2="90" stroke="#F1F5F9" stroke-dasharray="3,3" />
-                                    <line x1="0" y1="120" x2="500" y2="120" stroke="#F1F5F9" stroke-dasharray="3,3" />
-                                    
-                                    <!-- Area Fills -->
-                                    <path d="M0,40 L60,35 L120,45 L180,32 L240,30 L300,42 L360,38 L420,48 L500,55 L500,120 L0,120 Z" fill="rgba(124, 58, 237, 0.03)" />
-                                    <path d="M0,65 L60,65 L120,70 L180,62 L240,64 L300,72 L360,66 L420,74 L500,82 L500,120 L0,120 Z" fill="rgba(79, 70, 229, 0.03)" />
-                                    
-                                    <!-- Systolic Line Graph path -->
-                                    <path d="M0,40 L60,35 L120,45 L180,32 L240,30 L300,42 L360,38 L420,48 L500,55" fill="none" stroke="#7C3AED" stroke-width="2.5" />
-                                    <!-- Diastolic Line Graph path -->
-                                    <path d="M0,65 L60,65 L120,70 L180,62 L240,64 L300,72 L360,66 L420,74 L500,82" fill="none" stroke="#4F46E5" stroke-width="2.5" />
-                                    
-                                    <!-- Data node circular rendering plots points -->
-                                    <circle cx="60" cy="35" r="3.5" fill="#7C3AED" /><circle cx="120" cy="45" r="3.5" fill="#7C3AED" /><circle cx="180" cy="32" r="3.5" fill="#7C3AED" /><circle cx="240" cy="30" r="3.5" fill="#7C3AED" /><circle cx="300" cy="42" r="3.5" fill="#7C3AED" /><circle cx="360" cy="38" r="3.5" fill="#7C3AED" /><circle cx="420" cy="48" r="3.5" fill="#7C3AED" /><circle cx="500" cy="55" r="3.5" fill="#7C3AED" />
-                                    <circle cx="60" cy="65" r="3.5" fill="#4F46E5" /><circle cx="120" cy="70" r="3.5" fill="#4F46E5" /><circle cx="180" cy="62" r="3.5" fill="#4F46E5" /><circle cx="240" cy="64" r="3.5" fill="#4F46E5" /><circle cx="300" cy="72" r="3.5" fill="#4F46E5" /><circle cx="360" cy="66" r="3.5" fill="#4F46E5" /><circle cx="420" cy="74" r="3.5" fill="#4F46E5" /><circle cx="500" cy="82" r="3.5" fill="#4F46E5" />
-                                </svg>
+                                    <canvas id="bpChart"></canvas>
                                 </div>
                             </div>
                         </div>
-                        <div class="x-axis-timeline">
+                        <!-- <div class="x-axis-timeline">
                             <span>Apr 21</span><span>Apr 28</span><span>May 5</span><span>May 12</span><span>May 19</span><span>May 26</span><span>Jun 2</span><span>jun 21 </span>
-                        </div>
+                        </div> -->
                         <div class="chart-legends-footer">
                             <span class="legend-item"><span class="legend-dot color-systolic"></span> Systolic</span>
                             <span class="legend-item"><span class="legend-dot color-diastolic"></span> Diastolic</span>
@@ -609,7 +589,313 @@
         </form>
     </div>
 </div>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<!-- Chart.js Zoom Plugin -->
+<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-zoom@2.2.0/dist/chartjs-plugin-zoom.min.js"></script>
 <script>
+
+const canvas1 = document.getElementById("bpChart");
+
+const ctx = canvas1.getContext("2d");
+
+const bpChart = new Chart(ctx, {
+
+    type:"line",
+
+    data:{
+
+        labels:[
+
+            "Jul 1",
+
+            "Jul 2",
+
+            "Jul 3",
+
+            "Jul 4",
+
+            "Jul 5",
+
+            "Jul 6",
+
+            "Jul 7"
+
+        ],
+
+        datasets:[
+
+            {
+
+                label:"Systolic",
+
+                data:[120, 118, 122, 124, 121, 120, 124],
+
+                borderColor: "#7C3AED",
+
+
+
+                // Area below line
+
+                backgroundColor: "rgba(124,58,237,0.2)",
+
+
+
+                // Line thickness
+
+                borderWidth: 3,
+
+
+
+                // Smoothness
+
+                tension: 0.4,
+
+
+
+                // Point size
+
+                pointRadius: 4,
+
+
+
+                // Point size while hovering
+
+                pointHoverRadius: 7,
+
+
+
+                // Fill below line
+
+                fill: true
+
+            },
+
+            {
+
+                label:"Diastolic",
+
+                data:[80, 82, 79, 81, 83, 81, 82],
+
+                borderColor: "#2563EB",
+
+                backgroundColor: "rgba(37,99,235,0.2)",
+
+                borderWidth: 3,
+
+                tension: 0.4,
+
+                pointRadius: 4,
+
+                pointHoverRadius: 7,
+
+                fill: true
+
+            }
+
+        ]
+
+    },
+
+    options:{
+
+        responsive:true,
+
+        maintainAspectRatio:false,
+
+        plugins:{
+
+            legend:{
+
+                display:false
+
+            },
+
+            tooltip:{
+
+                enabled:true,
+
+                 // Tooltip background
+
+                backgroundColor: "#222",
+
+
+
+                // Title color
+
+                titleColor: "#FFFFFF",
+
+
+
+                // Body color
+
+                bodyColor: "#FFFFFF",
+
+
+
+                // Space inside tooltip
+
+                padding: 10,
+
+
+
+                // Show small color boxes
+
+                displayColors: true,
+
+
+
+                callbacks:{
+
+                    label:function(context)
+
+                    {
+
+                        return context.dataset.label+":"+context.raw+" mmHg";
+
+                    }
+
+                }
+
+            },
+
+            zoom:{
+
+                pan:{
+
+                    enabled:true,
+
+                    mode:"x"
+
+                },
+
+                zoom: {
+
+
+
+                    wheel: {
+
+                        enabled:false
+
+                    },
+
+
+
+                    pinch: {
+
+                        enabled:false
+
+                    },
+
+                    mode:"x"
+
+                }
+
+            }
+
+        },
+
+        scales:{
+
+            x:{
+
+                display:true,
+
+                min:0,
+
+                max:6,
+
+                ticks:{display:true},
+
+                grid:{ display:false,
+
+                    color: "rgba(0, 0, 0, 0.1)"
+
+                },
+
+                title:{
+
+                    display:false,
+
+                    text:"Date"  
+
+                }
+
+            },
+
+            y:{
+
+                display:true,
+
+                min:40,
+
+                max:200,
+
+                ticks:{display:true},
+
+                grid:{
+
+                    display:false,
+
+                    color: "rgba(0, 0, 0, 0.1)"
+
+                },
+
+                title:{
+
+                    display:false,
+
+                    text:"Blood Pressure"
+
+                }
+
+            }
+
+        },
+
+        elements:{
+
+            line: {
+
+                // Default line width
+
+                borderWidth: 3,
+
+                // Default smoothness
+
+                tension: 0.4
+
+            },
+
+
+
+            point: {
+
+                // Default point size
+
+                radius: 4,
+
+                // Size while hovering
+
+                hoverRadius: 8
+
+            }
+
+        },
+
+        interaction:{
+
+            mode:"index",
+
+            intersect:false
+
+        }
+
+    }
+
+});
+
+
 const modal = document.getElementById("readingModal");
 const modalTitle = document.getElementById("modalTitle");
 const dynamicFields = document.getElementById("dynamicFields");

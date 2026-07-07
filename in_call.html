@@ -140,10 +140,11 @@
     function pinVideo(name) {
         // document.getElementById('mainView').innerText = "Active Video: " + name;
     }
-
+    let isNotesOpen = false;
     function toggleNotes() {
         const panel = document.getElementById('notesPanel');
-        panel.style.right = (panel.style.right === '0px') ? '-350px' : '0px';
+        isNotesOpen = !isNotesOpen;
+        panel.style.right = isNotesOpen ? '0px' : '-350px';
     }
 </script>
 </body>
