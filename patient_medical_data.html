@@ -259,13 +259,14 @@
                             </div>
                         </div>
 
-                        <div class="form-buttons-row">
-                            <button type="reset" class="btn-discard">
+                        <div class="form-buttons-row">          
+                            <button type="reset" class="btn-discard">  
                                 <i class="fa-regular fa-trash-can"></i> Discard Changes
                             </button>
                             <button type="submit" class="btn-save">
                                 <i class="fa-solid fa-download"></i> Save Changes
                             </button>
+                            <!-- as type=reset we are able to get the changes back -->
                         </div>
                     </form>
                 </section>
@@ -310,11 +311,11 @@
                             <!-- <div class="y-axis-labels">
                                 <span>160/100</span><span>140/90</span><span>120/80</span><span>100/60</span><span>80/40</span>
                             </div> -->
-                            <div class="grid-and-vector">
-                                <div class="chart-container" id="chartContainer">
+                            <!-- <div class="grid-and-vector"> -->
+                                <!-- <div class="chart-container" id="chartContainer"> -->
                                     <canvas id="bpChart"></canvas>
-                                </div>
-                            </div>
+                                <!-- </div> -->
+                            <!-- </div> -->
                         </div>
                         <!-- <div class="x-axis-timeline">
                             <span>Apr 21</span><span>Apr 28</span><span>May 5</span><span>May 12</span><span>May 19</span><span>May 26</span><span>Jun 2</span><span>jun 21 </span>
@@ -341,28 +342,7 @@
                         </div>
                         
                         <div class="canvas-chart-wrapper">
-                            <div class="y-axis-labels">
-                                <span>200</span><span>160</span><span>120</span><span>80</span><span>40</span>
-                            </div>
-                            <div class="grid-and-vector">
-                                <svg class="chart-svg-layer" viewBox="0 0 500 120" preserveAspectRatio="none">
-                                    <line x1="0" y1="0" x2="500" y2="0" stroke="#F1F5F9" stroke-dasharray="3,3" />
-                                    <line x1="0" y1="30" x2="500" y2="30" stroke="#F1F5F9" stroke-dasharray="3,3" />
-                                    <line x1="0" y1="60" x2="500" y2="60" stroke="#E2E8F0" />
-                                    <line x1="0" y1="90" x2="500" y2="90" stroke="#F1F5F9" stroke-dasharray="3,3" />
-                                    <line x1="0" y1="120" x2="500" y2="120" stroke="#F1F5F9" stroke-dasharray="3,3" />
-                                    
-                                    <path d="M0,75 L40,82 L80,72 L120,85 L160,70 L200,80 L240,68 L285,82 L330,70 L370,76 L410,72 L450,80 L500,84 L500,120 L0,120 Z" fill="rgba(16, 185, 129, 0.03)" />
-                                    
-                                    <path d="M0,75 L40,82 L80,72 L120,85 L160,70 L200,80 L240,68 L285,82 L330,70 L370,76 L410,72 L450,80 L500,84" fill="none" stroke="#10B981" stroke-width="2.5" />
-                                    <path d="M0,88 L50,92 L100,84 L150,96 L200,88 L250,90 L300,94 L350,86 L400,92 L450,90 L500,98" fill="none" stroke="#059669" stroke-width="1.5" stroke-dasharray="4,3" />
-                                    
-                                    <circle cx="80" cy="72" r="3.5" fill="#10B981" /><circle cx="160" cy="70" r="3.5" fill="#10B981" /><circle cx="240" cy="68" r="3.5" fill="#10B981" /><circle cx="330" cy="70" r="3.5" fill="#10B981" /><circle cx="410" cy="72" r="3.5" fill="#10B981" />
-                                </svg>
-                            </div>
-                        </div>
-                        <div class="x-axis-timeline">
-                            <span>Apr 21</span><span>Apr 28</span><span>May 5</span><span>May 12</span><span>May 19</span><span>May 26</span><span>Jun 2</span><span>Jun 9</span>
+                            <canvas id="bsChart"></canvas>
                         </div>
                         <div class="chart-legends-footer">
                             <span class="legend-item"><span class="legend-dot color-fasting"></span> Fasting</span>
@@ -387,26 +367,7 @@
                         </div>
                         
                         <div class="canvas-chart-wrapper">
-                            <div class="y-axis-labels">
-                                <span>39</span><span>38</span><span>37</span><span>36</span><span>35</span>
-                            </div>
-                            <div class="grid-and-vector">
-                                <svg class="chart-svg-layer" viewBox="0 0 500 120" preserveAspectRatio="none">
-                                    <line x1="0" y1="0" x2="500" y2="0" stroke="#F1F5F9" stroke-dasharray="3,3" />
-                                    <line x1="0" y1="30" x2="500" y2="30" stroke="#F1F5F9" stroke-dasharray="3,3" />
-                                    <line x1="0" y1="60" x2="500" y2="60" stroke="#E2E8F0" />
-                                    <line x1="0" y1="90" x2="500" y2="90" stroke="#F1F5F9" stroke-dasharray="3,3" />
-                                    <line x1="0" y1="120" x2="500" y2="120" stroke="#F1F5F9" stroke-dasharray="3,3" />
-                                    
-                                    <path d="M0,82 L40,78 L80,84 L120,80 L160,72 L200,68 L240,76 L280,70 L320,82 L360,74 L400,84 L440,78 L500,80 L500,120 L0,120 Z" fill="rgba(249, 115, 22, 0.03)" />
-                                    <path d="M0,82 L40,78 L80,84 L120,80 L160,72 L200,68 L240,76 L280,70 L320,82 L360,74 L400,84 L440,78 L500,80" fill="none" stroke="#F97316" stroke-width="2.5" />
-                                    
-                                    <circle cx="40" cy="78" r="3.5" fill="#F97316" /><circle cx="120" cy="80" r="3.5" fill="#F97316" /><circle cx="200" cy="68" r="3.5" fill="#F97316" /><circle cx="280" cy="70" r="3.5" fill="#F97316" /><circle cx="360" cy="74" r="3.5" fill="#F97316" /><circle cx="440" cy="78" r="3.5" fill="#F97316" />
-                                </svg>
-                            </div>
-                        </div>
-                        <div class="x-axis-timeline">
-                            <span>Apr 21</span><span>Apr 28</span><span>May 5</span><span>May 12</span><span>May 19</span><span>May 26</span><span>Jun 2</span><span>Jun 9</span>
+                            <canvas id="tempChart"></canvas>
                         </div>
                     </div>
 
@@ -427,26 +388,7 @@
                         </div>
                         
                         <div class="canvas-chart-wrapper">
-                            <div class="y-axis-labels">
-                                <span>120</span><span>100</span><span>80</span><span>60</span><span>40</span>
-                            </div>
-                            <div class="grid-and-vector">
-                                <svg class="chart-svg-layer" viewBox="0 0 500 120" preserveAspectRatio="none">
-                                    <line x1="0" y1="0" x2="500" y2="0" stroke="#F1F5F9" stroke-dasharray="3,3" />
-                                    <line x1="0" y1="30" x2="500" y2="30" stroke="#F1F5F9" stroke-dasharray="3,3" />
-                                    <line x1="0" y1="60" x2="500" y2="60" stroke="#E2E8F0" />
-                                    <line x1="0" y1="90" x2="500" y2="90" stroke="#F1F5F9" stroke-dasharray="3,3" />
-                                    <line x1="0" y1="120" x2="500" y2="120" stroke="#F1F5F9" stroke-dasharray="3,3" />
-                                    
-                                    <path d="M0,84 L40,86 L80,82 L120,78 L160,82 L200,76 L240,84 L280,74 L320,86 L360,80 L400,84 L440,88 L500,86 L500,120 L0,120 Z" fill="rgba(239, 68, 68, 0.03)" />
-                                    <path d="M0,84 L40,86 L80,82 L120,78 L160,82 L200,76 L240,84 L280,74 L320,86 L360,80 L400,84 L440,88 L500,86" fill="none" stroke="#EF4444" stroke-width="2.5" />
-                                    
-                                    <circle cx="120" cy="78" r="3.5" fill="#EF4444" /><circle cx="200" cy="76" r="3.5" fill="#EF4444" /><circle cx="280" cy="74" r="3.5" fill="#EF4444" /><circle cx="360" cy="80" r="3.5" fill="#EF4444" />
-                                </svg>
-                            </div>
-                        </div>
-                        <div class="x-axis-timeline">
-                            <span>Apr 21</span><span>Apr 28</span><span>May 5</span><span>May 12</span><span>May 19</span><span>May 26</span><span>Jun 2</span><span>Jun 9</span>
+                            <canvas id="heartChart"></canvas>
                         </div>
                     </div>
 
@@ -454,7 +396,7 @@
             </section>
 
             <!-- NEW SECTION: Recent 20 Sessions Log Records Table Frame Component -->
-            <section class="section-container">
+            <!-- <section class="section-container">
                 <div class="table-header-wrapper">
                     <h2 class="block-title">Recent 20 Sessions</h2>
                     <p class="block-subtitle">Your latest 20 recorded readings</p>
@@ -542,7 +484,7 @@
                         </tbody>
                     </table>
                 </div>
-            </section>
+            </section> -->
 
             <!-- Dashboard Encryption Guard Rails Footer -->
             <footer class="secure-footer">
@@ -590,129 +532,186 @@
     </div>
 </div>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-
 <!-- Chart.js Zoom Plugin -->
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-zoom@2.2.0/dist/chartjs-plugin-zoom.min.js"></script>
 <script>
+    let accessToken = null;
+    async function refreshtoken()
+    {
+        const result = await fetch("/refresh",
+            {
+                method:"GET",
+                credentials: "include"
+            });
+        if(result.ok)
+        {
+            const data = await result.json();
+            accessToken = data.access_token;
+            return accessToken;
+        }
+        else
+        {
+            window.location.href="login.html";
+            return null;
+        }
+    }
+    function calculateAdultBMI(bmi)
+    {
 
+        const healthyRange = "18.5 - 24.9";
+
+        let status;
+        let color;
+
+        if (bmi < 18.5) {
+            status = "Underweight";
+            color = "#3498DB";
+        }
+        else if (bmi < 25) {
+            status = "Healthy weight";
+            color = "#2ECC71";
+        }
+        else if (bmi < 30) {
+            status = "Overweight";
+            color = "#F39C12";
+        }
+        else {
+            status = "Obesity";
+            color = "#E74C3C";
+        }
+
+        return {
+            bmi: bmi,
+            status: status,
+            color: color,
+            healthyRange: healthyRange
+        };
+    }
+    function giveChildBmi(data, ageInmonths, bmi) //make sure in backend you send the correct data depending on the age<20
+    {
+        const row = data.find(r=>r.Month === ageInmonths);  //find is used to find
+        let status = "";
+        let color = "";
+        if(bmi<row.P5)
+        {
+            status = "Underweight";
+            color = "#3498DB";
+        }
+        else if(bmi<row.P85)
+        {
+            status = "Healthyweight";
+            color = "#2ECC71";
+        }
+        else if (bmi < row.P95) {
+            status = "Overweight";
+            color = "#F39C12";
+        }
+        else {
+            status = "Obesity";
+            color = "#E74C3C";
+        }
+        return {
+            status:status,
+            color:color,
+            healthy_range:`${row.P5} - ${row.P95}`
+        }
+    }
+    function getColor(index) 
+    {
+        const colors = ["blue", "green", "purple", "orange"];
+        return colors[index % 4];
+    }
+    function getAvatar(id) 
+    {
+        if (id === "first") return "avatar_patients/adult-female.png";
+        if (id === "second") return "avatar_patients/adult-male.png";
+        if (id === "third") return "avatar_patients/old-female.png";
+        if (id === "fourth") return "avatar_patients/old-male.png";
+        if (id === "fifth") return "avatar_patients/young-boy.png";
+        if (id === "sixth") return "avatar_patients/young-girl.png";            
+    }
+    async function giveData()
+    {
+        const result = await fetch("/patient_medical_data",
+        {
+            method:"GET",
+            headers:{
+                "Authorization":`Bearer ${accessToken}`
+            }
+        });
+        if(result.status === 401)
+        {
+            const data = await refreshtoken();
+            if(!data) return;
+        }
+        const finalresult = await fetch("/index",
+        {
+            method:"GET",
+            headers:{
+                "Authorization":`Bearer ${accessToken}`
+            }
+        });
+        return finalresult;
+    }
+const canvas2 = document.getElementById("bsChart");
+    async function askData()
+    {
+
+    }
 const canvas1 = document.getElementById("bpChart");
 
-const ctx = canvas1.getContext("2d");
+const ctx1 = canvas1.getContext("2d");
+const ctx2 = canvas2.getContext("2d");
+const bpLabels = [
+    "Jun 10","Jun 11","Jun 12","Jun 13","Jun 14","Jun 15","Jun 16",
+    "Jun 17","Jun 18","Jun 19","Jun 20","Jun 21","Jun 22","Jun 23",
+    "Jun 24","Jun 25","Jun 26","Jun 27","Jun 28","Jun 29","Jun 30",
+    "Jul 1","Jul 2","Jul 3","Jul 4","Jul 5","Jul 6","Jul 7","Jul 8"
+];
+const systolicData = [119,121,120,122,118,120,123,121,119,122,120,118,121,124,
+                       122,120,119,121,123,120,122,120,118,122,124,121,120,124,122];
+const diastolicData = [79,80,78,81,79,80,82,81,79,80,79,78,80,83,
+                        81,80,79,80,82,81,83,80,79,81,82,80,81,82,80];
 
-const bpChart = new Chart(ctx, {
+                        const sugarLabels = [
+    "Jun 10","Jun 11","Jun 12","Jun 13","Jun 14","Jun 15","Jun 16",
+    "Jun 17","Jun 18","Jun 19","Jun 20","Jun 21","Jun 22","Jun 23",
+    "Jun 24","Jun 25","Jun 26","Jun 27","Jun 28","Jun 29","Jun 30",
+    "Jul 1","Jul 2","Jul 3","Jul 4","Jul 5","Jul 6","Jul 7","Jul 8"
+];
 
-    type:"line",
+const fastingData = [
+    96,98,95,101,97,99,100,98,96,99,
+    97,95,98,102,100,99,97,98,101,99,
+    100,98,97,99,101,100,98,99,97
+];
 
-    data:{
+const postMealData = [
+    138,142,136,145,140,143,147,144,139,146,
+    142,138,141,149,146,144,140,143,147,145,
+    148,143,141,146,150,147,144,148,145
+];
 
-        labels:[
-
-            "Jul 1",
-
-            "Jul 2",
-
-            "Jul 3",
-
-            "Jul 4",
-
-            "Jul 5",
-
-            "Jul 6",
-
-            "Jul 7"
-
-        ],
-
-        datasets:[
-
-            {
-
-                label:"Systolic",
-
-                data:[120, 118, 122, 124, 121, 120, 124],
-
-                borderColor: "#7C3AED",
-
-
-
-                // Area below line
-
-                backgroundColor: "rgba(124,58,237,0.2)",
-
-
-
-                // Line thickness
-
-                borderWidth: 3,
-
-
-
-                // Smoothness
-
-                tension: 0.4,
-
-
-
-                // Point size
-
-                pointRadius: 4,
-
-
-
-                // Point size while hovering
-
-                pointHoverRadius: 7,
-
-
-
-                // Fill below line
-
-                fill: true
-
-            },
-
-            {
-
-                label:"Diastolic",
-
-                data:[80, 82, 79, 81, 83, 81, 82],
-
-                borderColor: "#2563EB",
-
-                backgroundColor: "rgba(37,99,235,0.2)",
-
-                borderWidth: 3,
-
-                tension: 0.4,
-
-                pointRadius: 4,
-
-                pointHoverRadius: 7,
-
-                fill: true
-
-            }
-
+const bpChart = new Chart(ctx1, {
+    type: "line",
+    data: {
+        labels: bpLabels,
+        datasets: [
+            { label: "Systolic", data: systolicData, borderColor: "#7C3AED",
+              backgroundColor: "rgba(124,58,237,0.2)", borderWidth: 3, tension: 0.4,
+              pointRadius: 4, pointHoverRadius: 7, fill: true },
+            { label: "Diastolic", data: diastolicData, borderColor: "#2563EB",
+              backgroundColor: "rgba(37,99,235,0.2)", borderWidth: 3, tension: 0.4,
+              pointRadius: 4, pointHoverRadius: 7, fill: true }
         ]
-
     },
-
-    options:{
-
-        responsive:true,
-
-        maintainAspectRatio:false,
-
-        plugins:{
-
-            legend:{
-
-                display:false
-
-            },
-
-            tooltip:{
-
+    options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+            legend: { display: false },
+            tooltip: {
+                 /* ...unchanged... */ 
                 enabled:true,
 
                  // Tooltip background
@@ -755,244 +754,493 @@ const bpChart = new Chart(ctx, {
 
                     }
 
+                }                        
+                },
+            zoom: {
+                pan: {
+                    enabled: true,
+                    mode: "x"
+                    // no modifierKey — plain touch/mouse drag pans
+                },
+                zoom: { wheel: { enabled: false }, pinch: { enabled: false }, mode: "x" },
+                limits: {
+                    x: { min: 0, max: bpLabels.length - 1, minRange: 6 }
                 }
+            }
+        },
+        scales: {
+            x: {
+                display: true,
+                min: bpLabels.length - 7,   // start showing the LAST 7 days
+                max: bpLabels.length - 1,
+                ticks: { display: true },
+                grid: { display: false }
+            },
+            y: { display: true, min: 40, max: 200, ticks: { display: true }, grid: { display: false } }
+        },
+        interaction: { mode: "index", intersect: false }
+    }
+});
+console.log(bpChart.options.plugins.zoom);
 
+const bsChart = new Chart(ctx2, {
+    type: "line",
+    data: {
+        labels: sugarLabels,
+        datasets: [
+            {
+                label: "Fasting",
+                data: fastingData,
+                borderColor: "#10B981",
+                backgroundColor: "rgba(16, 185, 129, 0.20)",
+                borderWidth: 3,
+                tension: 0.4,
+                pointRadius: 4,
+                pointHoverRadius: 7,
+                fill: true
+            },
+            {
+                label: "Post Meal",
+                data: postMealData,
+                borderColor: "#6EE7B7",
+                backgroundColor: "rgba(110, 231, 183, 0.20)",
+                borderDash: [6, 4],   // 6px line, 4px gap
+                borderWidth: 3,
+                tension: 0.4,
+                pointRadius: 4,
+                pointHoverRadius: 7,
+                fill: true
+            }
+        ]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: false,
+
+        plugins: {
+            legend: {
+                display: false
             },
 
-            zoom:{
+            tooltip: {
+                enabled: true,
+                backgroundColor: "#222",
+                titleColor: "#FFFFFF",
+                bodyColor: "#FFFFFF",
+                padding: 10,
+                displayColors: true,
 
-                pan:{
+                callbacks: {
+                    label: function (context) {
+                        return context.dataset.label + ": " + context.raw + " mg/dL";
+                    }
+                }
+            },
 
-                    enabled:true,
-
-                    mode:"x"
-
+            zoom: {
+                pan: {
+                    enabled: true,
+                    mode: "x"
                 },
 
                 zoom: {
-
-
-
                     wheel: {
-
-                        enabled:false
-
+                        enabled: false
                     },
-
-
-
                     pinch: {
-
-                        enabled:false
-
+                        enabled: false
                     },
-
-                    mode:"x"
-
-                }
-
-            }
-
-        },
-
-        scales:{
-
-            x:{
-
-                display:true,
-
-                min:0,
-
-                max:6,
-
-                ticks:{display:true},
-
-                grid:{ display:false,
-
-                    color: "rgba(0, 0, 0, 0.1)"
-
+                    mode: "x"
                 },
 
-                title:{
-
-                    display:false,
-
-                    text:"Date"  
-
+                limits: {
+                    x: {
+                        min: 0,
+                        max: sugarLabels.length - 1,
+                        minRange: 6
+                    }
                 }
+            }
+        },
 
-            },
+        scales: {
+            x: {
+                display: true,
+                min: sugarLabels.length - 7,
+                max: sugarLabels.length - 1,
 
-            y:{
-
-                display:true,
-
-                min:40,
-
-                max:200,
-
-                ticks:{display:true},
-
-                grid:{
-
-                    display:false,
-
-                    color: "rgba(0, 0, 0, 0.1)"
-
+                ticks: {
+                    display: true
                 },
 
-                title:{
-
-                    display:false,
-
-                    text:"Blood Pressure"
-
+                grid: {
+                    display: false
                 }
-
-            }
-
-        },
-
-        elements:{
-
-            line: {
-
-                // Default line width
-
-                borderWidth: 3,
-
-                // Default smoothness
-
-                tension: 0.4
-
             },
 
+            y: {
+                display: true,
+                min: 40,
+                max: 200,
 
+                ticks: {
+                    display: true
+                },
 
-            point: {
-
-                // Default point size
-
-                radius: 4,
-
-                // Size while hovering
-
-                hoverRadius: 8
-
+                grid: {
+                    display: false
+                }
             }
-
         },
 
-        interaction:{
-
-            mode:"index",
-
-            intersect:false
-
+        interaction: {
+            mode: "index",
+            intersect: false
         }
-
     }
-
 });
 
+const canvas3 = document.getElementById("tempChart");
+const ctx3 = canvas3.getContext("2d");
+const tempLabels = [
+    "Jun 10","Jun 11","Jun 12","Jun 13","Jun 14","Jun 15","Jun 16",
+    "Jun 17","Jun 18","Jun 19","Jun 20","Jun 21","Jun 22","Jun 23",
+    "Jun 24","Jun 25","Jun 26","Jun 27","Jun 28","Jun 29","Jun 30",
+    "Jul 1","Jul 2","Jul 3","Jul 4","Jul 5","Jul 6","Jul 7","Jul 8"
+];
 
-const modal = document.getElementById("readingModal");
-const modalTitle = document.getElementById("modalTitle");
-const dynamicFields = document.getElementById("dynamicFields");
+const temperatureData = [
+    36.3, 36.5, 36.2, 36.4, 36.8, 37.0, 36.6,
+    36.9, 36.3, 36.7, 36.2, 36.5, 36.4, 36.8,
+    36.6, 36.5, 36.3, 36.7, 36.9, 36.6, 36.8,
+    36.5, 36.4, 36.6, 36.7, 36.5, 36.6, 36.4, 36.5
+];
 
-function openModal(type) {
-    modal.classList.add("active");
-    dynamicFields.innerHTML = "";
+const tempChart = new Chart(ctx3, {
+    type: "line",
 
-    if (type === "bp") {
-        modalTitle.innerText = "Add Blood Pressure Reading";
+    data: {
+        labels: tempLabels,
+        datasets: [
+            {
+                label: "Temperature",
+                data: temperatureData,
+                borderColor: "#F97316",
+                backgroundColor: "rgba(249,115,22,0.20)",
+                borderWidth: 3,
+                tension: 0.4,
+                pointRadius: 4,
+                pointHoverRadius: 7,
+                fill: true
+            }
+        ]
+    },
 
-        dynamicFields.innerHTML = `
-            <div class="form-group">
-                <label>Systolic (mmHg)</label>
-                <input type="number" placeholder="e.g. 120">
-            </div>
-            <div class="form-group">
-                <label>Diastolic (mmHg)</label>
-                <input type="number" placeholder="e.g. 80">
-            </div>
-        `;
+    options: {
+        responsive: true,
+        maintainAspectRatio: false,
+
+        plugins: {
+            legend: {
+                display: false
+            },
+
+            tooltip: {
+                enabled: true,
+                backgroundColor: "#222",
+                titleColor: "#FFFFFF",
+                bodyColor: "#FFFFFF",
+                padding: 10,
+                displayColors: true,
+
+                callbacks: {
+                    label: function (context) {
+                        return context.raw + " °C";
+                    }
+                }
+            },
+
+            zoom: {
+                pan: {
+                    enabled: true,
+                    mode: "x"
+                },
+
+                zoom: {
+                    wheel: {
+                        enabled: false
+                    },
+                    pinch: {
+                        enabled: false
+                    },
+                    mode: "x"
+                },
+
+                limits: {
+                    x: {
+                        min: 0,
+                        max: tempLabels.length - 1,
+                        minRange: 6
+                    }
+                }
+            }
+        },
+
+        scales: {
+            x: {
+                display: true,
+                min: tempLabels.length - 7,
+                max: tempLabels.length - 1,
+
+                ticks: {
+                    display: true
+                },
+
+                grid: {
+                    display: false
+                }
+            },
+
+            y: {
+                display: true,
+                min: 35,
+                max: 39,
+
+                ticks: {
+                    stepSize: 1
+                },
+
+                grid: {
+                    display: false
+                }
+            }
+        },
+
+        interaction: {
+            mode: "index",
+            intersect: false
+        }
     }
-
-    if (type === "sugar") {
-        modalTitle.innerText = "Add Blood Sugar Reading";
-
-        dynamicFields.innerHTML = `
-            <div class="form-group">
-                <label>Blood Sugar (mg/dL)</label>
-                <input type="number" placeholder="e.g. 98.6">
-            </div>
-        `;
-    }
-
-    if (type === "temp") {
-        modalTitle.innerText = "Add Temperature Reading";
-
-        dynamicFields.innerHTML = `
-            <div class="form-group">
-                <label>Temperature (°C)</label>
-                <input type="number" step="0.1" placeholder="e.g. 36.6">
-            </div>
-        `;
-    }
-
-    if (type === "heart") {
-        modalTitle.innerText = "Add Heart Rate Reading";
-
-        dynamicFields.innerHTML = `
-            <div class="form-group">
-                <label>Heart Rate (bpm)</label>
-                <input type="number" placeholder="e.g. 72">
-            </div>
-        `;
-    }
-}
-
-function closeModal() {
-    modal.classList.remove("active");
-}
-const chart = document.querySelector("#chartContainer");
-
-let startX = 0;
-let currentTranslate = 0;
-let isDragging = false;
-
-chart.addEventListener("touchstart", (e) => {
-    startX = e.touches[0].clientX;
-    isDragging = true;
 });
 
-chart.addEventListener("touchmove", (e) => {
-    if (!isDragging) return;
+const canvas4 = document.getElementById("heartChart");
+const ctx4 = canvas4.getContext("2d");
+const heartLabels = [
+    "Jun 10","Jun 11","Jun 12","Jun 13","Jun 14","Jun 15","Jun 16",
+    "Jun 17","Jun 18","Jun 19","Jun 20","Jun 21","Jun 22","Jun 23",
+    "Jun 24","Jun 25","Jun 26","Jun 27","Jun 28","Jun 29","Jun 30",
+    "Jul 1","Jul 2","Jul 3","Jul 4","Jul 5","Jul 6","Jul 7","Jul 8"
+];
 
-    const currentX = e.touches[0].clientX;
-    const diff = currentX - startX;
+const heartRateData = [
+    72,71,73,75,73,76,72,
+    77,71,74,72,70,73,78,
+    76,74,72,73,77,75,76,
+    73,72,74,76,75,74,72,73
+];
+const heartChart = new Chart(ctx4, {
+    type: "line",
 
-    // move chart horizontally
-    chart.style.transform = `translateX(${currentTranslate + diff}px)`;
+    data: {
+        labels: heartLabels,
+        datasets: [
+            {
+                label: "Heart Rate",
+                data: heartRateData,
+                borderColor: "#EF4444",
+                backgroundColor: "rgba(239,68,68,0.20)",
+                borderWidth: 3,
+                tension: 0.4,
+                pointRadius: 4,
+                pointHoverRadius: 7,
+                fill: true
+            }
+        ]
+    },
+
+    options: {
+        responsive: true,
+        maintainAspectRatio: false,
+
+        plugins: {
+            legend: {
+                display: false
+            },
+
+            tooltip: {
+                enabled: true,
+                backgroundColor: "#222",
+                titleColor: "#FFFFFF",
+                bodyColor: "#FFFFFF",
+                padding: 10,
+                displayColors: true,
+
+                callbacks: {
+                    label: function (context) {
+                        return context.raw + " bpm";
+                    }
+                }
+            },
+
+            zoom: {
+                pan: {
+                    enabled: true,
+                    mode: "x"
+                },
+
+                zoom: {
+                    wheel: {
+                        enabled: false
+                    },
+                    pinch: {
+                        enabled: false
+                    },
+                    mode: "x"
+                },
+
+                limits: {
+                    x: {
+                        min: 0,
+                        max: heartLabels.length - 1,
+                        minRange: 6
+                    }
+                }
+            }
+        },
+
+        scales: {
+            x: {
+                display: true,
+                min: heartLabels.length - 7,
+                max: heartLabels.length - 1,
+
+                ticks: {
+                    display: true
+                },
+
+                grid: {
+                    display: false
+                }
+            },
+
+            y: {
+                display: true,
+                min: 40,
+                max: 120,
+
+                ticks: {
+                    stepSize: 20
+                },
+
+                grid: {
+                    display: false
+                }
+            }
+        },
+
+        interaction: {
+            mode: "index",
+            intersect: false
+        }
+    }
 });
+// const modal = document.getElementById("readingModal");
+// const modalTitle = document.getElementById("modalTitle");
+// const dynamicFields = document.getElementById("dynamicFields");
 
-chart.addEventListener("touchend", (e) => {
-    const endX = e.changedTouches[0].clientX;
-    const diff = endX - startX;
+// function openModal(type) {
+//     modal.classList.add("active");
+//     dynamicFields.innerHTML = "";
 
-    currentTranslate += diff;
+//     if (type === "bp") {
+//         modalTitle.innerText = "Add Blood Pressure Reading";
 
-    isDragging = false;
+//         dynamicFields.innerHTML = `
+//             <div class="form-group">
+//                 <label>Systolic (mmHg)</label>
+//                 <input type="number" placeholder="e.g. 120">
+//             </div>
+//             <div class="form-group">
+//                 <label>Diastolic (mmHg)</label>
+//                 <input type="number" placeholder="e.g. 80">
+//             </div>
+//         `;
+//     }
 
-    // optional: snap back limits (prevents over sliding)
-    const maxMove = 0;
-    const minMove = -300; // adjust based on your graph width
+//     if (type === "sugar") {
+//         modalTitle.innerText = "Add Blood Sugar Reading";
 
-    if (currentTranslate > maxMove) currentTranslate = maxMove;
-    if (currentTranslate < minMove) currentTranslate = minMove;
+//         dynamicFields.innerHTML = `
+//             <div class="form-group">
+//                 <label>Blood Sugar (mg/dL)</label>
+//                 <input type="number" placeholder="e.g. 98.6">
+//             </div>
+//         `;
+//     }
 
-    chart.style.transform = `translateX(${currentTranslate + diff}px)`;});
+//     if (type === "temp") {
+//         modalTitle.innerText = "Add Temperature Reading";
+
+//         dynamicFields.innerHTML = `
+//             <div class="form-group">
+//                 <label>Temperature (°C)</label>
+//                 <input type="number" step="0.1" placeholder="e.g. 36.6">
+//             </div>
+//         `;
+//     }
+
+//     if (type === "heart") {
+//         modalTitle.innerText = "Add Heart Rate Reading";
+
+//         dynamicFields.innerHTML = `
+//             <div class="form-group">
+//                 <label>Heart Rate (bpm)</label>
+//                 <input type="number" placeholder="e.g. 72">
+//             </div>
+//         `;
+//     }
+// }
+
+// function closeModal() {
+//     modal.classList.remove("active");
+// }
+// const chart = document.querySelector("#chartContainer");
+
+// let startX = 0;
+// let currentTranslate = 0;
+// let isDragging = false;
+
+// chart.addEventListener("touchstart", (e) => {
+//     startX = e.touches[0].clientX;
+//     isDragging = true;
+// });
+
+// chart.addEventListener("touchmove", (e) => {
+//     if (!isDragging) return;
+
+//     const currentX = e.touches[0].clientX;
+//     const diff = currentX - startX;
+
+//     // move chart horizontally
+//     chart.style.transform = `translateX(${currentTranslate + diff}px)`;
+// });
+
+// chart.addEventListener("touchend", (e) => {
+//     const endX = e.changedTouches[0].clientX;
+//     const diff = endX - startX;
+
+//     currentTranslate += diff;
+
+//     isDragging = false;
+
+//     // optional: snap back limits (prevents over sliding)
+//     const maxMove = 0;
+//     const minMove = -300; // adjust based on your graph width
+
+//     if (currentTranslate > maxMove) currentTranslate = maxMove;
+//     if (currentTranslate < minMove) currentTranslate = minMove;
+
+//     chart.style.transform = `translateX(${currentTranslate + diff}px)`;});
 </script>
 </body>
 </html>

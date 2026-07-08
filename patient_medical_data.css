@@ -977,7 +977,7 @@ body {
     gap: 12px;
     margin-top: 14px;
     height: 28vh;
-    min-height: 220px;
+    min-height: 300px;
     position: relative;
 }
 
@@ -1358,3 +1358,7 @@ body {
     background: #2563EB;
     color: white;
 } 
+
+#bpChart {
+    touch-action: none;
+}
