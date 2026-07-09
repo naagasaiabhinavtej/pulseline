@@ -181,7 +181,7 @@
                         </div>
                         <div class="alert-banner banner-blue">
                             <i class="fa-solid fa-circle-plus"></i>
-                            <p>This information is locked and cannot be edited. Contact hospital administration for any changes.</p>
+                            <p>This information is locked and cannot be edited.</p>
                         </div>
                     </div>
                 </section>
@@ -507,7 +507,7 @@
             </footer>
         </main>
     </div>
-    //reading modal
+    <!-- //reading modal -->
     <div id="readingModal" class="modal-overlay">
     <div class="modal-box">
         <div class="modal-header">
@@ -653,44 +653,213 @@
         });
         return finalresult;
     }
-const canvas2 = document.getElementById("bsChart");
-    async function askData()
-    {
-
-    }
+const avatar = document.querySelector(".avatar");
+const profileName = document.querySelector(".profile-name");
+const profileRole = document.querySelector(".profile-role");
+const profileArrow = document.querySelector(".profile-arrow");
+const widgetNumbers = document.querySelectorAll(".widget-number");
+const widgetSubs = document.querySelectorAll(".widget-sub");
+const heartRateSub = widgetSubs[0];
+const bmiSub = widgetSubs[1];
+const ageSub = widgetSubs[2];
+const lastCheckupSub = widgetSubs[3];
+const statusTags = document.querySelectorAll(".status-tag");
+const heartRateStatusTag = statusTags[0];
+const bmiStatusTag = statusTags[1];
+const ageStatusTag = statusTags[2];
+const bloodPressureStatusTag = statusTags[3];
+const bloodSugarStatusTag = statusTags[4];
+const temperatureStatusTag = statusTags[5];
+const heartChartStatusTag = statusTags[6];
+const cards = document.querySelectorAll(".card");
+const permanentValues = permanentCard.querySelectorAll(".box-value");
+const healthIdValue = permanentValues[0];
+const fullNameValue = permanentValues[1];
+const dobValue = permanentValues[2];
+const genderValue = permanentValues[3];
+const bloodGroupValue = permanentValues[4];
+const permanentCard = cards[0];
+const medicalForm = document.querySelector("form");
+const heightInput = document.getElementById("height");
+const weightInput = document.getElementById("weight");
+const eyeSightInput = document.getElementById("eye_sight");
+const hearingInput = document.getElementById("hearing");
+const emergencyContactInput = document.getElementById("emergency_contact");
+const medicalHistoryInput = document.getElementById("medical_history");
+const allergiesInput = document.getElementById("allergies");
+const saveBtn = document.querySelector(".btn-save");
+const timeButtons = document.querySelectorAll(".time-btn");
+const activeTimeButton = document.querySelector(".time-btn.active");
+const addReadingButtons = document.querySelectorAll(".add-reading-btn");
+const closeModalBtn = document.querySelector(".close-modal");
+const cancelBtn = document.querySelector(".cancel-btn");
+const saveReadingBtn = document.querySelector(".save-btn");
+const lastCheckupDateWidget = document.querySelector(".widget-text-date");
+const heartRateWidget = widgetNumbers[0];
+const bmiWidget = widgetNumbers[1];
+const ageWidget = widgetNumbers[2];
 const canvas1 = document.getElementById("bpChart");
-
+const canvas2 = document.getElementById("bsChart");
+const canvas3 = document.getElementById("tempChart");
+const canvas4 = document.getElementById("heartChart");
 const ctx1 = canvas1.getContext("2d");
 const ctx2 = canvas2.getContext("2d");
+const ctx3 = canvas3.getContext("2d");
+const ctx4 = canvas4.getContext("2d");
 const bpLabels = [
-    "Jun 10","Jun 11","Jun 12","Jun 13","Jun 14","Jun 15","Jun 16",
-    "Jun 17","Jun 18","Jun 19","Jun 20","Jun 21","Jun 22","Jun 23",
-    "Jun 24","Jun 25","Jun 26","Jun 27","Jun 28","Jun 29","Jun 30",
-    "Jul 1","Jul 2","Jul 3","Jul 4","Jul 5","Jul 6","Jul 7","Jul 8"
+    // "Jun 10","Jun 11","Jun 12","Jun 13","Jun 14","Jun 15","Jun 16",
+    // "Jun 17","Jun 18","Jun 19","Jun 20","Jun 21","Jun 22","Jun 23",
+    // "Jun 24","Jun 25","Jun 26","Jun 27","Jun 28","Jun 29","Jun 30",
+    // "Jul 1","Jul 2","Jul 3","Jul 4","Jul 5","Jul 6","Jul 7","Jul 8"
 ];
-const systolicData = [119,121,120,122,118,120,123,121,119,122,120,118,121,124,
-                       122,120,119,121,123,120,122,120,118,122,124,121,120,124,122];
-const diastolicData = [79,80,78,81,79,80,82,81,79,80,79,78,80,83,
-                        81,80,79,80,82,81,83,80,79,81,82,80,81,82,80];
+const systolicData = [
+                        // 119,121,120,122,118,120,123,121,119,122,120,118,121,124,
+    //                    122,120,119,121,123,120,122,120,118,122,124,121,120,124,122
+                    ];
+const diastolicData = [
+    // 79,80,78,81,79,80,82,81,79,80,79,78,80,83,
+    //                     81,80,79,80,82,81,83,80,79,81,82,80,81,82,80
+                    ];
 
-                        const sugarLabels = [
-    "Jun 10","Jun 11","Jun 12","Jun 13","Jun 14","Jun 15","Jun 16",
-    "Jun 17","Jun 18","Jun 19","Jun 20","Jun 21","Jun 22","Jun 23",
-    "Jun 24","Jun 25","Jun 26","Jun 27","Jun 28","Jun 29","Jun 30",
-    "Jul 1","Jul 2","Jul 3","Jul 4","Jul 5","Jul 6","Jul 7","Jul 8"
+const sugarLabels = [
+    // "Jun 10","Jun 11","Jun 12","Jun 13","Jun 14","Jun 15","Jun 16",
+    // "Jun 17","Jun 18","Jun 19","Jun 20","Jun 21","Jun 22","Jun 23",
+    // "Jun 24","Jun 25","Jun 26","Jun 27","Jun 28","Jun 29","Jun 30",
+    // "Jul 1","Jul 2","Jul 3","Jul 4","Jul 5","Jul 6","Jul 7","Jul 8"
 ];
 
 const fastingData = [
-    96,98,95,101,97,99,100,98,96,99,
-    97,95,98,102,100,99,97,98,101,99,
-    100,98,97,99,101,100,98,99,97
+    // 96,98,95,101,97,99,100,98,96,99,
+    // 97,95,98,102,100,99,97,98,101,99,
+    // 100,98,97,99,101,100,98,99,97
 ];
 
 const postMealData = [
-    138,142,136,145,140,143,147,144,139,146,
-    142,138,141,149,146,144,140,143,147,145,
-    148,143,141,146,150,147,144,148,145
+    // 138,142,136,145,140,143,147,144,139,146,
+    // 142,138,141,149,146,144,140,143,147,145,
+    // 148,143,141,146,150,147,144,148,145
 ];
+const sessionsData = [];
+async function askData()
+{
+    const res = await giveData();
+    if(!res || !res.ok) return;
+    const data = await res.json(); //JSON only used for stringify i mean for objects to change thier property
+    const PatientName = data.PatientName;
+    const patientAvatar = data.PatientAvatarId;
+    const healthID = data.HealthID;
+    const fullName = data.FullName;
+    const dateOfBirth = data.dateOfBirth;
+    const gender = data.Gender;
+    const bloodGroup = data.BloodGroup;
+    const height = data.Height;
+    const weight = data.Weight;
+    const eyeSight = data.EyeSight;
+    const hearing = data.Hearing;
+    const emergencyContact = data.EmergencyContact;
+    const medicalHistory = data.MedicalHistory;
+    const allergies = data.Allergies;
+    const file = data.file; //correct file as perage
+    sessionsData = data.sessionData;
+    profileName.textContent = PatientName;
+    avatar.src = getAvatar(PatientAvatarId);
+    heightInput.value = height;
+    weightInput.value = weight;
+    eyeSightInput.value = eyeSight;
+    hearingInput.value = hearing;
+    emergencyContactInput.value = emergencyContact;
+    medicalHistoryInput.value = medicalHistory;
+    allergiesInput.value = allergies;
+    healthIdValue.textContent = healthID;
+    fullNameValue.textContent = PatientName;
+    dobValue.textContent = dateOfBirth;
+    genderValue.textContent = gender;
+    bloodGroupValue.textContent = bloodGroup;
+
+    //BMI
+    const ageInMonths = giveAgeInMonths(dateOfBirth);
+    let bmi = null;
+    let heightInM = height/100;
+    bmi = ((weight)/(heightInM*heightInM));  //toFixed gives you string so make it number of() if needed
+    let bmiData = null;
+    if(ageInMonths>228)
+    {
+        bmiData = adultBMIClassification(bmi)
+    }
+    else bmiData = giveChildBmi(file, ageInMonths, bmi);
+    let status = "";
+    status - bmiData.status;
+    bmiWidget.textContent = `${bmi.toFixed(2)}`;
+    bmiSub.textContent = `Healthy Range: ${bmiData.healthy_range}`;
+    bmiStatusTag.textContent = `${bmiData.status}`;
+    bmiStatusTag.classList.remove("tag-green");
+    if(status === "Underweight")
+    {
+        bmiStatusTag.classList.add("tag-yellow");
+    }
+    else if(status === "Healthyweight")
+    {
+        bmiStatusTag.classList.add("tag-yellow");
+    }
+    else if(status === "Overweight")
+    {
+        bmiStatusTag.classList.add("tag-orange");
+    }
+    else if(status === "Obesity")
+    {
+        bmiStatusTag.classList.add("tag-red");
+    }
+
+
+    //Heart Rate
+    
+
+
+
+
+    //age
+    const age = getAge(dateOfBirth);
+    let ageStatus = "";
+    switch (true){
+        case (age<2):
+            ageStatus = "Infant";
+            break;
+        case (age<13):
+            ageStatus = "Child";
+            break;
+        case(age<19):
+            ageStatus = "Teenager";
+            break;
+        case(age<60):
+            ageStatus = "Adult";
+            break;
+        default: 
+            ageStatus = "Senior";
+    }
+    ageWidget.textContent = '${age}';
+    let birthDate = new Date(dateOfBirth).toLocaleDateString("en-US",{
+        month:"short",
+        day:"numeric",
+        year:"numeric"
+    });
+    ageSub = `Born on ${birthDate}`;
+    ageStatusTag.textContent = `${ageStatus} Stage`;
+
+
+    //last checkup
+// formats like July 9, 2026
+lastCheckupDateWidget.textContent = sessionsData.length
+    ? new Date(sessionsData[0].createdAt).toLocaleDateString("en-IN", {
+          day: "numeric",
+          month: "short",
+          year: "numeric"
+      })
+    : "No Recordings";    
+    //tolocaleString - makes the timestamp with date into local region style if mentioned it goes to that way so both time and date are visible and toLocalDateString
+    // only date is given
+lastCheckupSub.textContent = sessionsData.length?sessionsData[0].department:"";
+}
+
 
 const bpChart = new Chart(ctx1, {
     type: "line",
@@ -900,8 +1069,6 @@ const bsChart = new Chart(ctx2, {
     }
 });
 
-const canvas3 = document.getElementById("tempChart");
-const ctx3 = canvas3.getContext("2d");
 const tempLabels = [
     "Jun 10","Jun 11","Jun 12","Jun 13","Jun 14","Jun 15","Jun 16",
     "Jun 17","Jun 18","Jun 19","Jun 20","Jun 21","Jun 22","Jun 23",
@@ -1023,8 +1190,6 @@ const tempChart = new Chart(ctx3, {
     }
 });
 
-const canvas4 = document.getElementById("heartChart");
-const ctx4 = canvas4.getContext("2d");
 const heartLabels = [
     "Jun 10","Jun 11","Jun 12","Jun 13","Jun 14","Jun 15","Jun 16",
     "Jun 17","Jun 18","Jun 19","Jun 20","Jun 21","Jun 22","Jun 23",
@@ -1201,9 +1366,9 @@ const heartChart = new Chart(ctx4, {
 //     }
 // }
 
-// function closeModal() {
-//     modal.classList.remove("active");
-// }
+function closeModal() {
+    modal.classList.remove("active");
+}
 // const chart = document.querySelector("#chartContainer");
 
 // let startX = 0;
