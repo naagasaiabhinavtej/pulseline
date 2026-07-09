@@ -328,6 +328,21 @@ body {
     color: #065F46;
 }
 
+.tag-yellow{
+    background:#FEF9C3;
+    color:#CA8A04;
+}
+
+.tag-orange{
+    background:#FED7AA;
+    color:#EA580C;
+}
+
+.tag-red{
+    background:#FEE2E2;
+    color:#DC2626;
+}
+
 .widget-sub {
     font-size: 0.8rem;
     color: var(--text-muted);
