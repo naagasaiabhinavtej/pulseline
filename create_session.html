@@ -103,6 +103,13 @@ button:hover {
     transform: translateY(-2px);
     box-shadow: 0 10px 20px rgba(79,124,255,0.25);
 }
+
+.error-message {
+    min-height: 16px;
+    font-size: 12px;
+    color: #dc2626;
+    margin-top: 2px;
+}
 </style>
 </head>
 
@@ -111,23 +118,25 @@ button:hover {
 <div class="container">
     <h1>➕ Create New Session</h1>
 
-    <form id="sessionForm">
+    <form id="sessionForm" novalidate>
         <div class="form-grid">
 
             <div class="field">
                 <label>Health ID</label>
-                <input type="text" name="health_id" required>
+                <input type="text" name="health_id" id="health_id">
+                <small class="error-message" id="health_id_error">Please Enter your Name</small>
             </div>
 
             <div class="field">
                 <label>Clinic ID</label>
-                <input type="text" name="clinic_id" required>
+                <input type="text" name="clinic_id" id="clinic_id">
+                <small class="error-message" id="clinic_id_error"></small>
             </div>
 
             <div class="field">
                 <label>Department</label>
-                <select name="department" required>
-                    <option value="">Select Department</option>
+                <select name="department" id="department">
+                    <option value="" selected disabled>Select Department</option>
                     <option>General_Medicine</option>
                     <option>Ophthalmology</option>
                     <option>Otolaryngology</option>
@@ -141,11 +150,13 @@ button:hover {
                     <option>Psychiatry</option>
                     <option>Urology</option>
                 </select>
+                <small class="error-message" id="department_error"></small>
             </div>
 
             <div class="field">
                 <label>Assigned Doctor ID</label>
-                <input type="text" name="assigned_doctor_id" required>
+                <input type="text" name="assigned_doctor_id" id="assigned_doctor_id">
+                <small class="error-message" id="assigned_doctor_id_error"></small>
             </div>
 
         </div>
@@ -155,6 +166,24 @@ button:hover {
 </div>
 
 <script>
+const makeSessionForm = document.getElementById("sessionForm");
+// Input fields
+const healthIdInput = document.getElementById("health_id");
+const clinicIdInput = document.getElementById("clinic_id");
+const departmentInput = document.getElementById("department");
+const assignedDoctorIdInput = document.getElementById("assigned_doctor_id");
+
+// Error message elements
+const healthIdError = document.getElementById("health_id_error");
+const clinicIdError = document.getElementById("clinic_id_error");
+const departmentError = document.getElementById("department_error");
+const assignedDoctorIdError = document.getElementById("assigned_doctor_id_error");
+
+makeSessionForm.addEventListener("submit", validateForm);
+function validateForm()
+{
+    
+}
 document.getElementById("sessionForm").addEventListener("submit", async function(e) {
     e.preventDefault();
 
