@@ -76,7 +76,7 @@
                 <div class="table-actions">
                     <div class="search-box">
                         <i data-lucide="search"></i>
-                        <input type="text" placeholder="Search records...">
+                        <input type="text"id="searchbar" placeholder="Search records...">
                     </div>
                     <button class="filter-btn">
                         <i data-lucide="sliders-horizontal"></i>
@@ -94,48 +94,49 @@
 
                     <div class="session-content">
                         <div class="session-top">
-                            <div>
+                            <div class="session-left-top">
                                 <span class="session-id id-blue">#1001</span>
-                                <span class="dept-badge cardio">Cardiology</span>
+                                <span class="dept-badge department-blue">Cardiology</span>
+                            </div>
+                            <div class="session-date">
+                                <i data-lucide="calendar"></i>
+                                <span>May 24, 2025 → May 28, 2025</span>
                             </div>
                             <span class="status-pill resolved">Resolved</span>
                         </div>
 
                         <div class="session-main">
                             <div class="doctor-block">
-                                <img src="https://images.unsplash.com/photo-1559839734-2b71ea197ec2?w=100" />
-                                <div>
+                            <div class="doctor-card">
+                                <img src="avatar_doctors/adult_female.png">
+                                <div class="doctor">
                                     <h4>Dr. Sarah Johnson</h4>
                                     <p>City Care Clinic</p>
                                 </div>
                             </div>
+                        </div>
 
                             <div class="meta-grid">
                                 <div>
                                     <i data-lucide="activity"></i>
                                     <span>Chest pain & BP check</span>
                                 </div>
-                                <div>
-                                    <i data-lucide="calendar"></i>
-                                    <span>May 24, 2025 → May 28, 2025</span>
-                                </div>
-                                <div>
-                                    <i data-lucide="database"></i>
-                                    <span>additional_vitals TEXT DEFAULT '{}'</span>
-                                </div>
                             </div>
 
                             <div class="vitals-preview">
-                                <span>BP: 120/80</span>
-                                <span>HR: 78</span>
-                                <span>Temp: 98.6°F</span>
-                                <span>BS: 12D</span>
+                                <span class="bp">BP: 120/80</span>
+                                <span class="hr">HR: 78</span>
+                                <span class="temp">Temp: 98.6°F</span>
+                                <span class="bs">BS: 12D</span>
+                                <span class="additional-vitals">
+                                    Main Issue: eyeSight 20px : deafness : peak but why dont you give me an style where anyone here can do whatever they want 
+                                </span>
                             </div>
                         </div>
 
                         <div class="session-actions">
                             <button class="btn-primary">
-                                <i data-lucide="download"></i> Download Report
+                                <i data-lucide="download"></i> View Report
                             </button>
                         </div>
                     </div>
@@ -149,23 +150,39 @@
 
                     <div class="session-content">
                         <div class="session-top">
-                            <div>
+
+                            <div class="session-left-top">
                                 <span class="session-id id-purple">#1003</span>
-                                <span class="dept-badge neuro">Neurology</span>
+                                <span class="dept-badge department-purple">Neurology</span>
                             </div>
-                            <span class="status-pill referred">Referred</span>
+
+                            <div class="session-date">
+                                <i data-lucide="calendar"></i>
+                                <span>May 24, 2025 → May 28, 2025</span>
+                            </div>
+
+                            <span class="status-pill referred">
+                                Referred
+                            </span>
+
                         </div>
 
                         <div class="session-main">
                             <div class="doctor-block">
-                                <img src="https://images.unsplash.com/photo-1622253692010?w=100" />
-                                <div>
-                                    <h4>Dr. James Carter</h4>
-                                    <p>Neuro Care Hospital</p>
-                                    <div>
-                                        <i data-lucide="share-2"></i>
-                                        <span>Referral case (external hospital transfer)</span>
+                                <div class="doctor-card">
+                                    <img src="https://images.unsplash.com/photo-1622253692010?w=100">
+                                    <div class="doctor">
+                                        <h4>Dr. James Carter</h4>
+                                        <p>Neuro Care Hospital</p>
+                                    </div>
                                 </div>
+                                <span class="doctor-cross">×</span>
+                                <div class="doctor-card">
+                                    <img src="https://images.unsplash.com/photo-1612349317150-e413f6a5b16d?w=100">
+                                    <div class="doctor">
+                                        <h4>Dr. Michael Adams</h4>
+                                        <p>Central Medical Center</p>
+                                    </div>
                                 </div>
                             </div>
 
@@ -174,27 +191,28 @@
                                     <i data-lucide="alert-triangle"></i>
                                     <span>Migraine + dizziness</span>
                                 </div>
-                                   <div>
-                                    <i data-lucide="calendar"></i>
-                                    <span>May 24, 2025 → May 28, 2025</span>
-                                </div>
-                                <div>
-                                    <i data-lucide="database"></i>
-                                    <span>additional_vitals TEXT DEFAULT '{}'</span>
-                                </div>
                             </div>
 
                             <div class="vitals-preview">
-                                <span>BP: 130/85</span>
-                                <span>HR: 92</span>
-                                <span>Temp: 99.1°F</span>
-                                <span>BS: --- </span>
+
+                                <span class="bp">BP: 130/85</span>
+
+                                <span class="hr">HR: 92</span>
+
+                                <span class="temp">Temp: 99.1°F</span>
+
+                                <span class="bs">BS: ---</span>
+
+                                <span class="additional-vitals">
+                                    Additional Vitals
+                                </span>
+
                             </div>
                         </div>
 
                         <div class="session-actions">
                             <button class="btn-primary">
-                                <i data-lucide="download"></i> Report
+                                <i data-lucide="download"></i> View Report
                             </button>
                         </div>
                     </div>
@@ -208,6 +226,360 @@
 
 <script>
     lucide.createIcons();
+    let accessToken = null;
+async function refreshtoken()
+{
+    const response = await fetch("/refresh",{
+        method:"GET",
+        credentials:"include"
+    });
+    if(!response.ok)
+    {
+        window.location.href = "/login";
+        return false;
+    }
+    const data = await response.json();
+    accessToken = data.accessToken;
+    return accessToken;
+}
+async function giveData()
+{
+    let result = await fetch("/patient_previous_sessions",{
+        method:"GET",
+        headers:{
+            Authorization:`Bearer ${accessToken}`
+        }
+    });
+    if(result.status===401)
+    {
+        const refresh = await refreshtoken();
+        if(!refresh)
+            return null;
+        result = await fetch("/patient_previous_sessions",{
+            method:"GET",
+            headers:{
+                Authorization:`Bearer ${accessToken}`
+            }
+        });
+    }
+    return result;
+}
+const profileAvatar = document.querySelector(".avatar");
+const profileName = document.querySelector(".profile-name");
+const timeline = document.querySelector(".timeline");
+const searchInput = document.querySelector(".search-box input");
+const filterButton = document.querySelector(".filter-btn");
+const logoutButton = document.querySelector(".logout-btn");
+let previousSessionsData = [];
+async function askData()
+{
+    const result = await giveData();
+    if(!result || !result.ok)
+        return;
+    const data = await result.json();
+    profileAvatar.src = data.avatar;
+    profileName.textContent = data.patientName;
+    profileRole.textContent = data.patientRole;
+    previousSessionsData = data.previousSessions;
+    createPreviousSessions(data.previousSessions);
+    lucide.createIcons();
+}
+function createPreviousSessions(previousSessions)
+{
+    timeline.replaceChildren();
+    previousSessions.forEach((session,index)=>
+    {
+        const sessionCard = document.createElement("div");
+        sessionCard.className = `session-card ${session.status.toLowerCase()}`;
+        const idClass = index === 0 ? "id-blue" : "id-purple";
+        const departmentClass = index === 0 ? "department-blue" : "department-purple";
+        if(session.doctorTwo)
+        {
+            sessionCard.innerHTML = `
+                <div class="session-left">
+                    <div class="session-dot"></div>
+                    <div class="session-line"></div>
+                </div>
+
+                <div class="session-content">
+
+                    <div class="session-top">
+
+                        <div class="session-left-top">
+                            <span class="session-id ${idClass}">
+                                #${session.sessionId}
+                            </span>
+
+                            <span class="dept-badge ${departmentClass}">
+                                ${session.department}
+                            </span>
+                        </div>
+
+                        <div class="session-date">
+                            <i data-lucide="calendar"></i>
+                            <span>${session.date}</span>
+                        </div>
+
+                        <span class="status-pill ${session.status.toLowerCase()}">
+                            ${session.status}
+                        </span>
+
+                    </div>
+
+                    <div class="session-main">
+
+                        <div class="doctor-block">
+
+                            <div class="doctor-card">
+                                <img src="${session.doctorOne.avatar}">
+                                <div class="doctor">
+                                    <h4>${session.doctorOne.name}</h4>
+                                    <p>${session.doctorOne.hospital}</p>
+                                </div>
+                            </div>
+
+                            <span class="doctor-cross">×</span>
+
+                            <div class="doctor-card">
+                                <img src="${session.doctorTwo.avatar}">
+                                <div class="doctor">
+                                    <h4>${session.doctorTwo.name}</h4>
+                                    <p>${session.doctorTwo.hospital}</p>
+                                </div>
+                            </div>
+
+                        </div>
+
+                        <div class="meta-grid">
+                            <div>
+                                <i data-lucide="activity"></i>
+                                <span>${session.issue}</span>
+                            </div>
+                        </div>
+
+                        <div class="vitals-preview">
+
+                            <span class="bp">
+                                BP : ${session.bp}
+                            </span>
+
+                            <span class="hr">
+                                HR : ${session.hr}
+                            </span>
+
+                            <span class="temp">
+                                Temp : ${session.temperature}
+                            </span>
+
+                            <span class="bs">
+                                BS : ${session.bs}
+                            </span>
+
+                            <span class="additional-vitals">
+                                ${session.additionalVitals}
+                            </span>
+
+                        </div>
+
+                    </div>
+
+                    <div class="session-actions">
+
+                        <button class="btn-primary" onclick="downloadReport(${session.sessionId})">
+                            <i data-lucide="download"></i>
+                            Download Report
+                        </button>
+
+                    </div>
+
+                </div>
+            `;
+        }
+        else
+        {
+            sessionCard.innerHTML = `
+                <div class="session-left">
+                    <div class="session-dot"></div>
+                    <div class="session-line"></div>
+                </div>
+
+                <div class="session-content">
+
+                    <div class="session-top">
+
+                        <div class="session-left-top">
+                            <span class="session-id ${idClass}">
+                                #${session.sessionId}
+                            </span>
+
+                            <span class="dept-badge ${departmentClass}">
+                                ${session.department}
+                            </span>
+                        </div>
+
+                        <div class="session-date">
+                            <i data-lucide="calendar"></i>
+                            <span>${session.date}</span>
+                        </div>
+
+                        <span class="status-pill ${session.status.toLowerCase()}">
+                            ${session.status}
+                        </span>
+
+                    </div>
+
+                    <div class="session-main">
+
+                        <div class="doctor-block">
+
+                            <div class="doctor-card">
+                                <img src="${session.doctorOne.avatar}">
+                                <div class="doctor">
+                                    <h4>${session.doctorOne.name}</h4>
+                                    <p>${session.doctorOne.hospital}</p>
+                                </div>
+                            </div>
+
+                        </div>
+
+                        <div class="meta-grid">
+                            <div>
+                                <i data-lucide="activity"></i>
+                                <span>${session.issue}</span>
+                            </div>
+                        </div>
+
+                        <div class="vitals-preview">
+
+                            <span class="bp">
+                                BP : ${session.bp}
+                            </span>
+
+                            <span class="hr">
+                                HR : ${session.hr}
+                            </span>
+
+                            <span class="temp">
+                                Temp : ${session.temperature}
+                            </span>
+
+                            <span class="bs">
+                                BS : ${session.bs}
+                            </span>
+
+                            <span class="additional-vitals">
+                                ${session.additionalVitals}
+                            </span>
+
+                        </div>
+
+                    </div>
+
+                    <div class="session-actions">
+
+                        <button class="btn-primary" onclick="downloadReport(${session.sessionId})">
+                            <i data-lucide="download"></i>
+                            Download Report
+                        </button>
+
+                    </div>
+
+                </div>
+            `;
+        }
+
+        timeline.appendChild(sessionCard);
+    });
+
+    lucide.createIcons();
+}
+//we dont send the file through the previous_sessions as we dont know whether patient will open or not and if he has 100 sessions and each file of min 2mb then 200mb so data waste so instead calling functions when opened
+async function downloadReport(sessionId)
+{
+    let response = await fetch(`/download_report/${sessionId}`,{
+        method:"GET",
+        headers:{
+            Authorization:`Bearer ${accessToken}`
+        }
+    });
+
+    if(response.status===401)
+    {
+        const refresh = await refreshtoken();
+
+        if(!refresh)
+            return;
+
+        response = await fetch(`/download_report/${sessionId}`,{
+            method:"GET",
+            headers:{
+                Authorization:`Bearer ${accessToken}`
+            }
+        });
+    }
+    if(!response.ok)  //for people who are curious to see other files for them 403 status code
+    {
+        alert("Unable to open report.");
+        return null;
+    }
+    const report = await response.blob();
+    const url = URL.createObjectURL(report);
+    window.open(url, "_blank")
+    {
+        setTimeout(()=>
+        {
+            URL.revokeObjectURL(url)
+        }, 1000);
+    };
+}
+
+//searchinput
+let task = null;
+searchInput.addEventListener("input", ()=>
+{   
+    clearTimeout(task);
+    task = setTimeout(()=>
+    {
+        showSearchedInputs();
+    }, 1000);
+});
+searchInput.addEventListener("keydown", (e)=>
+{
+    if(e.key === "Enter")  //capital
+    {
+        showSearchedInputs();
+    }
+});
+filterButton.addEventListener("click", ()=>
+{
+    showSearchedInputs();   
+});
+function showSearchedInputs()
+{
+    if(!Array.isArray(previousSessionsData)) return;
+    let s = searchInput.value.toLowerCase();  //please make sure you do this 
+    const searchedResult = previousSessionsData.filter((session)=>                 //session please write that 
+    {
+        return          (session.doctorOne.name.toLowerCase().includes(s)|| (session.doctorTwo && session.doctorTwo.name.toLowerCase().includes(s)
+                        || session.doctorTwo.hospital.toLowerCase().includes(s)) || session.sessionId.toLowerCase().includes(s) 
+                        || session.doctorOne.hospital.toLowerCase().includes(s) || session.department.toLowerCase().includes(s)
+                        || session.date.toLowerCase().includes(s) || session.issue.toLowerCase().includes(s));
+    })
+    timeline.replaceChildren();
+    createPreviousSessions(searchedResult);
+}
+logoutButton.addEventListener("click", async ()=>
+{
+    const result = await fetch("/logout", {
+        method:"POST",
+        headers:{                                            //put headers
+            Authorization:`Bearer ${accessToken}`
+        }, 
+        credentials:"include"
+    });
+    accessToken = "";
+    window.location.href="login.html";
+});
 </script>
 
 </body>

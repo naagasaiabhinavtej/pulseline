@@ -376,8 +376,8 @@ body {
     font-size: 12px;
 }
 
-.cardio { background: #e0f2fe; color: #0369a1; }
-.neuro { background: #ede9fe; color: #6b21a8; }
+.department-blue { background: #e0f2fe; color: #0369a1; }
+.deparment-purple { background: #ede9fe; color: #6b21a8; }
 
 .status-pill {
     font-size: 12px;
