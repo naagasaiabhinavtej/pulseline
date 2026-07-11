@@ -551,21 +551,72 @@
             });
             return;
         }
-        const emergencyId = document.getElementById("emergency-modal");
+
+        // Emergency Panel
+        const emergencyModal = document.getElementById("emergency-modal");
+
+        // Header
+        const emergencyCount = document.getElementById("emergency-count");
+        const currentEmergency = document.getElementById("current-emergency");
+        const totalEmergencies = document.getElementById("total-emergencies");
+
+        // Navigation
+        const prevEmergency = document.getElementById("prev-emergency");
+        const nextEmergency = document.getElementById("next-emergency");
+
+        // Information
         const emergencySessionId = document.getElementById("req-session-id");
+        const patientName = document.getElementById("patient-name");
+        const hospitalName = document.getElementById("hospital-name");
+        const patientProblem = document.getElementById("patient-problem");
+        const waitingTime = document.getElementById("waiting-time");
+
+        // Queue
+        let emergencyQueue = [];
+        let currentIndex = 0;
+
+        // Waiting timer
+        let waitingInterval = null;
+
         const socket = new WebSocket(`ws://${window.location.host}/ws`);
-        socket.onopen = ()=>
-        {
-            console.log("connected websocket");
-        }
-        socket.onmessage = (event)=>
-        {
-            const data = JSON.parse(event.data);   // no await async because this runs only when frontend gets the message after waiting
-            if(data.type === "EmergencyConnection")
-            {
-                const sessionId = data.sessionId;
-                emergencyId.classList.remove("hidden");
-                emergencySessionId.textContent = `${sessionId}`;
+
+        socket.onopen = () => {
+            console.log("Connected to WebSocket");
+        };
+
+        socket.onmessage = (event) => {
+
+            const data = JSON.parse(event.data);
+
+            if (data.type === "EmergencyConnection") {
+
+                emergencyQueue.push({
+                    requestId: data.requestId,
+                    sessionId: data.sessionId,
+                    patientName: data.patientName,
+                    hospitalName: data.hospitalName,
+                    problem: data.problem,
+                    createdAt: data.createdAt
+                });
+
+                if (emergencyQueue.length === 1) {
+                    currentIndex = 0;
+                }
+
+                renderEmergency();
+            }
+
+            else if (data.type === "EmergencyResolved") {
+
+                emergencyQueue = emergencyQueue.filter(                                 //good idea of filtering
+                    emergency => emergency.requestId !== data.requestId
+                );
+
+                if (currentIndex >= emergencyQueue.length) {
+                    currentIndex = Math.max(0, emergencyQueue.length - 1);
+                }
+
+                renderEmergency();
             }
             else if(data.type === "Emergency_success_details")
             {
@@ -600,26 +651,244 @@
                                 `
                     tablename.appendChild(row);
             }
+        };
+
+        function renderEmergency()
+        {
+            // No emergencies
+            if(emergencyQueue.length === 0)
+            {
+                emergencyModal.classList.add("hidden");
+
+                if(waitingInterval)
+                {
+                    clearInterval(waitingInterval);
+                    waitingInterval = null;
+                }
+
+                return;
+            }
+
+            emergencyModal.classList.remove("hidden");
+
+            const current = emergencyQueue[currentIndex];
+
+            // Emergency information
+            emergencySessionId.textContent = current.sessionId;
+            patientName.textContent = current.patientName;
+            hospitalName.textContent = current.hospitalName;
+            patientProblem.textContent = current.problem;
+
+            // Header
+            emergencyCount.textContent = emergencyQueue.length;
+
+            currentEmergency.textContent = currentIndex + 1;
+            totalEmergencies.textContent = emergencyQueue.length;
+
+            // Navigation Buttons
+            prevEmergency.disabled = (currentIndex === 0);
+
+            nextEmergency.disabled =
+                (currentIndex === emergencyQueue.length - 1);
+
+            startWaitingTimer(current.createdAt);
         }
-    function handleResponse(action) {
-        const sessionId = emergencySessionId.textContent;
-        socket.send(JSON.stringify({
-            type: action === 'accept' ? "accept_emergency" : "reject_emergency",
-            sessionId: sessionId
-        }));
-        emergencyId.classList.add("hidden");
-    }
+        prevEmergency.addEventListener("click", () =>
+        {
+            if(currentIndex > 0)
+            {
+                currentIndex--;
+                renderEmergency();
+            }
+        });
+
+        nextEmergency.addEventListener("click", () =>
+        {
+            if(currentIndex < emergencyQueue.length - 1)
+            {
+                currentIndex++;
+                renderEmergency();
+            }
+        });
+
+        function startWaitingTimer(createdAt)
+        {
+            if(waitingInterval)
+            {
+                clearInterval(waitingInterval);
+            }
+
+            function updateTimer()
+            {
+                const createdTime = new Date(createdAt);
+
+                const now = new Date();
+
+                const elapsedSeconds =
+                    Math.floor((now - createdTime) / 1000);
+
+                const minutes =
+                    Math.floor(elapsedSeconds / 60);
+
+                const seconds =
+                    elapsedSeconds % 60;
+
+                waitingTime.textContent =
+                    `${String(minutes).padStart(2,'0')}:${String(seconds).padStart(2,'0')}`;
+
+                // Color Changes
+                if(elapsedSeconds < 600)          // Less than 10 minutes
+                {
+                    waitingTime.style.color = "#16a34a";   // Green
+                }
+                else if(elapsedSeconds < 1800)    // 10–30 minutes
+                {
+                    waitingTime.style.color = "#f59e0b";   // Orange
+                }
+                else if(elapsedSeconds < 3600)    // 30–60 minutes
+                {
+                    waitingTime.style.color = "#dc2626";   // Red
+                }
+                else                              // More than 1 hour
+                {
+                    waitingTime.style.color = "#7f1d1d";   // Dark Red
+                }
+            }
+            updateTimer();
+
+            waitingInterval = setInterval(updateTimer,1000);
+        }
+        acceptButton.addEventListener("click", () =>
+        {
+            handleResponse("accept");
+        });
+
+        rejectButton.addEventListener("click", () =>
+        {
+            handleResponse("reject");
+        });
+
+        function handleResponse(action)
+        {
+            if(emergencyQueue.length === 0) return;
+
+            const emergency = emergencyQueue[currentIndex];
+
+            socket.send(JSON.stringify({
+
+                type:
+                    action === "accept"
+                    ? "accept_emergency"
+                    : "reject_emergency",
+
+                sessionId: emergency.sessionId
+
+            }));
+
+            emergencyQueue.splice(currentIndex,1);
+
+            if(currentIndex >= emergencyQueue.length)
+            {
+                currentIndex =
+                    Math.max(0, emergencyQueue.length - 1);
+            }
+
+            renderEmergency();
+        }
+        logoutButton.addEventListener("click", async ()=>
+        {
+            const result = await fetch("/logout", {
+                method:"POST",
+                headers:{                                            //put headers
+                    Authorization:`Bearer ${accessToken}`
+                }, 
+                credentials:"include"
+            });
+            accessToken = "";
+            window.location.href="login.html";
+        });
     </script>
-    <div id="emergency-modal" class="emergency-modal hidden">
-    <div class="emergency-content">
-        <i data-lucide="alert-triangle" class="alert-icon"></i>
-        <h3>Emergency Request</h3>
-        <p>New request for Session: <strong id="req-session-id"></strong></p>
-        <div class="modal-actions">
-            <button class="btn-reject" onclick="handleResponse('reject')">Reject</button>
-            <button class="btn-accept" onclick="handleResponse('accept')">Accept</button>
+    <div id="emergency-modal" class="emergency-modal ">
+
+    <div class="emergency-header">
+        <div class="emergency-title">
+            🚨 Emergency Requests
+        </div>
+
+        <div class="emergency-count">
+            <span id="emergency-count">1</span> Waiting
         </div>
     </div>
+
+    <div class="emergency-navigation">
+
+        <button id="prev-emergency" class="nav-btn">
+            &#10094;
+        </button>
+
+        <span class="emergency-position">
+            <span id="current-emergency">1</span> /
+            <span id="total-emergencies">1</span>
+        </span>
+
+        <button id="next-emergency" class="nav-btn">
+            &#10095;
+        </button>
+
+    </div>
+
+    <div class="emergency-content">
+
+        <div class="emergency-icon">
+            🚨
+        </div>
+
+        <h2>Emergency Consultation</h2>
+
+        <div class="emergency-info">
+
+            <div class="info-row">
+                <span>Session ID</span>
+                <strong id="req-session-id"></strong>
+            </div>
+
+            <div class="info-row">
+                <span>Patient</span>
+                <strong id="patient-name">---</strong>
+            </div>
+
+            <div class="info-row">
+                <span>Hospital</span>
+                <strong id="hospital-name">---</strong>
+            </div>
+
+            <div class="info-row">
+                <span>Department</span>
+                <strong id="patient-problem">---</strong>
+            </div>
+
+            <div class="info-row">
+                <span>Waiting</span>
+                <strong id="waiting-time">00:00</strong>
+            </div>
+
+        </div>
+
+        <div class="modal-actions">
+
+            <button class="btn-reject">
+                Reject
+            </button>
+
+            <button class="btn-accept">
+                Accept
+            </button>
+
+        </div>
+
+    </div>
+
 </div>
 </body>
 </html>
+        
