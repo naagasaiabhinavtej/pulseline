@@ -110,6 +110,119 @@ button:hover {
     color: #dc2626;
     margin-top: 2px;
 }
+
+/* ===========================
+   WAITING OVERLAY
+=========================== */
+
+.overlay{
+    position:fixed;
+    inset:0;
+
+    background:rgba(0,0,0,0.45);
+
+    display:flex;
+    justify-content:center;
+    align-items:center;
+
+    backdrop-filter:blur(4px);
+
+    z-index:9999;
+}
+
+.hidden{
+    display:none;
+}
+
+.waiting-box{
+
+    width:430px;
+
+    background:white;
+
+    border-radius:18px;
+
+    padding:40px 35px;
+
+    text-align:center;
+
+    box-shadow:0 20px 50px rgba(0,0,0,.2);
+
+    animation:popup .25s ease;
+}
+
+@keyframes popup{
+
+    from{
+        transform:scale(.9);
+        opacity:0;
+    }
+
+    to{
+        transform:scale(1);
+        opacity:1;
+    }
+
+}
+
+.spinner{
+
+    width:60px;
+    height:60px;
+
+    margin:0 auto 25px;
+
+    border:6px solid #dce7ff;
+    border-top:6px solid #4f7cff;
+
+    border-radius:50%;
+
+    animation:spin .8s linear infinite;
+}
+
+@keyframes spin{
+
+    from{
+        transform:rotate(0deg);
+    }
+
+    to{
+        transform:rotate(360deg);
+    }
+
+}
+
+.waiting-box h2{
+
+    margin:0;
+    color:#1f2a44;
+}
+
+.status-text{
+
+    margin:18px 0 30px;
+    line-height:1.6;
+    color:#64748b;
+}
+
+.timer{
+
+    font-size:42px;
+
+    font-weight:700;
+
+    color:#2563eb;
+
+    margin-bottom:20px;
+}
+
+.waiting-box small{
+
+    color:#94a3b8;
+
+    line-height:1.5;
+}
+
 </style>
 </head>
 
@@ -164,8 +277,59 @@ button:hover {
         <button type="submit">Create Session</button>
     </form>
 </div>
+<div id="waitingOverlay" class="overlay hidden">
 
-<script>
+    <div class="waiting-box">
+
+        <div class="spinner"></div>
+
+        <h2>Waiting for Patient</h2>
+
+        <p class="status-text">
+            Your session request has been sent successfully.
+            Waiting for the patient to accept.
+        </p>
+
+        <div class="timer">
+            <span id="countdown">05:00</span>
+        </div>
+
+        <small>
+            The request will automatically expire if the patient
+            does not respond within 5 minutes.
+        </small>
+
+    </div>
+
+</div>
+<script type="module">  //this makes sure await can be written anywhere but these variables cant be exported, imported
+//     console.log("THIS IS THE FILE I AM RUNNING");
+// alert("Loaded this file");
+    let accessToken = null;
+    async function refreshtoken()
+    {
+        //  alert("Inside refresh");
+        const result = await fetch("/refresh",
+        {
+            method:"GET",
+            credentials: "include"
+        });
+        if(result.ok)
+        {
+            const data = await result.json();
+            accessToken = data.access_token;
+            console.log("Status:", result.status);
+        console.log("URL:", result.url);
+        console.log("Redirected:", result.redirected);
+            return accessToken;
+        }
+        else
+        {
+            // window.location.href="login.html";
+            return null;
+        }
+    }
+await refreshtoken(); //so that only after the user login you do the sytem
 const makeSessionForm = document.getElementById("sessionForm");
 // Input fields
 const healthIdInput = document.getElementById("health_id");
@@ -179,38 +343,157 @@ const clinicIdError = document.getElementById("clinic_id_error");
 const departmentError = document.getElementById("department_error");
 const assignedDoctorIdError = document.getElementById("assigned_doctor_id_error");
 
-makeSessionForm.addEventListener("submit", validateForm);
-function validateForm()
+//waiting
+const waitingOverlay = document.getElementById("waitingOverlay");
+const countDown = document.getElementById("countdown");
+
+const socket = new WebSocket(`ws://${window.location.host}/ws`);
+socket.onopen = ()=>
 {
-    
+    console.log("Connected");
 }
-document.getElementById("sessionForm").addEventListener("submit", async function(e) {
+makeSessionForm.addEventListener("submit", validateForm);
+async function validateForm(e)
+{
+    healthIdError.textContent = "";
+    clinicIdError.textContent = "";
+    departmentError.textContent = "";
+    assignedDoctorIdError.textContent = "";
     e.preventDefault();
-
-    const formData = Object.fromEntries(new FormData(this));
-
-    try {
-        const res = await fetch("/api/create-session", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(formData)
-        });
-
-        const data = await res.json();
-
-        localStorage.setItem("session_result", JSON.stringify(data));
-
-        window.location.href = "success_failure.html?status=success";
-
-    } catch (err) {
-        localStorage.setItem("session_result", JSON.stringify({
-            error: true,
-            message: err.message
-        }));
-
-        window.location.href = "success_failure.html?status=failed";
+    if(!healthIdInput.value.trim())
+    {
+        healthIdError.textContent = "Enter the Health Id";
+        return;
     }
-});
+    if(!clinicIdInput.value.trim())
+    {
+        clinicIdError.textContent = "Enter the Clinic Id";
+        return;
+    }
+    if(!departmentInput.value.trim())
+    {
+        departmentError.textContent = "Select the Department";
+        return;
+    }
+    if(!assignedDoctorIdInput.value.trim())
+    {
+        assignedDoctorIdError.textContent = "Enter the Doctor Id";
+        return;
+    }
+    const formData = Object.fromEntries(new FormData(makeSessionForm));  
+    const result = await fetch("/makeSession", {
+        method:"POST",
+        headers:{
+            Authorization:`Bearer ${accessToken}`,
+            "Content-Type":"application/json"              //says that frontend is sending the format of json
+        },
+        body:JSON.stringify(formData)
+    })
+    if(result.status === 401)
+    {
+        window.location.href = "login.html";
+    }
+    if(result.ok)
+    {
+        const data = await result.json();
+        if(data.type === "ErrorInDetails")
+        {
+            if(data.errorPlace === "healthId")
+            {
+                healthIdError.textContent = "Enter a valid HealthId";
+            }
+            else if(data.errorPlace === "clinicId")
+            {
+                clinicIdError.textContent = "Enter a valid ClinicId";
+            }
+            else if(data.errorPlace === "department")
+            {
+                departmentError.textContent = "Select a valid Department";
+            }
+            else if(data.errorPlace === "DoctorId")
+            {
+                assignedDoctorIdError.textContent = "Enter a valid DoctorId";
+            }
+        }
+        else if(data.type === "ValidDetails")
+        {
+            waitingOverlay.classList.remove("hidden");
+            countDown.textContent = "05:00";
+            startTimer();
+        }
+    }
+}
+socket.onmessage = (event)=>
+{
+    const data =  JSON.parse(event.data);
+    if(data.type === "Accepted")
+    {
+        waitingOverlay.classList.add("hidden");
+        clearInterval(timer);
+        window.location.href = `success_failure.html?status=success&sessionId=${data.sessionId}`;
+    }
+    else if(data.type === "Rejected")
+    {
+        waitingOverlay.classList.add("hidden");
+        clearInterval(timer);
+        window.location.href = "success_failure.html?status=failure";
+    }
+    else if(data.type === "Expired")
+    {
+        waitingOverlay.classList.add("hidden");
+        clearInterval(timer);
+        window.location.href = "success_failure.html?status=expired";
+    }
+};
+let timer = null;
+function startTimer()
+{
+    clearInterval(timer);
+    let seconds = 300;
+    timer = setInterval(() => {
+        seconds--;
+        let minutes = Math.floor(seconds/60);
+        let second = seconds%60;
+        if(seconds < 0)
+        {
+            clearInterval(timer);
+        }
+        else 
+        {
+            countDown.textContent = `${String(minutes).padStart(2, "0")}:${String(second).padStart(2, "0")}`;
+        }
+    }, 1000);
+}
+socket.onclose = () => {
+    console.log("Disconnected");
+};
+// document.getElementById("sessionForm").addEventListener("submit", async function(e) {
+//     e.preventDefault();
+
+//     const formData = Object.fromEntries(new FormData(this));
+
+//     try {
+//         const res = await fetch("/api/create-session", {
+//             method: "POST",
+//             headers: { "Content-Type": "application/json" },
+//             body: JSON.stringify(formData)
+//         });
+
+//         const data = await res.json();
+
+//         localStorage.setItem("session_result", JSON.stringify(data));
+
+//         window.location.href = "success_failure.html?status=success";
+
+//     } catch (err) {
+//         localStorage.setItem("session_result", JSON.stringify({
+//             error: true,
+//             message: err.message
+//         }));
+
+//         window.location.href = "success_failure.html?status=failed";
+//     }
+// });
 </script>
 
 </body>

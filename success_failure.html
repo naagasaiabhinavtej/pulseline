@@ -57,34 +57,92 @@
     <div class="redirect-text">Redirecting to dashboard...</div>
 </div>
 
-<script>
+<script type="module">
+    let accessToken = null;
+    async function refreshtoken()
+    {
+        //  alert("Inside refresh");
+        const result = await fetch("/refresh",
+        {
+            method:"GET",
+            credentials: "include"
+        });
+        if(result.ok)
+        {
+            const data = await result.json();
+            accessToken = data.access_token;
+            // console.log("Status:", result.status);
+            // console.log("URL:", result.url);
+            // console.log("Redirected:", result.redirected);
+            return accessToken;
+        }
+        else
+        {
+            // window.location.href="login.html";
+            return null;
+        }
+    }
+    await refreshtoken();
     const params = new URLSearchParams(window.location.search);
     const status = params.get('status');
-    const data = JSON.parse(localStorage.getItem("session_result") || "{}");
+    const sessionId = params.get('sessionId');
     
     const card = document.getElementById('statusCard');
     const icon = document.getElementById('icon');
     const title = document.getElementById('title');
     const message = document.getElementById('message');
     const successDetails = document.getElementById('successDetails');
-
+    if (!["success", "failure", "expired"].some(value => value === status)) {
+        window.location.href = "index.html";
+        return;
+    }
+    if (status === "success" && !sessionId) {
+        window.location.href = "index.html";
+        return;
+    }
     if (status === 'success') {
-        card.className = 'card success';
-        icon.innerHTML = '✓';
-        title.innerText = 'Session Created Successfully!';
-        message.innerHTML = `A new session has been created for <span class="name">${data.patient_name || 'the patient'}</span>`;
-        
-        document.getElementById('val-sid').innerText = data.session_id || 'N/A';
-        document.getElementById('val-clinic').innerText = data.clinic || 'N/A';
-        document.getElementById('val-doctor').innerText = data.doctor || 'N/A';
-        document.getElementById('val-dt').innerText = new Date().toLocaleString();
-        
-        successDetails.style.display = 'block';
-    } else {
+        const result = await fetch(`/success-failure/sessionDetails/${sessionId}`,{
+            method:"GET",
+            headers:{
+                Authorization:`Bearer ${accessToken}`
+            }
+        });
+        if(result.ok)
+        {
+            const data = await result.json();
+            card.className = 'card success';
+            icon.innerHTML = '✓';
+            title.innerText = 'Session Created Successfully!';
+            message.innerHTML = `A new session has been created for <span class="name">${data.patient_name || 'the patient'}</span>`;
+            
+            document.getElementById('val-sid').innerText = data.session_id || 'N/A';
+            document.getElementById('val-clinic').innerText = data.clinic || 'N/A';
+            document.getElementById('val-doctor').innerText = data.doctor || 'N/A';
+            document.getElementById('val-dt').innerText = data.createdAt;
+            
+            successDetails.style.display = 'block';
+            return;
+        }
+        else if(result.status === 401)
+        {
+            window.location.href = "login.html";
+            return;
+        }
+        else return;
+    } 
+    else if(status === "failure")
+    {
         card.className = 'card failed';
         icon.innerHTML = '✕';
         title.innerText = 'Session Creation Failed';
-        message.innerText = data.message || 'An unexpected error occurred.';
+        message.innerText = "Patient rejected the session";
+    }
+    else if(status === "expired")
+    {
+        card.className = 'card failed';
+        icon.innerHTML = '✕';
+        title.innerText = 'Session Creation Failed';
+        message.innerText = "The patient did not respond within the allotted time.";   
     }
 
     setTimeout(() => { window.location.href = "index.html"; }, 3000);
