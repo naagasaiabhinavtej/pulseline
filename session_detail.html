@@ -199,14 +199,18 @@
 
                     <!-- Input Dispatch Footer Actions Tray Area -->
                     <footer class="chat-input-bar">
+                        <div class="file-preview-box"></div>
+                        <div class="input-row">
                         <button class="attachment-action-btn">
                             <i data-lucide="paperclip"></i>
                         </button>
+                         <input type="file" id="filePicker" hidden multiple accept=".pdf, .jpg, .png, .doc, .docx">
                         <input type="text" placeholder="Type your message..." class="message-input-field">
                         <button class="send-action-submit-btn">
                             <span>Send</span>
                             <i data-lucide="send"></i>
                         </button>
+                        </div>
                     </footer>
                 </div>
 
@@ -247,14 +251,12 @@
                         <div class="detail-row">
                             <span class="row-label">Doctor 1</span>
                             <div class="doctor-sub-profile">
-                                <img src="avatar_doctors/old_male.png" alt="Doctor avatar">
                                 <span>Dr. Sarah Johnson</span>
                             </div>
                         </div>
                          <div class="detail-row">
                             <span class="row-label">Doctor 2</span>
                             <div class="doctor-sub-profile">
-                                <img src="avatar_doctors/old_female.png" alt="Doctor avatar">
                                 <span>Dr. Sarah Johnson</span>
                             </div>
                         </div>
@@ -264,7 +266,13 @@
                             <i data-lucide="siren"></i>
                             <span>Request Emergency Referral</span>
                         </button>
-                        <div id="referral-status" class="referral-status-hidden"></div>
+                        <div id="referral-status" class="referral-status hidden">
+
+                            <div class="status-header">
+                                <i data-lucide="loader-circle" id="status-icon"></i>
+                                <span id="status-title"></span>
+                            </div>
+                        </div>
                     </div>
                 </aside>
 
@@ -279,6 +287,608 @@
                 window.location.href = "waiting_room.html";
             }
         }
+        let accessToken = null;
+        async function refreshtoken()
+        {
+            const result = await fetch("/refresh",
+                {
+                    method:"GET",
+                    credentials: "include"
+                });
+            if(result.ok)
+            {
+                const data = await result.json();
+                accessToken = data.access_token;
+                return accessToken;
+            }
+            else
+            {
+                window.location.href="login.html";
+                return null;
+            }
+        }
+        // function getColor(index) 
+        // {
+        //     const colors = ["blue", "green", "purple", "orange"];
+        //     return colors[index % 4];
+        // }
+        function getAvatar(id) 
+        {
+            if (id === "first") return "avatar_patients/adult-female.png";
+            if (id === "second") return "avatar_patients/adult-male.png";
+            if (id === "third") return "avatar_patients/old-female.png";
+            if (id === "fourth") return "avatar_patients/old-male.png";
+            if (id === "fifth") return "avatar_patients/young-boy.png";
+            if (id === "sixth") return "avatar_patients/young-girl.png";            
+        }
+        async function giveData()
+        {
+            const result = await fetch("/session_detail",
+            {
+                method:"GET",
+                headers:{
+                    "Authorization":`Bearer ${accessToken}`
+                }
+            });
+            if(result.status === 401)
+            {
+                const data = await refreshtoken();
+                if(!data) return;
+            }
+            const finalresult = await fetch("/patient_session",
+            {
+                method:"GET",
+                headers:{
+                    "Authorization":`Bearer ${accessToken}`
+                }
+            });
+            return finalresult;
+        }
+        const logoutBtn = document.querySelector(".logout-btn");
+        const profileName = document.querySelector(".profile-name");
+        const dropdownIcon = document.querySelector(".dropdown-icon");
+        const patientAvatar = document.querySelector(".avatar");
+        const doctorAvatar = document.querySelector(".patient-avatar");
+        const patientName = document.querySelector(".patient-title h2");
+        const patientGender = document.querySelector(".patient-title p");
+        const sessionIdValue = document.querySelector(".meta-value-code span");
+        const startDatValue = document.querySelector(".meta-value span");
+        const startTimeValue = document.querySelector(".meta-value small");
+        const timerDigits = document.querySelector(".timer-digits");
+        const chatDateSeparator = document.querySelector(".chat-date-separator span");
+        const notesBox = document.querySelector(".notes-box");
+        const metasessionIdValue = document.querySelector(".badge-id");
+        const patientNameValue = document.querySelector(
+            '.detail-row:nth-child(2) .row-value'
+        );
+        const ageGenderValue = document.querySelector(
+            '.detail-row:nth-child(3) .row-value'
+        );
+        const startDateValue = document.querySelector(
+            '.detail-row:nth-child(4) .weight-bold'
+        );
+        const metastartTimeValue = document.querySelector(
+            '.detail-row:nth-child(4) small'
+        );
+        const doctor1Value = document.querySelector(
+            '.detail-row:nth-child(6) .doctor-sub-profile span'
+        );
+        const doctor2Value = document.querySelector(
+            '.detail-row:nth-child(7) .doctor-sub-profile span'
+        );
+        const chatBox = document.querySelector(".chat-viewport-window");
+        const attachmentActionBtn = document.querySelector(".attachment-action-btn");
+        const sendDataActionBtn = document.querySelector(".send-data-action-btn");
+        const messageInputField = document.querySelector(".message-input-field");
+        const sendActionSubmitBtn = document.querySelector(".send-action-submit-btn");
+        const copyIc = document.querySelector(".copy-ic");
+        const filePicker = document.querySelector("#filePicker");
+        const filePreviewBox = document.querySelector(".file-preview-box");
+        const tabTrigger = document.querySelector(".tab-trigger");
+        const videoBtn = document.querySelector(".action-video-launch-btn")
+        let messageList = [];
+        let selectedFiles = []; //so that you can get files already on the text board
+        // let recentDate = null; dont use this because sometimes backend may send the text late but before that forward dates gets uploaded and it will create a mess the late becasue of network speed, delays etc
+        let user_id = null;
+        let avatarSrc = "";
+        async function askdata()
+        {
+            const result = await giveData();
+            if(!result || !result.ok) return;
+            const data = await result.json();
+            const doctor1Name = data.doctor1Name;
+            const doctor2Name = data.doctor2Name;
+            const name = data.name;
+            user_id = data.user_id;
+            const patientFullName = data.patientName;
+            const pavatarId = data.pavatarId;
+            const davatarId = data.davatarId;
+            // const sessionId = data.sessionId;
+            const startDate = data.startDate;
+            const startTime = data.startTime;
+            const age_gender = data.age_gender;
+            const messages = data.messages;
+            const isReffered = data.isReffered;
+            messageList = messages;
+            profileName.textContent = name;
+            patientAvatar.src = getAvatar(pavatarId);
+            doctorAvatar.src = getAvatar(davatarId);
+            startDatValue.textContent = startDate;
+            startTimeValue.textContent = startTime;
+            sessionIdValue.textContent = sessionId;
+            metasessionIdValue.textContent = sessionId;
+            patientNameValue.textContent = patientFullName;
+            ageGenderValue.textContent = age_gender;
+            startDateValue.textContent = startDate;
+            metastartTimeValue.textContent = startTime;
+            doctor1Value.textContent = doctor1Name;
+            doctor2Value.textContent = doctor2Name;
+            patientName.innerHTML = `${patientFullName} <span class="status-dot-active">Active</span>`;
+            if(isReffered && name===doctor1Name) 
+            {
+                tabTrigger.classList.add('disabled-tag');  //make sure you have done check in report submission
+            }
+            showAllMessages();
+            avatarSrc = patientAvatar.src;
+            let merged_start = new Date(`${startDate}T${startTime}`);             //T is a seperator
+            startTimer(merged_start);
+            setInterval(startTimer, 1000, merged_start );     //setInterval(startTimer, 1000, arg1, arg2, arg3);
+        }
+        document.addEventListener("DOMContentLoaded", askData);
+        function startTimer(merged_start)
+        {
+            let now = new Date();
+            let diff = Math.floor((now - merged_start)/1000);        //returns in milliseconds if subtracted hence /1000
+            let days = Math.floor(diff/86400);
+            let hours = Math.floor((diff%86400)/3600);
+            let minutes = Math.floor((diff%3600)/60);
+            let seconds = diff%60;
+            timerDigits.textContent = `${days}D:${String(hours).padStart(2, "0")}:${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`;
+        }
+        function showAllMessages()      
+        {
+            chatBox.innerHTML = "";
+            let makehtml = "";
+            let recentDate = null;
+            messageList.forEach((message)=>
+            {
+                if(recentDate === null || recentDate!=message.date)
+                {
+                    recentDate = message.date;
+                    makehtml += `<div class="chat-date-separator">
+                                    <span>${recentDate}</span>
+                                </div>`
+                }
+                let filePath = "";
+                if(message.file_name)
+                {
+                    filePath = `<a href="/download-file-chat/${message.attachmentId}" target = "_blank">         
+                                    📄 ${message.file_name}
+                                </a>` //backend has to be careful while giving the filepath as people can get into the folders of the servers
+                }
+                let bluetick; //in backend please have a list of who saw it but here send true or false
+                let avatarsrc = getAvatar(message.avatarId);
+                if(message.bluetick)
+                {
+                    bluetick = "read-receipt";
+                }
+                else bluetick = "delivered";
+                if(message.sender_id === user_id)
+                {
+                    makehtml +=` <div class="chat-row message-outgoing" data-id="${message.tempId}">
+                                    <div class="message-wrapper">
+                                        <div class="bubble">
+                                            <div class="attachments-container">${filePath}</div>
+                                            <p>${message.chattext}</p>
+                                            <div class="bubble-status">
+                                                <span class="timestamp">${message.timestamp}</span>
+                                                <i data-lucide="check-check" class="${bluetick}"></i>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <img src="${avatarsrc}" alt="Patient" class="msg-avatar">
+                                </div>
+                            `;
+                }
+                else 
+                {
+                    socket.send(JSON.stringify({
+                        type:"read",
+                        message:message.tempId
+                    }));
+                    makehtml += `<div class="chat-row message-incoming" data-id="${message.tempId}>
+                                    <img src=${avatarsrc} alt="Doctor" class="msg-avatar">
+                                    <div class="message-wrapper">
+                                        <span class="sender-title">${message.senderName}</span>
+                                        <div class="bubble">
+                                            <div class="attachments-container">${filePath}</div>
+                                            <p>${message.chattext}</p>
+                                            <span class="timestamp">${message.timestamp}</span>
+                                        </div>
+                                    </div>
+                                </div>
+`;
+                }
+            });
+            chatBox.innerHTML = makehtml;
+            chatBox.scrollTop = chatBox.scrollHeight;  //shows the bottom message for the user scrollTop means how much dowwn you scrolled and scroll height is the total length of the chatbox
+        }
+        copyIc.addEventListener("click", async ()=>
+        {
+            const sessionCode = sessionIdValue.textContent;
+            await navigator.clipboard.writeText(sessionCode);  //copies text into clipboard as navigation is a browser property
+            copyIc.setAttribute("data-lucide", "check");         //lucide is a built in symbols instead of us to design
+            lucide.createIcons();
+            setTimeout(()=>
+            {
+                console.log("timeout fired");
+                copyIc.setAttribute("data-lucide", "copy");
+                lucide.createIcons();
+            }, 1000);
+        });
+        attachmentActionBtn.addEventListener("click", ()=>
+        {
+            filePicker.click();
+        });
+        filePicker.addEventListener("change", () => {
+
+            const files = Array.from(filePicker.files);  //to convert into array
+
+            files.forEach((file) => {
+
+                const isDuplicate = selectedFiles.some(f =>                //checks condition whether it satifies or not and return true false
+                    f.name === file.name &&
+                    f.size === file.size &&
+                    f.type === file.type
+                );
+
+                if (!isDuplicate) {
+                    selectedFiles.push(file);
+                }
+            });
+
+            renderFiles();
+            filePicker.value = "";
+        });
+function renderFiles() 
+{
+    filePreviewBox.innerHTML = "";
+
+    selectedFiles.forEach((file, index) => {
+
+        let iconName = "file";
+
+        if (file.type.includes("image")) iconName = "image";
+        else if (file.type.includes("video")) iconName = "video";
+        else if (file.type.includes("audio")) iconName = "music";
+        else if (file.type.includes("pdf")) iconName = "file-text";
+
+        const filechip = document.createElement("div");
+        filechip.classList.add("file-chip");
+
+        filechip.innerHTML = `
+            <i data-lucide="${iconName}" class="file-icon"></i>
+            <span>${file.name}</span>
+            <button class="remove-file">✕</button>
+        `;
+
+        // remove file
+        filechip.querySelector(".remove-file").addEventListener("click", () => {
+            selectedFiles.splice(index, 1);   //splice(index, deletcount, insertthis....) same order if only certain amount is given
+            renderFiles();
+        });
+
+        filePreviewBox.append(filechip);
+    });
+
+    lucide.createIcons();
+}
+
+sendActionSubmitBtn.addEventListener("click", handleSend);
+
+function handleSend() {
+    const text = messageInputField.value.trim();
+    if (!text && selectedFiles.length === 0) return;
+    const files = [...selectedFiles];           //if you copy directly both will point to the same element so if selectedFiles = [] then it means files = []
+
+    // CASE 1: NO FILES → just text message
+    if (files.length === 0) {
+        const tempId = crypto.randomUUID();    //so that frontend knows next which message to change when websocket send it
+        showMessage({
+            tempId,
+            sender_id: user_id,
+            chattext: text,
+            files: [],
+            timestamp: new Date().toLocaleTimeString(),
+            status: "sending"
+        });
+
+        socket.send(JSON.stringify({
+            type: "new_message",
+            tempId,
+            text,
+            files: [],
+            sessionId: sessionIdValue.textContent,
+            timestamp: new Date().toISOString(),
+            sender_id: user_id
+        }));
+
+        messageInputField.value = "";
+        return;
+    }
+
+    // CASE 2: FILES EXIST → text only goes to FIRST file
+    files.forEach((file, index) => {
+
+        const tempId = crypto.randomUUID();
+        const fileObj = {
+            name: file.name,
+            type: file.type
+        };
+
+        showMessage({
+            tempId,
+            sender_id: user_id,
+            chattext: index === 0 ? text : "",   // 👈 ONLY FIRST FILE GETS TEXT
+            files: [fileObj],
+            timestamp: new Date().toLocaleTimeString(),
+            status: "sending"
+        });
+
+        socket.send(JSON.stringify({
+            type: "new_message",
+            tempId,
+            text: index === 0 ? text : "",
+            files: [fileObj],
+            sessionId: sessionIdValue.textContent,
+            timestamp: new Date().toISOString(),
+            sender_id: user_id
+        }));
+    });
+
+    // cleanup
+    selectedFiles = [];
+    renderFiles();
+    messageInputField.value = "";
+}
+
+function showMessage({
+    sender_id,
+    chattext = "",
+    files = [],
+    avatarId = null,
+    senderName = "",
+    timestamp = "",
+    status = "sent",   // "sent" | "sending" | "delivered" | "read"
+    tempId = ""
+}) {
+    const chatBox = document.querySelector(".chat-viewport-window");
+    const isOutgoing = sender_id === user_id;
+    const avatar = avatarId ? getAvatar(avatarId) : avatarsrc;
+    // file (ONE file per message)
+    const file = files?.[0];
+    const fileHTML = file?.file_Path
+        ? `<a href="${file.file_Path}" target="_blank">
+              📄 ${file.file_name}
+           </a>`
+        : "";
+    // tick system (WhatsApp style)
+    let tickIcon = "check";
+    let tickClass = "sending";
+    if (status === "delivered") 
+    {
+        tickIcon = "check-check";
+        tickClass = "delivered";
+    } 
+    else if (status === "read") 
+    {
+        tickIcon = "check-check";
+        tickClass = "read-receipt";
+    }
+
+    const tickHTML = isOutgoing
+        ? `<i data-lucide="${tickIcon}" class="${tickClass}"></i>`
+        : "";
+
+    // OUTGOING HTML
+    const outgoingHTML = `
+        <div class="chat-row message-outgoing" data-id="${tempId}">
+
+            <div class="message-wrapper">
+                <div class="bubble">
+
+                    <div class="attachments-container">
+                        ${fileHTML}
+                    </div>
+
+                    <p>${chattext}</p>
+
+                    <div class="bubble-status">
+                        <span class="timestamp">${timestamp}</span>
+                        ${tickHTML}
+                    </div>
+
+                </div>
+            </div>
+
+            <img src="${avatar}" class="msg-avatar">
+
+        </div>
+    `;
+
+    // INCOMING HTML
+    const incomingHTML = `
+        <div class="chat-row message-incoming">
+
+            <img src="${avatar}" class="msg-avatar">
+
+            <div class="message-wrapper">
+
+                <span class="sender-title">${senderName}</span>
+
+                <div class="bubble">
+
+                    <div class="attachments-container">
+                        ${fileHTML}
+                    </div>
+
+                    <p>${chattext}</p>
+
+                    <span class="timestamp">${timestamp}</span>
+
+                </div>
+            </div>
+
+        </div>
+    `;
+
+    chatBox.insertAdjacentHTML("beforeend", isOutgoing ? outgoingHTML : incomingHTML);  //because we are sending strings but if you want to send the objects like div and div.innerHtml then you can use appendchild
+    lucide.createIcons();
+}
+socket.onmessage((message)=>{
+    const data = JSON.parse(message.data); //as message is like object having data, websokcet no, and additional details.
+    if(data.type === "delivered" || data.type === "read")
+    {
+        const msg = querySelector(`[data-id=${data.tempId}] i`);
+        const link = querySelector(`[data-id=${data.tempId}] .attachment-container a`)
+        if(msg)
+        {
+            msg.setAttribute("data-lucide", "check-check");
+            msg.className = data.type === "read" ? "read-receipt" : "delivered";
+            lucide.createIcons(); 
+            msg.closest(".chat-row").setAttribute("data-id", data.messageId);    //closest() shows the recent top data which has this class name
+        }
+        if(link && data.type === "delivered")
+        {
+            link.href = `/download-file-chat/${data.attachmentId}`;
+        }
+    }
+    else if(message.type === "sent")
+    {
+        showMessage(data);
+        const link = querySelector(`[data-id = ${data.tempId}] .attachments-container a `);
+        if(link) link.href = `/download-file-chat/${data.attachmentId}`;
+        socket.send(JSON.stringify({
+            type:"read",
+            message:data.messageId
+        }));
+    }
+    else if(data.type === "callStarted")
+    {
+        videoBtn.classList.add("call-started");
+        videoBtn.querySelector("span").textContent = "Join Session";
+    }
+    else if(data.type === "callEnded")
+    {
+        videoBtn.classList.remove("call-started");
+        videoBtn.querySelector("span").textContent = "Start Video Call";
+    }
+    else if(data.type === "startedSearching")
+    {
+        updateReferralStatus("searching");
+    }
+    else if(data.type === "startedExpanding")
+    {
+        updateReferralStatus("expanding");
+    }
+    else if(data.type === "searchingFailed")
+    {
+        updateReferralStatus("failed");
+        emergencyBtn.disabled = false;
+        referralStatus.classList.add("hidden");
+    }
+    else if(data.type === "searchingSuccess")
+    {
+        updateReferralStatus("success");
+        referralStatus.classList.add("hidden");
+        socket.send(JSON.stringify({
+            type:"wantDoctor2Details"
+        }));
+    }
+    else if(data.type === "doctor2Details")
+    {
+        
+    }
+
+});
+const emergencyBtn = document.querySelector("#emergency-dispatch-btn");
+const referralStatus = document.querySelector("#referral-status");
+const statusTitle = document.querySelector("#status-title");
+const statusIcon = document.querySelector("#status-icon");
+emergencyBtn.addEventListener("click", ()=>
+{
+    emergencyBtn.disabled = true;
+    const result = fetch("/sessions/emergency", 
+    {
+        method:"POST",
+        headers:{
+            Authorization:`Bearer ${accessToken}`
+        },
+        body:JSON.stringify({
+            sessionId:sessionIdValue.textContent
+        })
+    });
+});
+function updateReferralStatus(state)
+{
+    referralStatus.classList.remove(
+        "hidden",
+        "status-searching",
+        "status-expanded",
+        "status-success",
+        "status-failed"
+    );
+
+    if(state === "searching")
+    {
+        referralStatus.classList.add("status-searching");
+
+        statusTitle.textContent = "Searching nearby hospitals";
+
+        statusIcon.setAttribute(
+            "data-lucide",
+            "loader-circle"
+        );
+    }
+
+    else if(state === "expanded")
+    {
+        referralStatus.classList.add("status-expanded");
+
+        statusTitle.textContent = "Searching more hospitals";
+
+        statusIcon.setAttribute(
+            "data-lucide",
+            "clock"
+        );
+    }
+
+    else if(state === "success")
+    {
+        referralStatus.classList.add("status-success");
+
+        statusTitle.textContent = "Hospital accepted referral";
+
+        statusIcon.setAttribute(
+            "data-lucide",
+            "check-circle"
+        );
+    }
+
+    else if(state === "failed")
+    {
+        referralStatus.classList.add("status-failed");
+
+        statusTitle.textContent = "No hospital accepted";
+
+        statusIcon.setAttribute(
+            "data-lucide",
+            "x-circle"
+        );
+    }
+
+    lucide.createIcons();
+}
     </script>
 </body>
 </html>
