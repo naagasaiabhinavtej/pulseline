@@ -137,14 +137,524 @@
     // document.getElementById("doctor1CameraOff").style.display = "none";
     // document.getElementById("doctor2CameraOff").style.display = "none";
     // document.getElementById("mainCameraOff").style.display = "none";
-    function pinVideo(name) {
-        // document.getElementById('mainView').innerText = "Active Video: " + name;
-    }
     let isNotesOpen = false;
     function toggleNotes() {
         const panel = document.getElementById('notesPanel');
         isNotesOpen = !isNotesOpen;
         panel.style.right = isNotesOpen ? '0px' : '-350px';
+    }
+    const patientVideo = document.getElementById("patientVideo");
+    const doctor1Video = document.getElementById("doctor1Video");
+    const doctor2Video = document.getElementById("doctor2Video");
+    const params = new URLSearchParams(window.location.search);
+    const sessionId = params.get("sessionId");
+    let socket = null;
+    let localStream = null;
+    let myRole = null;
+    let userId = null;
+    let isScreenSharing = false;
+    let participants = [];
+    let peerConnections = {};
+    let patientId = null;
+    let doctor1Id = null;
+    let doctor2Id = null;
+
+    document.addEventListener("DOMContentLoaded", initializeCall);
+    function toggleMute() 
+    {
+        const audioTrack = localStream.getAudioTracks()[0];
+
+        if(audioTrack)
+        {
+            audioTrack.enabled = !audioTrack.enabled;
+
+            const btn = document.querySelectorAll('.ctrl-btn')[0];
+
+            btn.innerHTML = `
+                <i data-lucide="${audioTrack.enabled ? 'mic' : 'mic-off'}"></i>
+                ${audioTrack.enabled ? 'Mute' : 'Unmute'}
+            `;
+
+            btn.style.color = audioTrack.enabled ? 'white' : '#ef4444';
+
+            lucide.createIcons();
+        }
+    }
+    function toggleVideo() 
+    {
+
+        const videoTrack = localStream.getVideoTracks()[0];
+
+        if(videoTrack)
+        {
+            videoTrack.enabled = !videoTrack.enabled;
+
+            const btn = document.querySelectorAll('.ctrl-btn')[1];
+
+            btn.innerHTML = `
+                <i data-lucide="${videoTrack.enabled ? 'video' : 'video-off'}"></i>
+                ${videoTrack.enabled ? 'Stop Video' : 'Start Video'}
+            `;
+
+            btn.style.color = videoTrack.enabled ? 'white' : '#ef4444';
+
+
+            let overlayId = null;
+
+
+            if(myRole === "patient")
+            {
+                overlayId = "patientCameraOff";
+            }
+            else if(myRole === "doctor1")
+            {
+                overlayId = "doctor1CameraOff";
+            }
+            else if(myRole === "doctor2")
+            {
+                overlayId = "doctor2CameraOff";
+            }
+
+
+            const overlay = document.getElementById(overlayId);
+
+            if(overlay)
+            {
+                overlay.style.display = videoTrack.enabled ? "none" : "flex";
+            }
+
+
+            lucide.createIcons();
+        }
+    }
+    function pinVideo(name)
+    {
+        const mainVideo = document.getElementById("mainVideo");
+        const mainName = document.getElementById("mainParticipantName");
+
+
+        let selectedVideo = null;
+
+
+        if(name === "patient")
+        {
+            selectedVideo = patientVideo;
+        }
+        else if(name === "doctor1")
+        {
+            selectedVideo = doctor1Video;
+        }
+        else if(name === "doctor2")
+        {
+            selectedVideo = doctor2Video;
+        }
+
+
+        if(selectedVideo && selectedVideo.srcObject)
+        {
+            mainVideo.srcObject = selectedVideo.srcObject;
+
+
+            const nameElement = document.getElementById(`${name}Name`);
+
+            if(nameElement)
+            {
+                mainName.innerText = nameElement.innerText;
+            }
+
+
+            document.querySelectorAll('.video-tile')
+            .forEach(tile => {
+                tile.classList.remove("pinned");
+            });
+
+
+            selectedVideo.parentElement.classList.add("pinned");
+        }
+    }
+    async function toggleScreenShare()
+    {
+        if(isScreenSharing)
+        {
+            await stopScreenShare();
+            isScreenSharing = false;
+            return;
+        }
+        try
+        {
+            const screenStream = await navigator.mediaDevices.getDisplayMedia({
+                video:true
+            });
+
+
+            const screenTrack = screenStream.getVideoTracks()[0];
+            isScreenSharing = true;
+
+
+            // Replace camera with screen
+            for(const peerId in peerConnections)
+            {
+                const sender = peerConnections[peerId]
+                    .getSenders()
+                    .find(sender => 
+                        sender.track && sender.track.kind === "video"
+                    );
+
+
+                if(sender)
+                {
+                    await sender.replaceTrack(screenTrack);
+                }
+            }
+
+
+            // // Show screen locally
+            // if(myRole === "patient")
+            // {
+            //     patientVideo.srcObject = screenStream;
+            // }
+            // else if(myRole === "doctor1")
+            // {
+            //     doctor1Video.srcObject = screenStream;
+            // }
+            // else if(myRole === "doctor2")
+            // {
+            //     doctor2Video.srcObject = screenStream;
+            // }
+
+
+            // When user stops sharing
+            screenTrack.onended = () =>
+            {
+                stopScreenShare();
+            };
+
+        }
+        catch(error)
+        {
+            console.log("Screen share cancelled", error);
+        }
+    }
+    async function stopScreenShare()
+    {
+        const cameraTrack = localStream.getVideoTracks()[0];
+
+
+        for(const peerId in peerConnections)
+        {
+            const sender = peerConnections[peerId]
+                .getSenders()
+                .find(sender =>
+                    sender.track &&
+                    sender.track.kind === "video"
+                );
+
+
+            if(sender)
+            {
+                await sender.replaceTrack(cameraTrack);
+            }
+        }
+
+
+        if(myRole === "patient")
+        {
+            patientVideo.srcObject = localStream;
+        }
+        else if(myRole === "doctor1")
+        {
+            doctor1Video.srcObject = localStream;
+        }
+        else if(myRole === "doctor2")
+        {
+            doctor2Video.srcObject = localStream;
+        }
+}
+    document.querySelectorAll('.ctrl-btn')[0]
+    .addEventListener('click', toggleMute);
+
+
+    document.querySelectorAll('.ctrl-btn')[1]
+    .addEventListener('click', toggleVideo);
+
+    document.querySelectorAll('.ctrl-btn')[2]
+    .addEventListener('click', toggleScreenShare);
+
+
+    async function initializeCall()
+    {
+        await getSession();
+
+        await startLocalMedia();
+
+        connectWebSocket();
+
+        // registerSocketEvents();
+    }
+    let accessToken = null;
+    async function refreshtoken()
+    {
+        const result = await fetch("/refresh",
+            {
+                method:"GET",
+                credentials: "include"
+            });
+        if(result.ok)
+        {
+            const data = await result.json();
+            accessToken = data.access_token;
+            return accessToken;
+        }
+        else
+        {
+            window.location.href="login.html";
+            return null;
+        }
+    }
+    async function giveData()
+    {
+        const result = await fetch(`/in_call.html?sessionId=${sessionId}`,
+        {
+            method:"GET",
+            headers:{
+                "Authorization":`Bearer ${accessToken}`
+            },
+        });
+        if(result.status === 401)
+        {
+            const data = await refreshtoken();
+            if(!data) return;
+        }
+        const finalresult = await fetch(`/in_call?sessionId=${sessionId}`,
+        {
+            method:"GET",
+            headers:{
+                "Authorization":`Bearer ${accessToken}`
+            }
+        });
+        return finalresult;
+    }
+    async function getSession()
+    {
+        const result = await giveData();
+        if(!result || !result.ok) return;
+        const data = await result.json();
+        myRole = data.myRole;
+        userId = data.userId;
+    }
+    async function startLocalMedia()
+    {
+        //use try catch for awaits or function which can give invalid response
+        try
+        {
+            localStream = await navigator.mediaDevices.getUserMedia(
+            {
+                video:true,
+                audio:true
+            });
+            if(myRole === "patient")
+            {
+                patientVideo.srcObject = localStream;
+                pinVideo("patient");
+            }
+            else if(myRole === "doctor1")
+            {
+                doctor1Video.srcObject = localStream;
+                pinVideo("doctor1");
+            }
+            else if(myRole === "doctor2")
+            {
+                doctor2Video.srcObject = localStream;
+                pinVideo("doctor2");
+            }
+        }
+        catch(error)
+        {
+            console.log(error);
+            alert("Unable to access camera or microphone");
+        }
+    }
+    async function connectWebSocket()
+    {
+        socket = new WebSocket(`ws://${window.location.host}/ws`);
+        socket.onopen = ()=>
+        {
+            console.log("Connected");
+        }
+        socket.onmessage = async (event) => {
+        // Handle incoming messages
+        const data = JSON.parse(event.data);    
+        switch(data.type)
+        {
+            case "participant_joined":
+                participantJoined(data);
+                break;
+
+            case "participant_left":
+                participantLeft(data);
+                break;
+
+            case "offer":
+                await handleOffer(data.offer, data.userId);
+                break;
+
+            case "answer":
+                await handleAnswer(data.answer, data.userId);
+                break;
+
+            case "ice_candidate":
+                await handleIceCandidate(data.candidate, data.userId);
+                break;
+        }
+        };
+
+        socket.onclose = () => {
+            console.log("Disconnected");
+        };
+
+        socket.onerror = (error) => {
+            console.error(error);
+        };
+    }
+    function participantJoined(data)
+    {
+         if(data.userId === userId)
+        {
+            return;
+        }
+        if(data.role === "patient")
+        {
+            patientId = data.userId;
+        }
+        else if(data.role === "doctor1")
+        {
+            doctor1Id = data.userId;
+        }
+        else if(data.role === "doctor2")
+        {
+            doctor2Id = data.userId;
+        }
+
+        createPeerConnection(data.userId, true);
+    }
+
+    function participantLeft(data)
+    {
+        if(peerConnections[data.userId])
+        {
+            peerConnections[data.userId].close();
+            delete peerConnections[data.userId];
+        }
+
+        if(patientId === data.userId)
+        {
+            patientId = null;
+            patientVideo.srcObject = null;
+        }
+        else if(doctor1Id === data.userId)
+        {
+            doctor1Id = null;
+            doctor1Video.srcObject = null;
+        }
+        else if(doctor2Id === data.userId)
+        {
+            doctor2Id = null;
+            doctor2Video.srcObject = null;
+        }
+    }
+    function createPeerConnection(remoteUserId, isInitiator)
+    {
+        const peerConnection =  new RTCPeerConnection({
+            iceServers:[
+                {
+                    urls:"stun:stun.l.google.com:19302"
+                }
+            ]
+        });
+        peerConnections[remoteUserId] = peerConnection;
+        localStream.getTracks().forEach(track => {
+            peerConnection.addTrack(track);
+        });
+        peerConnection.ontrack = (event) => {
+            if(remoteUserId === patientId)
+            {
+                patientVideo.srcObject = event.streams[0];
+            }
+            else if(remoteUserId === doctor1Id)
+            {
+                doctor1Video.srcObject = event.streams[0];
+            }
+            else if(remoteUserId === doctor2Id)
+            {
+                doctor2Video.srcObject = event.streams[0];
+            }
+        };
+        peerConnection.onicecandidate = (event) => {
+            if(event.candidate)
+            {
+                socket.send(JSON.stringify({
+                    type:"ice-candidate",
+                    candidate:event.candidate,
+                    userId:remoteUserId
+                }));
+            }
+        };
+        if (isInitiator) {
+            peerConnection.createOffer()
+                .then(offer => peerConnection.setLocalDescription(offer))
+                .then(() => {
+                    socket.send(JSON.stringify({
+                        type: 'offer',
+                        offer: peerConnection.localDescription,
+                        userId: remoteUserId,
+                        role: myRole // Make sure we send our specific role with the offer
+                    }));
+                });
+        }
+        return peerConnection;
+    }
+    async function handleOffer(offer, remoteUserId) {
+        const peerConnection = createPeerConnection(remoteUserId, false);
+        await peerConnection.setRemoteDescription(new RTCSessionDescription(offer));
+        
+        const answer = await peerConnection.createAnswer();
+        await peerConnection.setLocalDescription(answer);
+        
+        socket.send(JSON.stringify({
+            type: 'answer',
+            answer: peerConnection.localDescription,
+            userId: remoteUserId
+        }));
+    }
+    async function handleAnswer(answer, remoteUserId)
+    {
+        const peerConnection = peerConnections[remoteUserId];
+
+         if(!peerConnection)
+        {
+            return;
+        }
+
+        await peerConnection.setRemoteDescription(
+            new RTCSessionDescription(answer)
+        );
+    }
+    async function handleIceCandidate(candidate, remoteUserId)
+    {
+        const peerConnection = peerConnections[remoteUserId];
+
+        if(peerConnection)
+        {
+            await peerConnection.addIceCandidate(
+                new RTCIceCandidate(candidate)
+            );
+        }
+    }
+    function handleUserDisconnect(remoteUserId) {
+        if (peerConnections[remoteUserId]) {
+            peerConnections[remoteUserId].close();
+            delete peerConnections[remoteUserId];
+        }
     }
 </script>
 </body>

@@ -142,7 +142,7 @@
                                 <span>Patient <strong>John Doe</strong> and Doctor<strong>Abhinav tej </strong>is inside the room awaiting connection.</span>
                             </div>
                             
-                            <button class="action-join-stream-btn" onclick="alert('Establishing streaming broadcast protocols...')">
+                            <button class="action-join-stream-btn" id="joinButton">
                                 <span>Join Session Now</span>
                                 <i data-lucide="arrow-right"></i>
                             </button>
@@ -287,9 +287,8 @@
         const participantStatusBox = document.querySelector(
             ".participant-status-callout span"
         );
-        const joinButton = document.querySelector(
-            ".action-join-stream-btn"
-        );
+        const joinButton = document.getElementById("joinButton");
+
         const joinButtonText = document.querySelector(
             ".action-join-stream-btn span"
         );
@@ -415,6 +414,34 @@
             const res = await giveData();
             if(!res || !res.ok) return;
 
+        }
+        joinButton.addEventListener("click", joinSession);
+        function joinSession()
+        {
+            joinButton.disabled = true;
+            joinButton.textContent = "Joining";
+            window.open(`incall.html?sessionid=${sessionId}`, "_blank");
+        }
+        const socket = new Websocket(`ws://${window.location.host}/ws`)
+        socket.onopen = ()=>{
+            console.log("Connected");
+        }
+        socket.onclose = ()=>
+        {
+            console.log("Disconnected");
+        }
+        socket.onmessage = (message)=>
+        {
+            const data = JSON.parse(message.data);
+            if(data.type === "CallJoined")
+            {
+                joinButton.textContent = "In call";
+            }
+            else if(data.type === "CallCompleted")
+            {
+                joinButton.textContent = "Start Session";
+                joinButton.disabled = false;
+            }
         }
     </script>
 </body>
