@@ -225,8 +225,17 @@
 </div>
 
 <script>
-    lucide.createIcons();
-    let accessToken = null;
+lucide.createIcons();
+let accessToken = null;
+function getAvatar(id) 
+{
+    if (id === "first") return "avatar_patients/adult_female.png";
+    if (id === "second") return "avatar_patients/adult_male.png";
+    if (id === "third") return "avatar_patients/old_female.png";
+    if (id === "fourth") return "avatar_patients/old_male.png";
+    if (id === "fifth") return "avatar_patients/young_boy.png";
+    if (id === "sixth") return "avatar_patients/young_girl.png";            
+}
 async function refreshtoken()
 {
     const response = await fetch("/refresh",{
@@ -277,9 +286,8 @@ async function askData()
     if(!result || !result.ok)
         return;
     const data = await result.json();
-    profileAvatar.src = data.avatar;
+    profileAvatar.src = getAvatar(data.avatarId);
     profileName.textContent = data.patientName;
-    profileRole.textContent = data.patientRole;
     previousSessionsData = data.previousSessions;
     createPreviousSessions(data.previousSessions);
     lucide.createIcons();
@@ -331,7 +339,7 @@ function createPreviousSessions(previousSessions)
                         <div class="doctor-block">
 
                             <div class="doctor-card">
-                                <img src="${session.doctorOne.avatar}">
+                                <img src="${getAvatar(session.doctorOne.avatarId)}">
                                 <div class="doctor">
                                     <h4>${session.doctorOne.name}</h4>
                                     <p>${session.doctorOne.hospital}</p>
@@ -341,7 +349,7 @@ function createPreviousSessions(previousSessions)
                             <span class="doctor-cross">×</span>
 
                             <div class="doctor-card">
-                                <img src="${session.doctorTwo.avatar}">
+                                <img src="${getAvatar(session.doctorTwo.avatarId)}">
                                 <div class="doctor">
                                     <h4>${session.doctorTwo.name}</h4>
                                     <p>${session.doctorTwo.hospital}</p>
@@ -433,7 +441,7 @@ function createPreviousSessions(previousSessions)
                         <div class="doctor-block">
 
                             <div class="doctor-card">
-                                <img src="${session.doctorOne.avatar}">
+                                <img src="${getAvatar(session.doctorOne.avatarId)}">
                                 <div class="doctor">
                                     <h4>${session.doctorOne.name}</h4>
                                     <p>${session.doctorOne.hospital}</p>
