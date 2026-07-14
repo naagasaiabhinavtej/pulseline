@@ -188,7 +188,7 @@
 
                 <!-- Right Hand Side: Updatable Form Elements Area Panel -->
                 <section class="card">
-                    <form action="#" method="POST">
+                    <form id="medicalForm">
                         <div class="card-section-header">
                             <div class="section-icon icon-light-green">
                                 <i class="fa-regular fa-pen-to-square text-green-main"></i>
@@ -217,22 +217,84 @@
                                 </div>
                             </div>
 
-                            <div class="grid-2col">
-                                <div class="interactive-box-row">
-                                    <div class="box-icon-container text-green-main"><i class="fa-regular fa-eye"></i></div>
-                                    <div class="box-inner-content">
-                                        <label for="eye_sight">Eye Sight Metric</label>
-                                        <input type="text" id="eye_sight" name="eye_sight" value="20/20 Vision (Normal)">
-                                    </div>
-                                </div>
-                                <div class="interactive-box-row">
-                                    <div class="box-icon-container text-green-main"><i class="fa-solid fa-ear-listen"></i></div>
-                                    <div class="box-inner-content">
-                                        <label for="hearing">Hearing Metric</label>
-                                        <input type="text" id="hearing" name="hearing" value="Normal threshold (0-25 dB)">
-                                    </div>
-                                </div>
-                            </div>
+          <div class="grid-2col">
+
+    <!-- Right Eye -->
+    <div class="interactive-box-row">
+        <div class="box-icon-container text-green-main">
+            <i class="fa-regular fa-eye"></i>
+        </div>
+
+        <div class="box-inner-content">
+            <label for="right_eye">Right Eye (OD)</label>
+            <input 
+                type="text" 
+                id="right_eye" 
+                name="right_eye" 
+                value="20/20"
+                placeholder="Example: 20/20">
+        </div>
+    </div>
+
+
+    <!-- Left Eye -->
+    <div class="interactive-box-row">
+        <div class="box-icon-container text-green-main">
+            <i class="fa-regular fa-eye"></i>
+        </div>
+
+        <div class="box-inner-content">
+            <label for="left_eye">Left Eye (OS)</label>
+            <input 
+                type="text" 
+                id="left_eye" 
+                name="left_eye" 
+                value="20/20"
+                placeholder="Example: 20/20">
+        </div>
+    </div>
+
+</div>
+
+
+<div class="grid-2col">
+
+    <!-- Right Ear -->
+    <div class="interactive-box-row">
+        <div class="box-icon-container text-green-main">
+            <i class="fa-solid fa-ear-listen"></i>
+        </div>
+
+        <div class="box-inner-content">
+            <label for="right_ear_hearing">Right Ear Hearing (dB)</label>
+            <input 
+                type="number" 
+                id="right_ear_hearing" 
+                name="right_ear_hearing" 
+                value="15"
+                placeholder="Example: 15">
+        </div>
+    </div>
+
+
+    <!-- Left Ear -->
+    <div class="interactive-box-row">
+        <div class="box-icon-container text-green-main">
+            <i class="fa-solid fa-ear-listen"></i>
+        </div>
+
+        <div class="box-inner-content">
+            <label for="left_ear_hearing">Left Ear Hearing (dB)</label>
+            <input 
+                type="number" 
+                id="left_ear_hearing" 
+                name="left_ear_hearing" 
+                value="15"
+                placeholder="Example: 15">
+        </div>
+    </div>
+
+</div>
 
                             <div class="interactive-box-row">
                                 <div class="box-icon-container text-green-main"><i class="fa-solid fa-phone"></i></div>
@@ -297,9 +359,9 @@
                                 <div class="chart-icon-round icon-purple-bg"><i class="fa-solid fa-heart-pulse text-purple-main"></i></div>
                                 <h3>Blood Pressure <span class="unit-text">(mmHg)</span></h3>
                             </div>
-                            <button class="add-reading-btn" onclick="openModal('bp')">
+                            <!-- <button class="add-reading-btn" onclick="openModal('bp')">
                                 <i class="fa-solid fa-plus"></i> Add Reading
-                            </button>
+                            </button> -->
                         </div>
                         <div class="chart-main-value-group">
                             <div class="chart-stat-number">120/80 <span class="sub-unit">mmHg</span></div>
@@ -333,9 +395,10 @@
                                 <div class="chart-icon-round icon-green-bg"><i class="fa-solid fa-droplet text-green-main"></i></div>
                                 <h3>Blood Sugar <span class="unit-text">(mg/dL)</span></h3>
                             </div>
-                            <button class="add-reading-btn" onclick="openModal('sugar')">
+                            <!-- <button class="add-reading-btn" onclick="openModal('sugar')">
                                 <i class="fa-solid fa-plus"></i> Add Reading
-                            </button>                        </div>
+                            </button>                         -->
+                        </div>
                         <div class="chart-main-value-group">
                             <div class="chart-stat-number">98.6 <span class="sub-unit">mg/dL</span></div>
                             <span class="status-tag tag-green">Normal</span>
@@ -357,9 +420,9 @@
                                 <div class="chart-icon-round icon-orange-bg"><i class="fa-solid fa-temperature-half text-orange-main"></i></div>
                                 <h3>Temperature <span class="unit-text">(°C)</span></h3>
                             </div>
-                                <button class="add-reading-btn" onclick="openModal('temp')">
+                                <!-- <button class="add-reading-btn" onclick="openModal('temp')">
                                     <i class="fa-solid fa-plus"></i> Add Reading
-                                </button>                        
+                                </button>                         -->
                             </div>
                         <div class="chart-main-value-group">
                             <div class="chart-stat-number">36.6 <span class="sub-unit">°C</span></div>
@@ -378,9 +441,9 @@
                                 <div class="chart-icon-round icon-red-bg"><i class="fa-regular fa-heart text-danger"></i></div>
                                 <h3>Heart Rate <span class="unit-text">(bpm)</span></h3>
                             </div>
-                                <button class="add-reading-btn" onclick="openModal('heart')">
+                                <!-- <button class="add-reading-btn" onclick="openModal('heart')">
                                     <i class="fa-solid fa-plus"></i> Add Reading
-                                </button>                       
+                                </button>                        -->
                             </div>
                         <div class="chart-main-value-group">
                             <div class="chart-stat-number">72 <span class="sub-unit">bpm</span></div>
@@ -394,97 +457,6 @@
 
                 </div>
             </section>
-
-            <!-- NEW SECTION: Recent 20 Sessions Log Records Table Frame Component -->
-            <!-- <section class="section-container">
-                <div class="table-header-wrapper">
-                    <h2 class="block-title">Recent 20 Sessions</h2>
-                    <p class="block-subtitle">Your latest 20 recorded readings</p>
-                </div>
-
-                <div class="table-scroll-frame">
-                    <table class="data-logs-table">
-                        <thead>
-                            <tr>
-                                <th>Date & Time</th>
-                                <th>Blood Pressure <span class="table-unit">(mmHg)</span></th>
-                                <th>Blood Sugar <span class="table-unit">(mg/dL)</span></th>
-                                <th>Temperature <span class="table-unit">(°C)</span></th>
-                                <th>Heart Rate <span class="table-unit">(bpm)</span></th>
-                                <th class="text-center">Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr>
-                                <td class="text-bold-slate">Jun 10, 2025 <span class="time-label">09:15 AM</span></td>
-                                <td>120/80</td>
-                                <td>98.6</td>
-                                <td>36.6</td>
-                                <td>72</td>
-                                <td class="actions-cell">
-                                    <button class="action-btn edit-icon"><i class="fa-regular fa-pen-to-square"></i></button>
-                                    <button class="action-btn delete-icon"><i class="fa-regular fa-trash-can"></i></button>
-                                </td>
-                            </tr>
-                            <tr>
-                                <td class="text-bold-slate">Jun 9, 2025 <span class="time-label">08:45 AM</span></td>
-                                <td>118/78</td>
-                                <td>95.2</td>
-                                <td>36.7</td>
-                                <td>70</td>
-                                <td class="actions-cell">
-                                    <button class="action-btn edit-icon"><i class="fa-regular fa-pen-to-square"></i></button>
-                                    <button class="action-btn delete-icon"><i class="fa-regular fa-trash-can"></i></button>
-                                </td>
-                            </tr>
-                            <tr>
-                                <td class="text-bold-slate">Jun 8, 2025 <span class="time-label">08:30 AM</span></td>
-                                <td>122/82</td>
-                                <td>101.3</td>
-                                <td>36.8</td>
-                                <td>74</td>
-                                <td class="actions-cell">
-                                    <button class="action-btn edit-icon"><i class="fa-regular fa-pen-to-square"></i></button>
-                                    <button class="action-btn delete-icon"><i class="fa-regular fa-trash-can"></i></button>
-                                </td>
-                            </tr>
-                            <tr>
-                                <td class="text-bold-slate">Jun 7, 2025 <span class="time-label">09:10 AM</span></td>
-                                <td>119/79</td>
-                                <td>97.8</td>
-                                <td>36.5</td>
-                                <td>71</td>
-                                <td class="actions-cell">
-                                    <button class="action-btn edit-icon"><i class="fa-regular fa-pen-to-square"></i></button>
-                                    <button class="action-btn delete-icon"><i class="fa-regular fa-trash-can"></i></button>
-                                </td>
-                            </tr>
-                            <tr class="ellipsis-row">
-                                <td class="text-bold-slate">...</td>
-                                <td>...</td>
-                                <td>...</td>
-                                <td>...</td>
-                                <td>...</td>
-                                <td class="actions-cell">
-                                    <button class="action-btn edit-icon">...</button>
-                                    <button class="action-btn delete-icon">...</button>
-                                </td>
-                            </tr>
-                            <tr>
-                                <td class="text-bold-slate">May 22, 2025 <span class="time-label">07:50 AM</span></td>
-                                <td>116/76</td>
-                                <td>93.1</td>
-                                <td>36.4</td>
-                                <td>68</td>
-                                <td class="actions-cell">
-                                    <button class="action-btn edit-icon"><i class="fa-regular fa-pen-to-square"></i></button>
-                                    <button class="action-btn delete-icon"><i class="fa-regular fa-trash-can"></i></button>
-                                </td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-            </section> -->
 
             <!-- Dashboard Encryption Guard Rails Footer -->
             <footer class="secure-footer">
@@ -531,6 +503,38 @@
         </form>
     </div>
 </div>
+<div id="saveConfirmModal" class="modal-overlay">
+    <div class="modal-box confirm-box">
+
+        <div class="confirm-icon">
+            <i class="fa-solid fa-circle-question"></i>
+        </div>
+
+        <h2>Save Medical Data?</h2>
+
+        <p>
+            Are you sure you want to save these changes?
+            This will update your medical profile.
+        </p>
+
+        <div class="confirm-buttons">
+            <button id="cancelSave" class="cancel-btn">
+                Cancel
+            </button>
+
+            <button id="confirmSave" class="save-btn">
+                Yes, Save
+            </button>
+        </div>
+
+    </div>
+</div>
+
+
+<div id="saveToast" class="save-toast">
+    <i class="fa-solid fa-circle-check"></i>
+    Data Saved Successfully
+</div>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <!-- Chart.js Zoom Plugin -->
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-zoom@2.2.0/dist/chartjs-plugin-zoom.min.js"></script>
@@ -555,7 +559,225 @@
             return null;
         }
     }
-    function calculateAdultBMI(bmi)
+    function getColor(index) 
+    {
+        const colors = ["blue", "green", "purple", "orange"];
+        return colors[index % 4];
+    }
+    function getAvatar(id) 
+    {
+        if (id === "first") return "avatar_patients/adult_female.png";
+        if (id === "second") return "avatar_patients/adult_male.png";
+        if (id === "third") return "avatar_patients/old_female.png";
+        if (id === "fourth") return "avatar_patients/old_male.png";
+        if (id === "fifth") return "avatar_patients/young_boy.png";
+        if (id === "sixth") return "avatar_patients/young_girl.png";            
+    }
+    async function giveData()
+    {
+        const result = await fetch("/patient_medical_data",
+        {
+            method:"GET",
+            headers:{
+                "Authorization":`Bearer ${accessToken}`
+            }
+        });
+        if(result.status === 401)
+        {
+            const data = await refreshtoken();
+            if(!data) return;
+        }
+        const finalresult = await fetch("/patient_medical_data",
+        {
+            method:"GET",
+            headers:{
+                "Authorization":`Bearer ${accessToken}`
+            }
+        });
+        return finalresult;
+    }
+const avatar = document.querySelector(".avatar");
+const profileName = document.querySelector(".profile-name");
+const profileRole = document.querySelector(".profile-role");
+const profileArrow = document.querySelector(".profile-arrow");
+const widgetNumbers = document.querySelectorAll(".widget-number");
+const widgetSubs = document.querySelectorAll(".widget-sub");
+const heartRateSub = widgetSubs[0];
+const bmiSub = widgetSubs[1];
+const ageSub = widgetSubs[2];
+const lastCheckupSub = widgetSubs[3];
+const statusTags = document.querySelectorAll(".status-tag");
+const heartRateStatusTag = statusTags[0];
+const bmiStatusTag = statusTags[1];
+const ageStatusTag = statusTags[2];
+const bloodPressureStatusTag = statusTags[3];
+const bloodSugarStatusTag = statusTags[4];
+const temperatureStatusTag = statusTags[5];
+const heartChartStatusTag = statusTags[6];
+const cards = document.querySelectorAll(".card");
+const permanentCard = cards[0];
+const permanentValues = permanentCard.querySelectorAll(".box-value");
+const healthIdValue = permanentValues[0];
+const fullNameValue = permanentValues[1];
+const dobValue = permanentValues[2];
+const genderValue = permanentValues[3];
+const bloodGroupValue = permanentValues[4];
+const heightInput = document.getElementById("height");
+const weightInput = document.getElementById("weight");
+const rightEyeInput = document.getElementById("right_eye");
+const leftEyeInput = document.getElementById("left_eye");
+const rightEarInput = document.getElementById("right_ear_hearing");
+const leftEarInput = document.getElementById("left_ear_hearing");
+const emergencyContactInput = document.getElementById("emergency_contact");
+const medicalHistoryInput = document.getElementById("medical_history");
+const allergiesInput = document.getElementById("allergies");
+const saveBtn = document.querySelector(".btn-save");
+const timeButtons = document.querySelectorAll(".time-btn");
+const activeTimeButton = document.querySelector(".time-btn.active");
+const addReadingButtons = document.querySelectorAll(".add-reading-btn");
+const closeModalBtn = document.querySelector(".close-modal");
+const cancelBtn = document.querySelector(".cancel-btn");
+const saveReadingBtn = document.querySelector(".save-btn");
+const lastCheckupDateWidget = document.querySelector(".widget-text-date");
+const heartRateWidget = widgetNumbers[0];
+const bmiWidget = widgetNumbers[1];
+const ageWidget = widgetNumbers[2];
+let selectedRange = "7D";
+let isSaving = false;
+const medicalForm = document.getElementById("medicalForm");
+const saveConfirmModal = document.getElementById("saveConfirmModal");
+const confirmSaveBtn = document.getElementById("confirmSave");
+const cancelSaveBtn = document.getElementById("cancelSave");
+const saveToast = document.getElementById("saveToast");
+const canvas1 = document.getElementById("bpChart");
+const canvas2 = document.getElementById("bsChart");
+const canvas3 = document.getElementById("tempChart");
+const canvas4 = document.getElementById("heartChart");
+const ctx1 = canvas1.getContext("2d");
+const ctx2 = canvas2.getContext("2d");
+const ctx3 = canvas3.getContext("2d");
+const ctx4 = canvas4.getContext("2d");
+const bpLabels = [
+    // "Jun 10","Jun 11","Jun 12","Jun 13","Jun 14","Jun 15","Jun 16",
+    // "Jun 17","Jun 18","Jun 19","Jun 20","Jun 21","Jun 22","Jun 23",
+    // "Jun 24","Jun 25","Jun 26","Jun 27","Jun 28","Jun 29","Jun 30",
+    // "Jul 1","Jul 2","Jul 3","Jul 4","Jul 5","Jul 6","Jul 7","Jul 8"
+];
+const systolicData = [
+                        // 119,121,120,122,118,120,123,121,119,122,120,118,121,124,
+    //                    122,120,119,121,123,120,122,120,118,122,124,121,120,124,122
+                    ];
+const diastolicData = [
+    // 79,80,78,81,79,80,82,81,79,80,79,78,80,83,
+    //                     81,80,79,80,82,81,83,80,79,81,82,80,81,82,80
+                    ];
+
+const sugarLabels = [
+    // "Jun 10","Jun 11","Jun 12","Jun 13","Jun 14","Jun 15","Jun 16",
+    // "Jun 17","Jun 18","Jun 19","Jun 20","Jun 21","Jun 22","Jun 23",
+    // "Jun 24","Jun 25","Jun 26","Jun 27","Jun 28","Jun 29","Jun 30",
+    // "Jul 1","Jul 2","Jul 3","Jul 4","Jul 5","Jul 6","Jul 7","Jul 8"
+];
+
+const fastingData = [
+    // 96,98,95,101,97,99,100,98,96,99,
+    // 97,95,98,102,100,99,97,98,101,99,
+    // 100,98,97,99,101,100,98,99,97
+];
+
+const postMealData = [
+    // 138,142,136,145,140,143,147,144,139,146,
+    // 142,138,141,149,146,144,140,143,147,145,
+    // 148,143,141,146,150,147,144,148,145
+];
+let sessionsData = [];
+async function askData() {
+    const res = await giveData();
+    if (!res?.ok) return;            //meaning !res || !res.ok
+
+    const data = await res.json();
+    sessionsData = data.sessionsData;
+    profileName.textContent = data.PatientName;
+    avatar.src = getAvatar(data.patientAvatarId);
+
+    updatePermanentRecord(data);
+    updateEditableFields(data);
+    updateBMI(data);
+    updateAge(data.dateOfBirth);
+    updateLastCheckup(data.sessionData);
+    updateHeartRate(data.sessionsData);
+    updateCharts(data.sessionData);
+}
+function updatePermanentRecord(data)
+{
+    healthIdValue.textContent = data.HealthID;
+    fullNameValue.textContent = data.PatientName;
+    dobValue.textContent = data.dateOfBirth;
+    genderValue.textContent = data.Gender;
+    bloodGroupValue.textContent = data.BloodGroup;
+}
+function updateEditableFields(data)
+{
+    heightInput.value = data.Height;
+    weightInput.value = data.Weight;
+    rightEyeInput.value = data.RightEye;
+    leftEyeInput.value = data.LeftEye;
+    rightEarInput.value = data.RightEarHearing;
+    leftEarInput.value = data.LeftEarHearing;
+    emergencyContactInput.value = data.EmergencyContact;
+    medicalHistoryInput.value = data.MedicalHistory;
+    allergiesInput.value = data.Allergies;
+}
+function giveAgeInMonths(dateOfBirth)
+{
+    const dob = new Date(dateOfBirth);
+    const today = new Date();
+
+    let months =
+        (today.getFullYear() - dob.getFullYear()) * 12 +
+        (today.getMonth() - dob.getMonth());
+
+    if(today.getDate() < dob.getDate())
+    {
+        months--;
+    }
+
+    return months;
+}
+function updateBMI(data)
+{
+    const ageInMonths = giveAgeInMonths(data.dateOfBirth);
+
+    const heightInM = data.Height / 100;
+    const bmi = data.Weight / (heightInM * heightInM);     //toFixed gives you string so make it number of() if needed
+
+    let bmiData;
+
+    if(ageInMonths > 228)
+    {
+        bmiData = calculateAdultBMI(bmi);
+    }
+    else
+    {
+        bmiData = giveChildBmi(data.file, ageInMonths, bmi);
+    }
+
+    bmiWidget.textContent = bmi.toFixed(2);
+    bmiSub.textContent = `Healthy Range: ${bmiData.healthyRange}`;
+    bmiStatusTag.textContent = bmiData.status;
+
+    bmiStatusTag.className = "status-tag";
+
+    if(bmiData.status === "Underweight")
+        bmiStatusTag.classList.add("tag-yellow");
+    else if(bmiData.status === "Healthy weight")
+        bmiStatusTag.classList.add("tag-green");
+    else if(bmiData.status === "Overweight")
+        bmiStatusTag.classList.add("tag-orange");
+    else
+        bmiStatusTag.classList.add("tag-red");
+}
+function calculateAdultBMI(bmi)
     {
 
         const healthyRange = "18.5 - 24.9";
@@ -613,211 +835,28 @@
         return {
             status:status,
             color:color,
-            healthy_range:`${row.P5} - ${row.P95}`
-        }
+            healthyRange:`${row.P5} - ${row.P95}`
+        };
     }
-    function getColor(index) 
-    {
-        const colors = ["blue", "green", "purple", "orange"];
-        return colors[index % 4];
-    }
-    function getAvatar(id) 
-    {
-        if (id === "first") return "avatar_patients/adult-female.png";
-        if (id === "second") return "avatar_patients/adult-male.png";
-        if (id === "third") return "avatar_patients/old-female.png";
-        if (id === "fourth") return "avatar_patients/old-male.png";
-        if (id === "fifth") return "avatar_patients/young-boy.png";
-        if (id === "sixth") return "avatar_patients/young-girl.png";            
-    }
-    async function giveData()
-    {
-        const result = await fetch("/patient_medical_data",
-        {
-            method:"GET",
-            headers:{
-                "Authorization":`Bearer ${accessToken}`
-            }
-        });
-        if(result.status === 401)
-        {
-            const data = await refreshtoken();
-            if(!data) return;
-        }
-        const finalresult = await fetch("/index",
-        {
-            method:"GET",
-            headers:{
-                "Authorization":`Bearer ${accessToken}`
-            }
-        });
-        return finalresult;
-    }
-const avatar = document.querySelector(".avatar");
-const profileName = document.querySelector(".profile-name");
-const profileRole = document.querySelector(".profile-role");
-const profileArrow = document.querySelector(".profile-arrow");
-const widgetNumbers = document.querySelectorAll(".widget-number");
-const widgetSubs = document.querySelectorAll(".widget-sub");
-const heartRateSub = widgetSubs[0];
-const bmiSub = widgetSubs[1];
-const ageSub = widgetSubs[2];
-const lastCheckupSub = widgetSubs[3];
-const statusTags = document.querySelectorAll(".status-tag");
-const heartRateStatusTag = statusTags[0];
-const bmiStatusTag = statusTags[1];
-const ageStatusTag = statusTags[2];
-const bloodPressureStatusTag = statusTags[3];
-const bloodSugarStatusTag = statusTags[4];
-const temperatureStatusTag = statusTags[5];
-const heartChartStatusTag = statusTags[6];
-const cards = document.querySelectorAll(".card");
-const permanentValues = permanentCard.querySelectorAll(".box-value");
-const healthIdValue = permanentValues[0];
-const fullNameValue = permanentValues[1];
-const dobValue = permanentValues[2];
-const genderValue = permanentValues[3];
-const bloodGroupValue = permanentValues[4];
-const permanentCard = cards[0];
-const medicalForm = document.querySelector("form");
-const heightInput = document.getElementById("height");
-const weightInput = document.getElementById("weight");
-const eyeSightInput = document.getElementById("eye_sight");
-const hearingInput = document.getElementById("hearing");
-const emergencyContactInput = document.getElementById("emergency_contact");
-const medicalHistoryInput = document.getElementById("medical_history");
-const allergiesInput = document.getElementById("allergies");
-const saveBtn = document.querySelector(".btn-save");
-const timeButtons = document.querySelectorAll(".time-btn");
-const activeTimeButton = document.querySelector(".time-btn.active");
-const addReadingButtons = document.querySelectorAll(".add-reading-btn");
-const closeModalBtn = document.querySelector(".close-modal");
-const cancelBtn = document.querySelector(".cancel-btn");
-const saveReadingBtn = document.querySelector(".save-btn");
-const lastCheckupDateWidget = document.querySelector(".widget-text-date");
-const heartRateWidget = widgetNumbers[0];
-const bmiWidget = widgetNumbers[1];
-const ageWidget = widgetNumbers[2];
-const canvas1 = document.getElementById("bpChart");
-const canvas2 = document.getElementById("bsChart");
-const canvas3 = document.getElementById("tempChart");
-const canvas4 = document.getElementById("heartChart");
-const ctx1 = canvas1.getContext("2d");
-const ctx2 = canvas2.getContext("2d");
-const ctx3 = canvas3.getContext("2d");
-const ctx4 = canvas4.getContext("2d");
-const bpLabels = [
-    // "Jun 10","Jun 11","Jun 12","Jun 13","Jun 14","Jun 15","Jun 16",
-    // "Jun 17","Jun 18","Jun 19","Jun 20","Jun 21","Jun 22","Jun 23",
-    // "Jun 24","Jun 25","Jun 26","Jun 27","Jun 28","Jun 29","Jun 30",
-    // "Jul 1","Jul 2","Jul 3","Jul 4","Jul 5","Jul 6","Jul 7","Jul 8"
-];
-const systolicData = [
-                        // 119,121,120,122,118,120,123,121,119,122,120,118,121,124,
-    //                    122,120,119,121,123,120,122,120,118,122,124,121,120,124,122
-                    ];
-const diastolicData = [
-    // 79,80,78,81,79,80,82,81,79,80,79,78,80,83,
-    //                     81,80,79,80,82,81,83,80,79,81,82,80,81,82,80
-                    ];
-
-const sugarLabels = [
-    // "Jun 10","Jun 11","Jun 12","Jun 13","Jun 14","Jun 15","Jun 16",
-    // "Jun 17","Jun 18","Jun 19","Jun 20","Jun 21","Jun 22","Jun 23",
-    // "Jun 24","Jun 25","Jun 26","Jun 27","Jun 28","Jun 29","Jun 30",
-    // "Jul 1","Jul 2","Jul 3","Jul 4","Jul 5","Jul 6","Jul 7","Jul 8"
-];
-
-const fastingData = [
-    // 96,98,95,101,97,99,100,98,96,99,
-    // 97,95,98,102,100,99,97,98,101,99,
-    // 100,98,97,99,101,100,98,99,97
-];
-
-const postMealData = [
-    // 138,142,136,145,140,143,147,144,139,146,
-    // 142,138,141,149,146,144,140,143,147,145,
-    // 148,143,141,146,150,147,144,148,145
-];
-const sessionsData = [];
-async function askData()
+function getAge(dateOfBirth)
 {
-    const res = await giveData();
-    if(!res || !res.ok) return;
-    const data = await res.json(); //JSON only used for stringify i mean for objects to change thier property
-    const PatientName = data.PatientName;
-    const patientAvatar = data.PatientAvatarId;
-    const healthID = data.HealthID;
-    const fullName = data.FullName;
-    const dateOfBirth = data.dateOfBirth;
-    const gender = data.Gender;
-    const bloodGroup = data.BloodGroup;
-    const height = data.Height;
-    const weight = data.Weight;
-    const eyeSight = data.EyeSight;
-    const hearing = data.Hearing;
-    const emergencyContact = data.EmergencyContact;
-    const medicalHistory = data.MedicalHistory;
-    const allergies = data.Allergies;
-    const file = data.file; //correct file as perage
-    sessionsData = data.sessionData;
-    profileName.textContent = PatientName;
-    avatar.src = getAvatar(PatientAvatarId);
-    heightInput.value = height;
-    weightInput.value = weight;
-    eyeSightInput.value = eyeSight;
-    hearingInput.value = hearing;
-    emergencyContactInput.value = emergencyContact;
-    medicalHistoryInput.value = medicalHistory;
-    allergiesInput.value = allergies;
-    healthIdValue.textContent = healthID;
-    fullNameValue.textContent = PatientName;
-    dobValue.textContent = dateOfBirth;
-    genderValue.textContent = gender;
-    bloodGroupValue.textContent = bloodGroup;
+    const dob = new Date(dateOfBirth);
+    const today = new Date();
 
-    //BMI
-    const ageInMonths = giveAgeInMonths(dateOfBirth);
-    let bmi = null;
-    let heightInM = height/100;
-    bmi = ((weight)/(heightInM*heightInM));  //toFixed gives you string so make it number of() if needed
-    let bmiData = null;
-    if(ageInMonths>228)
+    let age = today.getFullYear() - dob.getFullYear();
+
+    if (
+        today.getMonth() < dob.getMonth() ||
+        (today.getMonth() === dob.getMonth() && today.getDate() < dob.getDate())
+    )
     {
-        bmiData = adultBMIClassification(bmi)
-    }
-    else bmiData = giveChildBmi(file, ageInMonths, bmi);
-    let status = "";
-    status - bmiData.status;
-    bmiWidget.textContent = `${bmi.toFixed(2)}`;
-    bmiSub.textContent = `Healthy Range: ${bmiData.healthy_range}`;
-    bmiStatusTag.textContent = `${bmiData.status}`;
-    bmiStatusTag.classList.remove("tag-green");
-    if(status === "Underweight")
-    {
-        bmiStatusTag.classList.add("tag-yellow");
-    }
-    else if(status === "Healthyweight")
-    {
-        bmiStatusTag.classList.add("tag-yellow");
-    }
-    else if(status === "Overweight")
-    {
-        bmiStatusTag.classList.add("tag-orange");
-    }
-    else if(status === "Obesity")
-    {
-        bmiStatusTag.classList.add("tag-red");
+        age--;
     }
 
-
-    //Heart Rate
-    
-
-
-
-
-    //age
+    return age;
+}
+function updateAge(dateOfBirth)
+{
     const age = getAge(dateOfBirth);
     let ageStatus = "";
     switch (true){
@@ -836,31 +875,446 @@ async function askData()
         default: 
             ageStatus = "Senior";
     }
-    ageWidget.textContent = '${age}';
+    ageWidget.textContent = age;
     let birthDate = new Date(dateOfBirth).toLocaleDateString("en-US",{
         month:"short",
         day:"numeric",
         year:"numeric"
     });
-    ageSub = `Born on ${birthDate}`;
+    ageSub.textContent = `Born on ${birthDate}`;
     ageStatusTag.textContent = `${ageStatus} Stage`;
+}
+function updateLastCheckup(sessionsData)
+{
+    // formats like July 9, 2026
+    lastCheckupDateWidget.textContent = sessionsData.length
+        ? new Date(sessionsData[0].createdAt).toLocaleDateString("en-IN", {
+              day: "numeric",
+              month: "short",
+              year: "numeric"
+          })
+        : "No Recordings";
 
-
-    //last checkup
-// formats like July 9, 2026
-lastCheckupDateWidget.textContent = sessionsData.length
-    ? new Date(sessionsData[0].createdAt).toLocaleDateString("en-IN", {
-          day: "numeric",
-          month: "short",
-          year: "numeric"
-      })
-    : "No Recordings";    
     //tolocaleString - makes the timestamp with date into local region style if mentioned it goes to that way so both time and date are visible and toLocalDateString
     // only date is given
-lastCheckupSub.textContent = sessionsData.length?sessionsData[0].department:"";
+    lastCheckupSub.textContent = sessionsData.length
+        ? sessionsData[0].department
+        : "";
 }
+function updateHeartRate(sessionsData)
+{
+    if(sessionsData.length === 0)
+    {
+        heartRateWidget.textContent = "--";
+        heartRateStatusTag.textContent = "No Recordings";
+        heartRateSub.textContent = "Last updated: Never";
+        return;
+    }
+
+    const latestSession = sessionsData[0];
+    const heartRate = latestSession.heartRate;
+
+    heartRateWidget.textContent = heartRate;
+
+    if(heartRate < 60)
+    {
+        heartRateStatusTag.textContent = "Low";
+        heartRateStatusTag.className = "status-tag tag-yellow";
+    }
+    else if(heartRate <= 100)
+    {
+        heartRateStatusTag.textContent = "Normal";
+        heartRateStatusTag.className = "status-tag tag-green";
+    }
+    else
+    {
+        heartRateStatusTag.textContent = "High";
+        heartRateStatusTag.className = "status-tag tag-red";
+    }
+
+    const updatedAt = new Date(latestSession.createdAt);
+    const now = new Date();
+
+    const diffHours = Math.floor((now - updatedAt) / (1000 * 60 * 60));
+    const diffDays = Math.floor(diffHours / 24);
+
+    if(diffHours < 24)
+    {
+        heartRateSub.textContent = `Last updated: ${diffHours} hour${diffHours !== 1 ? "s" : ""} ago`;
+    }
+    else if(diffDays <= 7)
+    {
+        heartRateSub.textContent = `Last updated: ${diffDays} day${diffDays !== 1 ? "s" : ""} ago`;
+    }
+    else
+    {
+        heartRateSub.textContent =
+            "Last updated: " +
+            updatedAt.toLocaleDateString("en-IN", {
+                day: "numeric",
+                month: "short",
+                year: "numeric"
+            });
+    }
+}
+timeButtons.forEach(button => {
+
+    button.addEventListener("click", () => {
+
+        timeButtons.forEach(btn => btn.classList.remove("active"));
+        button.classList.add("active");
+
+        selectedRange = button.textContent;
+
+        updateCharts();
+
+    });
+
+});
+function getFilteredSessions()
+{
+    if(selectedRange === "All")
+    {
+        return sessionsData;
+    }
+
+    if(selectedRange === "7D")
+    {
+        return sessionsData.slice(0, 7);
+    }
+
+    return sessionsData.slice(0, 30);
+}
+function updateCharts()
+{
+    const filteredSessions = getFilteredSessions();
+
+    bpLabels.length = 0;
+    systolicData.length = 0;
+    diastolicData.length = 0;
+
+    sugarLabels.length = 0;
+    fastingData.length = 0;
+    postMealData.length = 0;
+
+    tempLabels.length = 0;
+    temperatureData.length = 0;
+
+    heartLabels.length = 0;
+    heartRateData.length = 0;
+
+    for(const session of [...filteredSessions].reverse())
+    {
+        const label = new Date(session.createdAt).toLocaleDateString("en-IN",{
+            day:"numeric",
+            month:"short"
+        });
+
+        if(session.bloodPressure)
+        {
+            const [systolic, diastolic] = session.bloodPressure.split("/").map(Number);
+
+            bpLabels.push(label);
+            systolicData.push(systolic);
+            diastolicData.push(diastolic);
+        }
+
+        if(session.bloodSugar)
+        {
+            const [fasting, postMeal] = session.bloodSugar.split("/").map(Number);
+
+            sugarLabels.push(label);
+            fastingData.push(fasting);
+            postMealData.push(postMeal);
+        }
+
+        if(session.temperature != null)
+        {
+            tempLabels.push(label);
+            temperatureData.push(Number(session.temperature));
+        }
+
+        if(session.heartRate != null)
+        {
+            heartLabels.push(label);
+            heartRateData.push(Number(session.heartRate));
+        }
+    }
+
+    updateBloodPressureCard(sessionsData);
+    updateBloodSugarCard(sessionsData);
+    updateTemperatureCard(sessionsData);
+    updateHeartRateCard(sessionsData);
+
+    bpChart.options.scales.x.min = Math.max(0, bpLabels.length - 7);
+    bpChart.options.scales.x.max = bpLabels.length - 1;
+
+    bsChart.options.scales.x.min = Math.max(0, sugarLabels.length - 7);
+    bsChart.options.scales.x.max = sugarLabels.length - 1;
+
+    tempChart.options.scales.x.min = Math.max(0, tempLabels.length - 7);
+    tempChart.options.scales.x.max = tempLabels.length - 1;
+
+    heartChart.options.scales.x.min = Math.max(0, heartLabels.length - 7);
+    heartChart.options.scales.x.max = heartLabels.length - 1;
+
+    bpChart.update();
+    bsChart.update();
+    tempChart.update();
+    heartChart.update();
+}
+function updateBloodPressureCard(bp)
+{
+    const [sys, dia] = bp.split("/").map(Number);
+
+    document.querySelectorAll(".chart-stat-number")[0].innerHTML =
+        `${sys}/${dia} <span class="sub-unit">mmHg</span>`;
+
+    bloodPressureStatusTag.className = "status-tag";
+
+    if(sys < 120 && dia < 80)
+    {
+        bloodPressureStatusTag.textContent = "Normal";
+        bloodPressureStatusTag.classList.add("tag-green");
+    }
+    else if(sys < 130 && dia < 80)
+    {
+        bloodPressureStatusTag.textContent = "Elevated";
+        bloodPressureStatusTag.classList.add("tag-yellow");
+    }
+    else if(sys < 140 || dia < 90)
+    {
+        bloodPressureStatusTag.textContent = "High";
+        bloodPressureStatusTag.classList.add("tag-orange");
+    }
+    else
+    {
+        bloodPressureStatusTag.textContent = "Critical";
+        bloodPressureStatusTag.classList.add("tag-red");
+    }
+}
+function updateBloodSugarCard(sugar)
+{
+    const [fasting, postMeal] = sugar.split("/").map(Number);
+
+    document.querySelectorAll(".chart-stat-number")[1].innerHTML =
+        `${fasting}/${postMeal} <span class="sub-unit">mg/dL</span>`;
+
+    bloodSugarStatusTag.className = "status-tag";
+
+    if(fasting < 100 && postMeal < 140)
+    {
+        bloodSugarStatusTag.textContent = "Normal";
+        bloodSugarStatusTag.classList.add("tag-green");
+    }
+    else if(fasting < 126 && postMeal < 200)
+    {
+        bloodSugarStatusTag.textContent = "Prediabetes";
+        bloodSugarStatusTag.classList.add("tag-yellow");
+    }
+    else
+    {
+        bloodSugarStatusTag.textContent = "Diabetes";
+        bloodSugarStatusTag.classList.add("tag-red");
+    }
+}
+function updateTemperatureCard(temp)
+{
+    temp = Number(temp);
+
+    document.querySelectorAll(".chart-stat-number")[2].innerHTML =
+        `${temp} <span class="sub-unit">°C</span>`;
+
+    temperatureStatusTag.className = "status-tag";
+
+    if(temp < 37.5)
+    {
+        temperatureStatusTag.textContent = "Normal";
+        temperatureStatusTag.classList.add("tag-green");
+    }
+    else if(temp < 38.5)
+    {
+        temperatureStatusTag.textContent = "Fever";
+        temperatureStatusTag.classList.add("tag-orange");
+    }
+    else
+    {
+        temperatureStatusTag.textContent = "High Fever";
+        temperatureStatusTag.classList.add("tag-red");
+    }
+}
+function updateHeartRateCard(rate)
+{
+    rate = Number(rate);
+
+    document.querySelectorAll(".chart-stat-number")[3].innerHTML =
+        `${rate} <span class="sub-unit">bpm</span>`;
+
+    heartChartStatusTag.className = "status-tag";
+
+    if(rate < 60)
+    {
+        heartChartStatusTag.textContent = "Low";
+        heartChartStatusTag.classList.add("tag-yellow");
+    }
+    else if(rate <= 100)
+    {
+        heartChartStatusTag.textContent = "Normal";
+        heartChartStatusTag.classList.add("tag-green");
+    }
+    else
+    {
+        heartChartStatusTag.textContent = "High";
+        heartChartStatusTag.classList.add("tag-red");
+    }
+}
+medicalForm.addEventListener("submit",(e)=>{
+    e.preventDefault();
+    saveConfirmModal.style.display="flex";
+});
+cancelSaveBtn.onclick = ()=>{
+    saveConfirmModal.style.display="none";
+};
+function validateMedicalData()
+{
+    const height = Number(heightInput.value);
+    const weight = Number(weightInput.value);
+    const rightEar = Number(rightEarInput.value);
+    const leftEar = Number(leftEarInput.value);
+
+    if(!heightInput.value || !weightInput.value)
+    {
+        return "Height and Weight are required";
+    }
+
+    if(isNaN(height) || height < 50 || height > 250)
+    {
+        return "Please enter a valid height between 50 cm and 250 cm";
+    }
+
+    if(isNaN(weight) || weight < 10 || weight > 300)
+    {
+        return "Please enter a valid weight between 10 kg and 300 kg";
+    }
 
 
+    // Eye validation
+    const eyePattern = /^\d{2}\/\d{2}$/;
+
+    if(!eyePattern.test(rightEyeInput.value))
+    {
+        return "Right eye vision format should be like 20/20";
+    }
+
+    if(!eyePattern.test(leftEyeInput.value))
+    {
+        return "Left eye vision format should be like 20/20";
+    }
+
+
+    // Hearing validation
+    if(isNaN(rightEar) || rightEar < 0 || rightEar > 120)
+    {
+        return "Right ear hearing should be between 0 and 120 dB";
+    }
+
+    if(isNaN(leftEar) || leftEar < 0 || leftEar > 120)
+    {
+        return "Left ear hearing should be between 0 and 120 dB";
+    }
+
+
+    // Emergency contact validation
+    if(emergencyContactInput.value.trim().length < 5)
+    {
+        return "Please enter a valid emergency contact";
+    }
+
+
+    // Medical history length
+    if(medicalHistoryInput.value.length > 500)
+    {
+        return "Medical history cannot exceed 500 characters";
+    }
+
+
+    // Allergies length
+    if(allergiesInput.value.length > 300)
+    {
+        return "Allergies cannot exceed 300 characters";
+    }
+
+
+    return null;
+}
+confirmSaveBtn.onclick = async ()=>{
+    if(isSaving)
+        return;
+    isSaving = true;
+    confirmSaveBtn.disabled = true;
+    confirmSaveBtn.textContent = "Saving...";
+    saveConfirmModal.style.display="none";
+
+    const error = validateMedicalData();
+    if(error)
+    {
+        alert(error);
+        isSaving = false;
+        confirmSaveBtn.disabled = false;
+        confirmSaveBtn.textContent = "Yes, Save";
+        return;
+    }
+    const updatedData = {
+        Height: heightInput.value,
+        Weight: weightInput.value,
+        RightEye: rightEyeInput.value,
+        LeftEye: leftEyeInput.value,
+        RightEarHearing: rightEarInput.value,
+        LeftEarHearing: leftEarInput.value,
+        EmergencyContact: emergencyContactInput.value,
+        MedicalHistory: medicalHistoryInput.value,
+        Allergies: allergiesInput.value
+    };
+    try{
+        const result = await fetch("/update_medical_data",
+        {
+            method:"POST",
+            headers:{
+                "Authorization":`Bearer ${accessToken}`,
+                "Content-Type":"application/json"
+            },
+            body:JSON.stringify(updatedData)
+        });
+        if(result.ok)
+        {
+            showSavedToast();
+            isSaving = false;
+            confirmSaveBtn.disabled = false;
+            confirmSaveBtn.textContent = "Yes, Save";
+        }
+        else
+        {
+            alert("Failed to save data");
+        }
+    }
+    catch(error)
+    {
+        isSaving = false;
+        confirmSaveBtn.disabled = false;
+        confirmSaveBtn.textContent = "Yes, Save";
+        console.log(error);
+        alert("Server error");
+    }
+};
+
+function showSavedToast()
+{
+
+    saveToast.classList.add("show");
+    setTimeout(()=>{
+        saveToast.classList.remove("show");
+    },3000);
+}
 const bpChart = new Chart(ctx1, {
     type: "line",
     data: {
@@ -1069,19 +1523,6 @@ const bsChart = new Chart(ctx2, {
     }
 });
 
-const tempLabels = [
-    "Jun 10","Jun 11","Jun 12","Jun 13","Jun 14","Jun 15","Jun 16",
-    "Jun 17","Jun 18","Jun 19","Jun 20","Jun 21","Jun 22","Jun 23",
-    "Jun 24","Jun 25","Jun 26","Jun 27","Jun 28","Jun 29","Jun 30",
-    "Jul 1","Jul 2","Jul 3","Jul 4","Jul 5","Jul 6","Jul 7","Jul 8"
-];
-
-const temperatureData = [
-    36.3, 36.5, 36.2, 36.4, 36.8, 37.0, 36.6,
-    36.9, 36.3, 36.7, 36.2, 36.5, 36.4, 36.8,
-    36.6, 36.5, 36.3, 36.7, 36.9, 36.6, 36.8,
-    36.5, 36.4, 36.6, 36.7, 36.5, 36.6, 36.4, 36.5
-];
 
 const tempChart = new Chart(ctx3, {
     type: "line",
@@ -1189,20 +1630,6 @@ const tempChart = new Chart(ctx3, {
         }
     }
 });
-
-const heartLabels = [
-    "Jun 10","Jun 11","Jun 12","Jun 13","Jun 14","Jun 15","Jun 16",
-    "Jun 17","Jun 18","Jun 19","Jun 20","Jun 21","Jun 22","Jun 23",
-    "Jun 24","Jun 25","Jun 26","Jun 27","Jun 28","Jun 29","Jun 30",
-    "Jul 1","Jul 2","Jul 3","Jul 4","Jul 5","Jul 6","Jul 7","Jul 8"
-];
-
-const heartRateData = [
-    72,71,73,75,73,76,72,
-    77,71,74,72,70,73,78,
-    76,74,72,73,77,75,76,
-    73,72,74,76,75,74,72,73
-];
 const heartChart = new Chart(ctx4, {
     type: "line",
 
@@ -1309,103 +1736,6 @@ const heartChart = new Chart(ctx4, {
         }
     }
 });
-// const modal = document.getElementById("readingModal");
-// const modalTitle = document.getElementById("modalTitle");
-// const dynamicFields = document.getElementById("dynamicFields");
-
-// function openModal(type) {
-//     modal.classList.add("active");
-//     dynamicFields.innerHTML = "";
-
-//     if (type === "bp") {
-//         modalTitle.innerText = "Add Blood Pressure Reading";
-
-//         dynamicFields.innerHTML = `
-//             <div class="form-group">
-//                 <label>Systolic (mmHg)</label>
-//                 <input type="number" placeholder="e.g. 120">
-//             </div>
-//             <div class="form-group">
-//                 <label>Diastolic (mmHg)</label>
-//                 <input type="number" placeholder="e.g. 80">
-//             </div>
-//         `;
-//     }
-
-//     if (type === "sugar") {
-//         modalTitle.innerText = "Add Blood Sugar Reading";
-
-//         dynamicFields.innerHTML = `
-//             <div class="form-group">
-//                 <label>Blood Sugar (mg/dL)</label>
-//                 <input type="number" placeholder="e.g. 98.6">
-//             </div>
-//         `;
-//     }
-
-//     if (type === "temp") {
-//         modalTitle.innerText = "Add Temperature Reading";
-
-//         dynamicFields.innerHTML = `
-//             <div class="form-group">
-//                 <label>Temperature (°C)</label>
-//                 <input type="number" step="0.1" placeholder="e.g. 36.6">
-//             </div>
-//         `;
-//     }
-
-//     if (type === "heart") {
-//         modalTitle.innerText = "Add Heart Rate Reading";
-
-//         dynamicFields.innerHTML = `
-//             <div class="form-group">
-//                 <label>Heart Rate (bpm)</label>
-//                 <input type="number" placeholder="e.g. 72">
-//             </div>
-//         `;
-//     }
-// }
-
-function closeModal() {
-    modal.classList.remove("active");
-}
-// const chart = document.querySelector("#chartContainer");
-
-// let startX = 0;
-// let currentTranslate = 0;
-// let isDragging = false;
-
-// chart.addEventListener("touchstart", (e) => {
-//     startX = e.touches[0].clientX;
-//     isDragging = true;
-// });
-
-// chart.addEventListener("touchmove", (e) => {
-//     if (!isDragging) return;
-
-//     const currentX = e.touches[0].clientX;
-//     const diff = currentX - startX;
-
-//     // move chart horizontally
-//     chart.style.transform = `translateX(${currentTranslate + diff}px)`;
-// });
-
-// chart.addEventListener("touchend", (e) => {
-//     const endX = e.changedTouches[0].clientX;
-//     const diff = endX - startX;
-
-//     currentTranslate += diff;
-
-//     isDragging = false;
-
-//     // optional: snap back limits (prevents over sliding)
-//     const maxMove = 0;
-//     const minMove = -300; // adjust based on your graph width
-
-//     if (currentTranslate > maxMove) currentTranslate = maxMove;
-//     if (currentTranslate < minMove) currentTranslate = minMove;
-
-//     chart.style.transform = `translateX(${currentTranslate + diff}px)`;});
 </script>
 </body>
 </html>

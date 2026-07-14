@@ -1377,3 +1377,68 @@ body {
 #bpChart {
     touch-action: none;
 }
+.confirm-box{
+    text-align:center;
+    width:380px;
+}
+
+
+.confirm-icon{
+    font-size:45px;
+    color:#2563eb;
+    margin-bottom:15px;
+}
+
+
+.confirm-box h2{
+    margin-bottom:10px;
+}
+
+
+.confirm-box p{
+    color:#64748b;
+    margin-bottom:25px;
+}
+
+
+.confirm-buttons{
+    display:flex;
+    justify-content:center;
+    gap:15px;
+}
+
+
+.save-toast{
+
+    position:fixed;
+    right:30px;
+    bottom:30px;
+
+    background:#eff6ff;
+    color:#2563eb;
+
+    border:1px solid #bfdbfe;
+
+    padding:15px 25px;
+
+    border-radius:12px;
+
+    font-weight:600;
+
+    display:flex;
+    align-items:center;
+    gap:10px;
+
+    box-shadow:0 10px 25px rgba(0,0,0,0.15);
+
+    transform:translateY(100px);
+    opacity:0;
+
+    transition:0.3s;
+}
+
+
+.save-toast.show{
+    transform:translateY(0);
+    opacity:1;
+}
