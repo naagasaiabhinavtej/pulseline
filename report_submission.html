@@ -160,7 +160,8 @@
 
                             <div class="form-field-control spacing-top-break">
                                 <label>Additional Vitals <span class="required-indicator">*</span></label>
-                                <textarea rows="3" placeholder="Enter other relevant vitals (e.g., Weight, SPO2, etc.)" required></textarea>
+                                <textarea rows="3" placeholder="Enter  relevant vitals to describe the session in sentence
+(e.g., Pain: Sharp (6/10), Duration: 2 days, Cough: Productive, Sputum: Yellow, Breathlessness: Moderate, Nausea: Present. etc.)" required></textarea>
                             </div>
 
                             <div class="form-field-control spacing-top-break">
@@ -171,7 +172,7 @@
                                 <div class="drag-drop-zone-area">
                                     <input type="file" id="lab-file-uploader" class="hidden-file-input" required>
                                     <i data-lucide="upload-cloud" class="cloud-icon-upload"></i>
-                                    <p>Drag & drop files or <span>click to upload</span></p>
+                                    <p>Click to upload <span>files</span></p>
                                     <small>Lab Documentation / Test Reports</small>
                                 </div>
                             </div>
@@ -229,11 +230,7 @@
                                 <img src="https://images.unsplash.com/photo-1559839734-2b71ea197ec2?auto=format&fit=crop&q=80&w=60" alt="Doctor avatar">
                                 <span>Dr. Sarah Johnson</span>
                             </div>
-                        </div>
-                        <div class="detail-row notes-vertical-layout">
-                            <span class="row-label">Notes</span>
-                            <p class="row-paragraph-value">Discuss test results and follow-up treatment plan.</p>
-                        </div>
+                        </div>  
                     </div>
                 </aside>
 
@@ -244,10 +241,437 @@
     <script>
         lucide.createIcons();
         function openVideoConfirmationModal() {
-            if (confirm("Do you want to establish an encrypted video call channel for Session MC-1001?")) {
-                window.location.href = "waiting_room.html";
+
+            if(!sessionId)
+            {
+                alert("Invalid session.");
+                return;
+            }
+            if (confirm(`Do you want to establish an encrypted video call channel for Session ${sessionId}?`)) {
+                window.location.href = `waiting_room.html?sessionId=${sessionId}`;
             }
         }
+        let accessToken = null;
+        let sessionId = null;
+        let selectedReport = null;
+
+        const params = new URLSearchParams(window.location.search);
+        sessionId = params.get("sessionId");
+
+        const reportForm = document.querySelector("#clinical-report-form");
+
+        const bpInput = document.querySelector('input[placeholder="e.g. 120/80"]');
+        const sugarInput = document.querySelector('input[placeholder="e.g. 95"]');
+        const tempInput = document.querySelector('input[placeholder="e.g. 98.6"]');
+        const heartRateInput = document.querySelector('input[placeholder="e.g. 72"]');
+
+        const chiefComplaint = document.querySelectorAll("textarea")[0];
+        const additionalVitals = document.querySelectorAll("textarea")[1];
+
+        const uploadArea = document.querySelector(".drag-drop-zone-area");
+        const fileInput = document.querySelector("#lab-file-uploader");
+
+        const profileName = document.querySelector(".profile-name");
+        const patientAvatar = document.querySelector(".patient-avatar");
+        const patientTitle = document.querySelector(".patient-title h2");
+
+        const sessionIdTop = document.querySelector(".meta-value-code span");
+        const sessionIdSide = document.querySelector(".badge-id");
+
+        const patientNameSide = document.querySelector(
+        ".detail-row:nth-child(2) .row-value"
+        );
+
+        const ageGenderSide = document.querySelector(
+        ".detail-row:nth-child(3) .row-value"
+        );
+
+        const startDateSide = document.querySelector(
+        ".detail-row:nth-child(4) .weight-bold"
+        );
+
+        const startTimeSide = document.querySelector(
+        ".detail-row:nth-child(4) small"
+        );
+
+        const doctorNameSide = document.querySelector(
+        ".detail-row:nth-child(6) .doctor-sub-profile span"
+        );
+
+        const startDateTop = document.querySelector(".meta-value span");
+        const startTimeTop = document.querySelector(".meta-value small");
+        const timerDigits = document.querySelector(".timer-digits");
+
+        const logoutBtn = document.querySelector(".logout-btn");
+        const copyIc = document.querySelector(".copy-ic");
+        const patientAgeGenderTop =
+        document.querySelector(".patient-title p");
+
+        async function refreshToken()
+        {
+            const result = await fetch("/refresh",
+            {
+                method:"GET",
+                credentials:"include"
+            });
+            if(result.ok)
+            {
+                const data = await result.json();
+                accessToken = data.access_token;
+                return accessToken;
+            }
+            window.location.href="login.html";
+            return null;
+        }
+
+            async function giveData()
+            {
+                let result = await fetch(
+                    `/report_submission?sessionId=${sessionId}`,
+                {
+                    method:"GET",
+
+                    headers:
+                    {
+                        Authorization:`Bearer ${accessToken}`
+                    }
+                });
+
+                if(result.status===401)
+                {
+                    const token = await refreshToken();
+
+                    if(!token) return null;
+
+                    result = await fetch(
+                        `/report_submission?sessionId=${sessionId}`,
+                    {
+                        method:"GET",
+
+                        headers:
+                        {
+                            Authorization:`Bearer ${accessToken}`
+                        }
+                    });
+                }
+
+                if(result.status===403)
+                {
+                    alert("You are not authorized.");
+
+                    window.location.href="login.html";
+
+                    return null;
+                }
+
+                return result;
+            }
+
+        function getAvatar(id)
+        {
+            if(id === "first") return "avatar_doctors/adult_female.png";
+            if(id === "second") return "avatar_doctors/adult_male.png";
+            if(id === "third") return "avatar_doctors/old_female.png";
+            if(id === "fourth") return "avatar_doctors/old_male.png";
+        }
+
+        async function askData()
+        {
+            sessionId = new URLSearchParams(
+                window.location.search
+            ).get("sessionId");
+
+            if(!sessionId)
+            {
+                alert("Invalid session.");
+                window.location.href="index.html";
+                return;
+            }
+
+            const token = await refreshToken();
+            if(!token) return;
+            const result = await giveData();
+            if(!result || !result.ok)
+                return;
+            const data = await result.json();
+            profileName.textContent =
+            data.doctorName;
+            patientAvatar.src =
+            getAvatar(data.patientAvatar);
+            patientTitle.innerHTML =
+            `${data.patientName}
+            <span class="status-dot-active">
+            Active
+            </span>`;
+            patientAgeGenderTop.textContent =
+            `Age: ${data.age} • ${data.gender}`;
+            sessionIdTop.textContent =
+            sessionId;
+            sessionIdSide.textContent =
+            sessionId;
+            patientNameSide.textContent =
+            data.patientName;
+            ageGenderSide.textContent =
+            data.ageGender;
+            startDateTop.textContent =
+            data.startDate;
+            startTimeTop.textContent =
+            data.startTime;
+            startDateSide.textContent =
+            data.startDate;
+            startTimeSide.textContent =
+            data.startTime;
+            doctorNameSide.textContent =
+            data.doctorName;
+            const start =
+            new Date(`${data.startDate}T${data.startTime}`);
+            startTimer(start);
+            setInterval(startTimer,1000,start);
+        }
+
+        document.addEventListener("DOMContentLoaded",askData);
+
+        function startTimer(start)
+        {
+            const now = new Date();
+
+            let diff = Math.max(
+                0,
+                Math.floor((now-start)/1000)
+            );
+            let days = Math.floor(diff/86400);
+
+            let hours = Math.floor((diff%86400)/3600);
+
+            let minutes = Math.floor((diff%3600)/60);
+
+            let seconds = diff%60;
+
+            timerDigits.textContent =
+            `${days}D:${String(hours).padStart(2,"0")}:${String(minutes).padStart(2,"0")}:${String(seconds).padStart(2,"0")}`;
+        }
+
+        uploadArea.addEventListener("click",()=>
+        {
+            fileInput.click();
+        });
+
+        fileInput.addEventListener("change",()=>
+        {
+            selectedReport = null;
+
+            if(fileInput.files.length===0)
+            {
+                uploadArea.querySelector("small").textContent =
+                "Lab Documentation / Test Reports";
+                return;
+            }
+
+            selectedReport = fileInput.files[0];
+
+            uploadArea.querySelector("small").textContent =
+            selectedReport.name;
+        });
+
+        function validateForm()
+        {
+            if(chiefComplaint.value.trim()==="")
+            {
+                alert("Chief Complaint is required.");
+                return false;
+            }
+
+            if(additionalVitals.value.trim()==="")
+            {
+                alert("Additional vitals are required.");
+                return false;
+            }
+
+            if(!selectedReport)
+            {
+                alert("Please upload the report file.");
+                return false;
+            }
+
+            return true;
+        }
+
+        reportForm.addEventListener("submit",handleSubmit);
+
+        async function handleSubmit(e)
+        {
+            e.preventDefault();
+
+            if(!validateForm()) return;
+
+            const confirmSubmit = confirm(
+        `Are you sure you want to submit this report?
+
+        This action will permanently close the session.
+
+        The report cannot be modified after submission.`
+            );
+
+            if(!confirmSubmit) return;
+
+            const formData = new FormData();
+
+            formData.append("report",selectedReport);
+            formData.append("sessionId", sessionId);
+
+            let uploadResult = await fetch("/upload_report_file",
+            {
+                method:"POST",
+
+                headers:
+                {
+                    Authorization:`Bearer ${accessToken}`
+                },
+
+                body:formData
+            });
+
+            if(uploadResult.status===401)
+            {
+                const token = await refreshToken();
+
+                if(!token) return;
+
+                uploadResult = await fetch("/upload_report_file",
+                {
+                    method:"POST",
+
+                    headers:
+                    {
+                        Authorization:`Bearer ${accessToken}`
+                    },
+
+                    body:formData
+                });
+            }
+
+            if(uploadResult.status===403)
+            {
+                alert("You are not authorized to perform this action.");
+
+                window.location.href="login.html";
+
+                return;
+            }
+
+            if(!uploadResult.ok)
+            {
+                alert("Unable to upload report.");
+
+                return;
+            }
+
+            const uploadData = await uploadResult.json();
+
+            const report =
+            {
+                sessionId,
+
+                bloodPressure:bpInput.value.trim(),
+
+                bloodSugar:sugarInput.value.trim(),
+
+                temperature:tempInput.value.trim(),
+
+                heartRate:heartRateInput.value.trim(),
+
+                chiefComplaint:chiefComplaint.value.trim(),
+
+                additionalVitals:additionalVitals.value.trim(),
+
+                attachmentId:uploadData.attachmentId
+            };
+
+            let submitResult = await fetch("/submit_report",
+            {
+                method:"POST",
+
+                headers:
+                {
+                    Authorization:`Bearer ${accessToken}`,
+                    "Content-Type":"application/json"
+                },
+
+                body:JSON.stringify(report)
+            });
+
+            if(submitResult.status===401)
+            {
+                const token = await refreshToken();
+
+                if(!token) return;
+
+                submitResult = await fetch("/submit_report",
+                {
+                    method:"POST",
+
+                    headers:
+                    {
+                        Authorization:`Bearer ${accessToken}`,
+                        "Content-Type":"application/json"
+                    },
+
+                    body:JSON.stringify(report)
+                });
+            }
+
+            if(submitResult.status===403)
+            {
+                alert("You are not authorized to perform this action.");
+
+                window.location.href="login.html";
+
+                return;
+            }
+
+            if(!submitResult.ok)
+            {
+                alert("Unable to submit report.");
+
+                return;
+            }
+
+            alert("Report submitted successfully.");
+
+            window.location.href = "doctor_dashboard.html";
+        }
+        logoutBtn.addEventListener("click", async () => {
+            await fetch("/logout", {
+                method: "POST",
+                credentials: "include"
+            });
+
+            window.location.href = "login.html";
+        });
+        copyIc.addEventListener("click",async()=>
+        {
+            await navigator.clipboard.writeText(
+                sessionId
+            );
+
+            copyIc.setAttribute(
+                "data-lucide",
+                "check"
+            );
+
+            lucide.createIcons();
+
+            setTimeout(()=>
+            {
+                copyIc.setAttribute(
+                    "data-lucide",
+                    "copy"
+                );
+
+                lucide.createIcons();
+
+            },1000);
+        });
     </script>
 </body>
 </html>
