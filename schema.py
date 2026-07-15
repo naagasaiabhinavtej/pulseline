@@ -9,3 +9,15 @@ class SessionResponse(BaseModel):
 
     class Config:
         form_attributes = True
+
+class patientRegister(BaseModel):
+    name: str
+    date_of_birth: str
+    gender: str
+    blood_group: str
+    height: float
+    weight: float
+    emergency_contact: str
+    allergies: str | None = None               #modern way but you can use optional[str] = None
+    medical_data: str | None = None
+    password: str

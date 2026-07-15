@@ -385,7 +385,7 @@ form.addEventListener("submit", async(e)=>
             const password = h.value.trim();
             if(validateform2())
             {
-                const results = await fetch("/register", {
+                const results = await fetch("/register/doctor", {
                     method : "POST",
                     headers:{
                         "Content-Type":"application/json"
@@ -402,6 +402,7 @@ form.addEventListener("submit", async(e)=>
                 if(results.ok)
                 {
                     const data = await results.json();
+                    console.log(data)
                     window.location.href = "index.html";
                 }
                 else
@@ -426,7 +427,7 @@ form.addEventListener("submit", async(e)=>
             const password = o.value.trim();
             if(validateform2())
             {
-                const results = await fetch("/register", {
+                const results = await fetch("/register/patient", {
                     method : "POST",
                     headers:{
                         "Content-Type":"application/json"

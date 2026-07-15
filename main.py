@@ -1,9 +1,11 @@
 import os
-from fastapi import FastAPI, UploadFile, File, Form, HTTPException, Request, Query, WebSocket
-from crud import create_patient_session, complete_patient_session, emergency_connect_hospitals, make_available_doctor
+from fastapi import FastAPI, UploadFile, File, Form, HTTPException, Request, Query, WebSocket, Response
+from crud import create_patient_session, complete_patient_session, emergency_connect_hospitals, make_available_doctor, patientLogin
 from datetime import datetime
 from typing import Optional
 from fastapi.middleware.cors import CORSMiddleware
+from auth import createAccessToken, createRefreshToken, decodeToken, hash_password, validate_password
+from schema import patientRegister
 
 app = FastAPI(title="Rural Clinic Telemedicine Platform")
 
@@ -14,6 +16,60 @@ app.add_middleware(
     allow_headers = ["*"],
     allow_methods = ["*"],
 )
+
+@app.get("/refresh")
+def refresh_token(request:Request):  #request is the entire piece of data or what you send to backend no need ot send the cookie if sent in htppsonlycookie
+    refresh_token = request.cookies.get(
+        "refresh_token"
+    )
+    if not refresh_token:
+        raise HTTPException(
+            status_code=401,
+            detail="Refresh Token Missing"
+        )
+    payload = decodeToken(refresh_token)
+    if(payload.get("type")!="refresh"):                  #jwtdecode only sees the signature correct not expire only these but you need others also right like whats the purpose of this token
+        raise HTTPException(
+            status_code=401,
+            detail="Invalid refresh token"
+        )
+    
+    new_access_token = createAccessToken({
+        "userId":payload["userId"],
+        "role":payload["role"]
+    })
+
+    return {
+               "access_token":new_access_token,
+               "token-type":"Bearer"
+            }  #standard way to use 
+
+
+@app.post("/register/patient")
+def patientDatabaseLogin(patientData:patientRegister, response:Response):
+    patientDict = patientData.model_dump()
+    hashedPassword = hash_password(patientData.password)
+    patientData.password = hashedPassword
+    patientDict["password"] = hashedPassword
+    result = patientLogin(patientData=patientDict, hashedPassword=hashedPassword)
+    userId = result["userId"]
+    accessToken = createAccessToken({"userId":userId,
+                                     "role":"patient"})
+    refreshToken = createRefreshToken({"userId":userId,
+                                     "role":"patient"})
+    response.set_cookie(
+        key="refresh_token",
+        value=refreshToken,
+        httponly=True,
+        secure=False,      # True in production with HTTPS
+        samesite="lax",
+        max_age=60 * 60 * 24 * 30
+    )
+    return {"message":"User Registered"}
+
+
+
+
 @app.post("/api/sessions/start")
 def make_session(health_id:str = Form(...), clinic_id:str = Form(...), department:str = Form(...), assigned_doctor_id:str = Form(...)):
     #make check when unkown patient_name comes or unknown_doc_name or clinic name comes

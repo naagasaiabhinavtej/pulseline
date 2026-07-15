@@ -5,6 +5,60 @@ import math
 
 database_path = "medical_platform.db"
 
+
+def patientLogin(patientData:dict, hashedPassword:str):
+    conn = None
+    try:
+        conn = sqlite3.connect(database_path)
+        cursor = conn.cursor()
+        patientData["height"] = float(patientData["height"])
+        patientData["weight"] = float(patientData["weight"])
+        cursor.execute("""
+                            INSERT INTO patients
+                            (health_id,
+                            password,
+                            name,
+                            date_of_birth,
+                            gender,
+                            blood_group,
+                            height,
+                            weight,
+                            eye_sight,
+                            hearing,
+                            medical_history,
+                            allergies,
+                            emergency_contact)
+                            VALUES
+                            (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                            """,
+                            (patientData["health_id"],
+                             patientData["passwrd"],
+                            patientData["name"],
+                            patientData["date_of_birth"],
+                            patientData["gender"],
+                            patientData["blood_group"],
+                            patientData["height"],
+                            patientData["weight"],
+                            patientData["eye_sight"],
+                            patientData["hearing"],
+                            patientData["medical_history"],
+                            patientData["allergies"],
+                            patientData["emergency_contact"]))
+        userId = cursor.lastrowid
+        
+        conn.commit()
+        return{
+            "userId":userId,
+            "message":"Details Uploaded"
+        }
+
+    except Exception as e:
+        if conn:
+            conn.rollback()
+        raise e
+    finally:
+        conn.close()
+
 def create_patient_session(health_id:str, clinic_id:str, department:str, assigned_doctor_id:str):
     conn = None
     try:

@@ -1,6 +1,7 @@
 -- patients table
 CREATE TABLE patients (
     health_id VARCHAR(50) PRIMARY KEY AUTOINCREMENT,
+    password VARCHAR(32) NOT NULL,
     name VARCHAR(100) NOT NULL,
     date_of_birth DATE NOT NULL,
     gender VARCHAR(20) NOT NULL CHECK (gender IN ('Male', 'Female', 'Other')),
