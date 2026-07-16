@@ -311,7 +311,7 @@ button:hover {
         //  alert("Inside refresh");
         const result = await fetch("/refresh",
         {
-            method:"GET",
+            method:"GET",   
             credentials: "include"
         });
         if(result.ok)
@@ -381,7 +381,7 @@ async function validateForm(e)
         return;
     }
     const formData = Object.fromEntries(new FormData(makeSessionForm));  
-    const result = await fetch("/makeSession", {
+    let result = await fetch("/makeSession", {
         method:"POST",
         headers:{
             Authorization:`Bearer ${accessToken}`,
@@ -391,7 +391,25 @@ async function validateForm(e)
     })
     if(result.status === 401)
     {
-        window.location.href = "login.html";
+        accessToken = await refreshtoken();
+        if (!accessToken) {
+            window.location.href = "login.html";
+            return;
+        }
+        // Retry with the new token
+        result = await fetch("/makeSession", {
+        method:"POST",
+        headers:{
+            Authorization:`Bearer ${accessToken}`,
+            "Content-Type":"application/json"              //says that frontend is sending the format of json
+        },
+        body:JSON.stringify(formData)
+        });
+        if (result.status === 401) 
+        {
+            window.location.href = "login.html";
+            return;
+        }
     }
     if(result.ok)
     {
