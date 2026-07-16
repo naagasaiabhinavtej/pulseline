@@ -35,8 +35,8 @@ def decodeToken(token:str):
         return jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
     except JWTError:
         raise HTTPException(
-            status_code=401
-            detail:"Invalid Token"
+            status_code=401,
+            detail="Invalid Token"
         )
 #for functions use _ in naming and in 
 def hash_password(password:str):

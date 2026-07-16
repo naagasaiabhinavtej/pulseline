@@ -1,11 +1,12 @@
 import os
 from fastapi import FastAPI, UploadFile, File, Form, HTTPException, Request, Query, WebSocket, Response
-from crud import create_patient_session, complete_patient_session, emergency_connect_hospitals, make_available_doctor, patientLogin
+from crud import create_patient_session, complete_patient_session, emergency_connect_hospitals, make_available_doctor, patientLogin,doctorLogin, checkPatientId, checkDoctorId
 from datetime import datetime
 from typing import Optional
 from fastapi.middleware.cors import CORSMiddleware
 from auth import createAccessToken, createRefreshToken, decodeToken, hash_password, validate_password
-from schema import patientRegister
+from schema import patientRegister, doctorRegister, LoginRequest
+from utils import makeAvatarIdP
 
 app = FastAPI(title="Rural Clinic Telemedicine Platform")
 
@@ -19,15 +20,15 @@ app.add_middleware(
 
 @app.get("/refresh")
 def refresh_token(request:Request):  #request is the entire piece of data or what you send to backend no need ot send the cookie if sent in htppsonlycookie
-    refresh_token = request.cookies.get(
-        "refresh_token"
+    refreshToken = request.cookies.get(
+        "refreshToken"
     )
-    if not refresh_token:
+    if not refreshToken:
         raise HTTPException(
             status_code=401,
             detail="Refresh Token Missing"
         )
-    payload = decodeToken(refresh_token)
+    payload = decodeToken(refreshToken)
     if(payload.get("type")!="refresh"):                  #jwtdecode only sees the signature correct not expire only these but you need others also right like whats the purpose of this token
         raise HTTPException(
             status_code=401,
@@ -47,27 +48,125 @@ def refresh_token(request:Request):  #request is the entire piece of data or wha
 
 @app.post("/register/patient")
 def patientDatabaseLogin(patientData:patientRegister, response:Response):
-    patientDict = patientData.model_dump()
-    hashedPassword = hash_password(patientData.password)
-    patientData.password = hashedPassword
-    patientDict["password"] = hashedPassword
-    result = patientLogin(patientData=patientDict, hashedPassword=hashedPassword)
-    userId = result["userId"]
-    accessToken = createAccessToken({"userId":userId,
-                                     "role":"patient"})
-    refreshToken = createRefreshToken({"userId":userId,
-                                     "role":"patient"})
+    try:
+        patientDict = patientData.model_dump()
+        patientDict.update({"avatarId":makeAvatarIdP(patientData.age, patientData.gender)})
+        hashedPassword = hash_password(patientData.password)
+        patientData.password = hashedPassword
+        patientDict["password"] = hashedPassword
+        result = patientLogin(patientData=patientDict, hashedPassword=hashedPassword)
+        userId = result["userId"]
+        accessToken = createAccessToken({"userId":userId,
+                                        "role":"patient"})
+        refreshToken = createRefreshToken({"userId":userId,
+                                        "role":"patient"})
+        response.set_cookie(
+            key="refreshToken",
+            value=refreshToken,
+            httponly=True,
+            secure=False,      # True in production with HTTPS
+            samesite="lax",
+            max_age=60 * 60 * 24 * 30
+        )
+        return {"message":"User Registered"}
+    except:
+        raise HTTPException(
+            status_code=500,
+            detail="Something went wrong while registering user"
+        )
+
+
+@app.post("/register/doctor")
+def doctorDatabaseLogin(doctorData:doctorRegister, response:Response):
+    try:
+        doctorDict = doctorData.model_dump()           #to make an object to dictonary use model_dump()
+        hashedPassword = hash_password(doctorData.password)
+        doctorDict["password"] = hashedPassword
+        doctorDict.update({"avatarId":"first"})
+        result = doctorLogin(doctorDict)
+        userId = result[userId]
+        accessToken = createAccessToken({"userId":userId,
+                                         "role":"doctor"})
+        refreshToken = createRefreshToken({"userId":userId,
+                                         "role":"doctor"})
+        response.set_cookie(
+            key="refreshToken",
+            value=refreshToken,
+            httponly=True,
+            secure=False,      # True in production with HTTPS
+            samesite="lax",
+            max_age=60 * 60 * 24 * 30
+        )
+        return {"message":"User Registered"}
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail="Something went wrong while registering user"
+        )
+
+@app.post("/login")
+def user_database_login(user:LoginRequest, response:Response):
+    if user.person == "doctor":
+        result = checkDoctorId(user.id)
+    elif user.person == "patient":
+        result = checkPatientId(user.id)
+
+    if result is None:
+        raise HTTPException(
+            status_code=404,
+            detail="User not found"
+        )
+    userId, passwordHash = result
+
+    if not validate_password(user.password, passwordHash):
+        raise HTTPException(
+            status_code=401,
+            detail="Incorrect password"
+        )
+
+    accessToken = createAccessToken(
+        {
+            "userId": userId,
+            "role": user.person
+        }
+    )
+    refreshToken = createRefreshToken(
+        {
+            "userId": userId,
+            "role": user.person
+        }
+    )
     response.set_cookie(
-        key="refresh_token",
+        key="refreshToken",
         value=refreshToken,
         httponly=True,
-        secure=False,      # True in production with HTTPS
+        secure=False,      # True in production
         samesite="lax",
         max_age=60 * 60 * 24 * 30
     )
-    return {"message":"User Registered"}
+    return {
+        "message":"user logged in successfully"
+    }
 
 
+
+@app.get("/loading")
+def loading(request: Request):
+
+    refreshToken = request.cookies.get("refreshToken")
+
+    if refreshToken is None:
+        raise HTTPException(
+            status_code=401,
+            detail="Not logged in"
+        )
+
+    payload = decodeToken(refreshToken)
+
+    return {
+        "userId": payload["userId"],
+        "type": payload["type"]
+    }
 
 
 @app.post("/api/sessions/start")

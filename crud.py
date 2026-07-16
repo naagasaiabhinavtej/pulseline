@@ -1,12 +1,15 @@
 import sqlite3
 from typing import Optional
 import math
+import logging
 # import datetime
 
 database_path = "medical_platform.db"
 
+logger = logging.getLogger(__name__)
 
-def patientLogin(patientData:dict, hashedPassword:str):
+
+def patientLogin(patientData:dict):
     conn = None
     try:
         conn = sqlite3.connect(database_path)
@@ -18,29 +21,27 @@ def patientLogin(patientData:dict, hashedPassword:str):
                             (health_id,
                             password,
                             name,
+                            avatarId,
                             date_of_birth,
                             gender,
                             blood_group,
                             height,
                             weight,
-                            eye_sight,
-                            hearing,
                             medical_history,
                             allergies,
                             emergency_contact)
                             VALUES
-                            (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                            (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                             """,
                             (patientData["health_id"],
-                             patientData["passwrd"],
+                             patientData["password"],
                             patientData["name"],
+                            patientData["avatarId"],
                             patientData["date_of_birth"],
                             patientData["gender"],
                             patientData["blood_group"],
                             patientData["height"],
                             patientData["weight"],
-                            patientData["eye_sight"],
-                            patientData["hearing"],
                             patientData["medical_history"],
                             patientData["allergies"],
                             patientData["emergency_contact"]))
@@ -55,9 +56,90 @@ def patientLogin(patientData:dict, hashedPassword:str):
     except Exception as e:
         if conn:
             conn.rollback()
+        logger.exception("Error while creating user")
         raise e
     finally:
         conn.close()
+
+def doctorLogin(doctorDict:dict):
+    conn = None
+    try:
+        conn = sqlite3.connect(database_path)
+        curs = conn.cursor()
+        doctorDict.assigned_clinic_id = int(doctorDict.assigned_clinic_id)
+        curs.execute("""
+                        INSERT INTO doctors
+                        (
+                            name,
+                            avatarId,
+                            specialization,
+                            contact_number,
+                            assigned_clinic_id
+                        )
+                        VALUES
+                        (?,?,?,?,?)
+                        """, 
+                        (doctorDict["name"],
+                        doctorDict["avatarId"],
+                        doctorDict["specialization"],
+                        doctorDict["contact_number"],
+                        doctorDict["assigned_clinic_id"]))
+        userId = curs.lastrowid("doctor_id")
+        conn.commit()
+        return {"userId":userId,
+                "message":"Details Uploaded"}
+
+    except Exception as e:
+        if conn:
+            conn.rollback()
+        logger.exception("Error while creating user")
+        raise e
+    finally:
+        conn.close()
+
+
+def checkPatientId(health_id:str):
+    conn = None
+    try:
+        conn = sqlite3.connect(database_path)
+        curs = conn.cursor()
+        health_id = int(health_id)
+        curs.execute("""
+                        SELECT health_id, password
+                        FROM patients
+                        WHERE health_id=?
+                    """, (health_id,))
+        result = curs.fetchone()
+        return result
+    except Exception as e:
+        if conn:
+            conn.rollback()
+        logger.exception("Error while checking the User")
+        raise e
+    finally:
+        if conn:
+            conn.close()
+def checkDoctorId(doctor_id:str):
+    conn = None
+    try:
+        conn = sqlite3.connect(database_path)
+        curs = conn.cursor()
+        doctor_id = int(doctor_id)
+        curs.execute("""
+                        SELECT doctor_id, password
+                        FROM doctors
+                        WHERE doctor_id=?
+                    """, (doctor_id,))
+        result = curs.fetchone()
+        return result
+    except Exception as e:
+        if conn:
+            conn.rollback()
+        logger.exception("Error while checking the User")
+        raise e
+    finally:
+        if conn:
+            conn.close()
 
 def create_patient_session(health_id:str, clinic_id:str, department:str, assigned_doctor_id:str):
     conn = None

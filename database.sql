@@ -3,16 +3,17 @@ CREATE TABLE patients (
     health_id VARCHAR(50) PRIMARY KEY AUTOINCREMENT,
     password VARCHAR(32) NOT NULL,
     name VARCHAR(100) NOT NULL,
+    avatarId VARCHAR(50) NOT NULL,
     date_of_birth DATE NOT NULL,
     gender VARCHAR(20) NOT NULL CHECK (gender IN ('Male', 'Female', 'Other')),
     blood_group VARCHAR(10) CHECK (blood_group IN ('A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-')),
-    height REAL, -- Stored in cm
-    weight REAL, -- Stored in kg
+    height REAL NOT NULL, -- Stored in cm
+    weight REAL NOT NULL, -- Stored in kg
     eye_sight VARCHAR(150), 
     hearing VARCHAR(150),   
     medical_history TEXT,  
     allergies TEXT,        
-    emergency_contact VARCHAR(150),
+    emergency_contact VARCHAR(150) NOT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
@@ -52,12 +53,13 @@ CREATE INDEX idx_clinics_scale ON clinics(facility_scale);
  CREATE TABLE doctors (
     doctor_id INTEGER PRIMARY KEY AUTOINCREMENT,
     name VARCHAR(100) NOT NULL,
+    avatarId VARCHAR(50) NOT NULL,
     specialization VARCHAR(100) CHECK (specialization in ('General_Medicine', 'Ophthalmology', 'Otolaryngology', 'Cardiology',
             'Orthopedics', 'Neurology', 'Gastroenterology', 'Dermatology',
             'OB-GYN', 'Pediatrics', 'Psychiatry', 'Urology')), 
-    contact_number VARCHAR(15),
+    contact_number VARCHAR(15) NOT NULL,
     is_available BOOLEAN DEFAULT 1, 
-    assigned_clinic_id INTEGER,
+    assigned_clinic_id INTEGER NOT NULL,
     cases_solved INTEGER DEFAULT 0,
     FOREIGN KEY (assigned_clinic_id) REFERENCES clinics(clinic_id)
 );

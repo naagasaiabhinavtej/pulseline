@@ -71,6 +71,19 @@
         font-size:18px;
         cursor:pointer;
     }
+    .backend-error {
+    width: 100%;
+    max-width: 900px;
+    margin-top: 20px;
+    margin-bottom: 10px;
+    padding: 12px 16px;
+    color: #b91c1c;
+    background: #fef2f2;
+    border: 1px solid #fecaca;
+    border-radius: 10px;
+    font-size: 15px;
+    display: none;
+}
     .hidden-field { display: none !important; }
 </style>
 </head>
@@ -140,7 +153,7 @@
             <div id="name2error" class="error"></div>
             <input type="date" class="reg-only" id="date_of_birth" required>
             <div id="date_of_birtherror" class="error"></div>
-            <select class="reg-only" id="gender"><option>Male</option><option>Female</option><option>Other</option></select>
+            <select class="reg-only" id="gender"><option value="" selected disabled>Select Gender</option><option>Male</option><option>Female</option><option>Other</option></select>
             <div id="gendererror" class="error"></div>
             <select class="reg-only" id="blood_group" required>
                 <option value="" selected disabled>Blood Group</option>
@@ -173,7 +186,7 @@
             <input type="password" id="loginPassword" placeholder="Password" class="full" maxlength="32" required>
             <div id="password_error" style="color:red; font-size:14px; margin-top:5px;"></div>
         </div>
-
+        <div id="backendError" class="backend-error"></div>
         <button type="submit" class="submit-btn" id="submitBtn" required>
             Complete Registration
         </button>
@@ -186,6 +199,7 @@
 
 let currentRole = "doctor";
 let isLogin = false;
+const backendError = document.getElementById("backendError");
 
 function updateRequiredFields() {
     // Clear required properties from every input element first
@@ -264,6 +278,7 @@ function toggleAuth(){
         regFields.forEach(f => f.classList.add("hidden-field"));
     } else {
         regFields.forEach(f => f.classList.remove("hidden-field"));
+        document.getElementById("loginFields").style.display = "none";
         setRole(currentRole);
         
     }
@@ -317,7 +332,7 @@ async function logintransition()
     }
     else return;
 }
-logintransition();
+logintransition();                                  //dont use alphabets from now not industry recommended
 const form = document.getElementById("form");
 const a = document.getElementsByClassName("submit-btn");
 const b = document.getElementById("loginId");
@@ -343,6 +358,8 @@ updateRequiredFields();
 form.addEventListener("submit", async(e)=>
 {   
     e.preventDefault(); //avoids the browser to do anything like in forms after that browswer gives submitted etc
+    backendError.style.display = "none";
+    backendError.textContent = "";
     if(isLogin)
     {
         const id = b.value.trim();
@@ -368,9 +385,15 @@ form.addEventListener("submit", async(e)=>
             }
             else
             {
-                const error = await answer.json();
-                console.log(error);
-                document.getElementById("iderror").textContent = error.detail || "Login failed. Check your credentials.";
+                const error = await results.json();
+                backendError.style.display = "block";
+                if (Array.isArray(error.detail)) {
+                    backendError.textContent = error.detail
+                        .map(err => err.msg)
+                        .join("\n");
+                } else {
+                    backendError.textContent = error.detail || "Registration failed.";
+                }
             }
         }            
     }
@@ -378,7 +401,7 @@ form.addEventListener("submit", async(e)=>
     {
         if(currentRole === "doctor")
         {
-            const name = d.value.trim();
+            const name = d.value.trim();    
             const specialisation = e1.value.trim();
             const contact = f.value.trim();
             const assigned_clinic_id = g.value.trim();
@@ -408,8 +431,14 @@ form.addEventListener("submit", async(e)=>
                 else
                 {
                     const error = await results.json();
-                    console.log(error);
-                    document.getElementById("nameError").textContent = error.detail || "Registration failed. Please try again.";
+                    backendError.style.display = "block";
+                    if (Array.isArray(error.detail)) {
+                        backendError.textContent = error.detail
+                            .map(err => err.msg)
+                            .join("\n");
+                    } else {
+                        backendError.textContent = error.detail || "Registration failed.";
+                    }
                 }
             }
         }
@@ -454,8 +483,14 @@ form.addEventListener("submit", async(e)=>
                 else
                 {
                     const error = await results.json();
-                    console.log(error);
-                    document.getElementById("name2error").textContent = error.detail || "Registration failed. Please try again.";
+                    backendError.style.display = "block";
+                    if (Array.isArray(error.detail)) {
+                        backendError.textContent = error.detail
+                            .map(err => err.msg)
+                            .join("\n");
+                    } else {
+                        backendError.textContent = error.detail || "Registration failed.";
+                    }
                 }
             }
         }
@@ -506,7 +541,7 @@ function validateform2()
             document.getElementById("specialisationError").textContent = "Select a specialization";
             return false; 
         }
-        if(contact === "" || !/^\d{10}$/.test(contact))
+        if(contact === "" || !/^[6-9]\d{9}$/.test(contact))
         {
             document.getElementById("contactError").textContent = "Enter 10digit valid contact number";
             return false; 
@@ -595,7 +630,7 @@ function validateform2()
             document.getElementById("bloodgrouperror").textContent = "Please enter your blood group";
             return false;
         }
-        if(emergency_contact === "" || !/^\d{10}$/.test(emergency_contact) )
+        if(emergency_contact === "" || !/^[6-9]\d{9}$/.test(emergency_contact) )
         {
             document.getElementById("emergency_contacterror").textContent = "Please enter a valid 10digit emergency contact";
             return false;
