@@ -351,6 +351,10 @@ const socket = new WebSocket(`ws://${window.location.host}/ws`);
 socket.onopen = ()=>
 {
     console.log("Connected");
+    socket.send(JSON.stringify({
+        type: "authenticate",
+        token: accessToken
+    }));
 }
 makeSessionForm.addEventListener("submit", validateForm);
 async function validateForm(e)

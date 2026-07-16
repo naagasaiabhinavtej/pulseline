@@ -333,7 +333,7 @@
                 const data = await refreshtoken();
                 if(!data) return;
             }
-            const finalresult = await fetch("/patient_session",
+            const finalresult = await fetch("/session_detail",
             {
                 method:"GET",
                 headers:{

@@ -1,7 +1,7 @@
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel, Field, field_validator, model_validator
 from typing import Optional
 import re
-from datetime import date
+from datetime import date, datetime
 class SessionResponse(BaseModel):
     session_id:int
     health_name:str
@@ -215,3 +215,24 @@ class MakeSessionRequest(BaseModel):
         if value not in allowed:
                 raise ValueError("Invalid department")
         return value
+
+class Attachment(BaseModel):
+    name: str
+    type: str
+
+class NewMessage(BaseModel):
+    type: str
+    tempId: str
+    sessionId: int
+    timestamp: datetime
+    sender_id: int
+    text: str = ""
+    files: list[Attachment] = []
+
+    @model_validator(mode="after")             #so that after NewMessage validation this runs 
+    def validate_message(self):
+        if self.text.strip() == "" and len(self.files) == 0:
+            raise ValueError(
+                "Message must contain text or at least one file."
+            )
+        return self

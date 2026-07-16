@@ -164,6 +164,8 @@ def checkDoctorClinicId(doctorId:str, clinicId:str):
         if conn:
             conn.close()
 
+
+def addMessage(data:dict)
 def create_patient_session(health_id:str, clinic_id:str, department:str, assigned_doctor_id:str):
     conn = None
     try:

@@ -1,13 +1,18 @@
 import os
-from fastapi import FastAPI, UploadFile, File, Form, HTTPException, Request, Query, WebSocket, Response, Depends, RequestValidationError
+from fastapi import FastAPI, UploadFile, File, Form, HTTPException, Request, Query, WebSocket, Response, Depends, RequestValidationError, WebSocketDisconnect
 from crud import create_patient_session, complete_patient_session, emergency_connect_hospitals, make_available_doctor, patientLogin,doctorLogin, checkPatientId, checkDoctorId, checkDoctorClinicId
 from datetime import datetime
 from typing import Optional
 from fastapi.middleware.cors import CORSMiddleware
 from auth import createAccessToken, createRefreshToken, decodeToken, hash_password, validate_password, getCurrentUser
-from schema import patientRegister, doctorRegister, LoginRequest, MakeSessionRequest
+from schema import patientRegister, doctorRegister, LoginRequest, MakeSessionRequest, NewMessage
 from utils import makeAvatarIdP
 from fastapi.responses import JSONResponse
+from uuid import uuid4
+from pathlib import Path
+import shutil
+UPLOAD_DIR = Path("uploads/chat")
+UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
 
 
 app = FastAPI(title="Rural Clinic Telemedicine Platform")
@@ -20,6 +25,116 @@ app.add_middleware(
     allow_methods = ["*"],
 )
 
+class ConnectionManager:
+    def __init__(self):
+        self.activeConnections = {}
+    async def connect(self, userId:int,websocket:WebSocket, role:str):
+        self.activeConnections[userId] = {
+            "websocket": websocket,
+            "role": role
+        }
+    def disconnect(self, userId:int):
+        self.activeConnections.pop(userId, None)       #do nothing if not exists
+    def get(self,userId: int):
+        return self.activeConnections.get(userId)
+    async def message(self, userId:int, message:dict):
+        websocket = self.activeConnections.get(userId)
+        if websocket:
+            await websocket.send_json(message)
+
+socket = ConnectionManager()
+
+@app.websocket("/ws")
+async def websocketEndpoint(websocket:WebSocket):
+    await websocket.accept()
+    userId = None
+    try:
+        data = await websocket.receive_json()
+        if data.get("type") != "authenticate":
+            await websocket.close()
+            return
+        accessToken = data["accessToken"]
+        payload = decodeToken(accessToken)
+        userId = payload["userId"]
+        role = payload["role"]
+        await socket.connect(userId, websocket)
+        while True:
+            message = await websocket.receive_json()
+            if message["type"] == "new_message":
+                data = NewMessage(**message)         #gives the message in object form now
+                try:
+
+                # -------------------------
+                    # Validate incoming data
+                    # -------------------------
+                    data = NewMessage.model_validate(message)
+
+                    uploaded_files = []
+
+                    # -------------------------
+                    # Save uploaded files
+                    # -------------------------
+                    for file in data.files:
+
+                        extension = Path(file.file_name).suffix
+
+                        stored_name = f"{uuid4().hex}{extension}"
+
+                        file_path = UPLOAD_DIR / stored_name
+
+                        with open(file_path, "wb") as f:
+                            f.write(base64.b64decode(file.file_data))
+
+                        uploaded_files.append({
+                            "file_name": file.file_name,
+                            "file_path": str(file_path)
+                        })
+
+                    # -------------------------
+                    # Insert into database
+                    # -------------------------
+                    result = create_session_message(
+                        session_id=data.sessionId,
+                        sender_id=userId,
+                        text=data.text,
+                        files=uploaded_files,
+                        timestamp=data.timestamp
+                    )
+
+                    # -------------------------
+                    # Success response
+                    # -------------------------
+                    await websocket.send_json({
+                        "type": "delivered",
+                        "tempId": data.tempId,
+                        "messageId": result["messageId"]
+                    })
+
+                except Exception as e:
+
+                    # remove already uploaded files
+                    for file in uploaded_files:
+
+                        try:
+                            Path(file["file_path"]).unlink(missing_ok=True)
+                        except Exception:
+                            pass
+
+                    await websocket.send_json({
+                        "type": "error",
+                        "message": str(e)
+                    })
+                            
+
+                except WebSocketDisconnect:
+                    if userId is not None:
+                        socket.disconnect(userId)
+                except Exception:
+                    if userId is not None:
+                        socket.disconnect(userId)
+                    await websocket.close(code=1008)
+                    return
+
 @app.exception_handler(RequestValidationError)
 async def validation_exception_handler(request, exc):
 
@@ -29,11 +144,11 @@ async def validation_exception_handler(request, exc):
         status_code=422,
         content={
             "type": "ValidationError",
-            "field": error["loc"][-1],
+            "field": error["loc"][-1],               #tuple
             "message": error["msg"]
         }
     )
-    
+
 @app.get("/refresh")
 def refresh_token(request:Request):  #request is the entire piece of data or what you send to backend no need ot send the cookie if sent in htppsonlycookie
     refreshToken = request.cookies.get(
