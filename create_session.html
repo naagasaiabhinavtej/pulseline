@@ -414,7 +414,7 @@ async function validateForm(e)
     if(result.ok)
     {
         const data = await result.json();
-        if(data.type === "ErrorInDetails")
+        if(data.type === "errorInDetails")
         {
             if(data.errorPlace === "healthId")
             {
@@ -433,11 +433,32 @@ async function validateForm(e)
                 assignedDoctorIdError.textContent = "Enter a valid DoctorId";
             }
         }
-        else if(data.type === "ValidDetails")
+        else if(data.type === "validDetails")
         {
             waitingOverlay.classList.remove("hidden");
             countDown.textContent = "05:00";
             startTimer();
+        }
+    }
+    else{
+        const error = await result.json();
+        if (result.status === 422) 
+        {
+            if (error.field === "doctorId")
+                assignedDoctorIdError.textContent = error.message
+
+            else if (error.field === "department")
+                departmentError.textContent = error.message;
+
+            else if (error.field === "health_id")
+                healthIdError.textContent = error.message;
+
+            else if (error.field === "clinic_id")
+                clinicIdError.textContent = error.message;
+        }
+        else if(result.status === 403)
+        {
+                assignedDoctorIdError.textContent = error.message
         }
     }
 }

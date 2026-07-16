@@ -2,6 +2,9 @@ from datatime import datetime, timedelta, timezone
 from jose import JWTError, jwt
 from fastApi import FastAPI, HTTPException, Response, Request, Depends
 from passlib.context import CryptContext
+from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
+
+security = HTTPBearer()
 
 pwd_context = CryptContext(
     schemes=["bcrypt"],
@@ -44,3 +47,8 @@ def hash_password(password:str):
 
 def validate_password(password:str, hashed_password:str):
     return pwd_context.verify(password, hashed_password)
+
+def getCurrentUser(credentials: HTTPAuthorizationCredentials = Depends(security)):
+    accessToken = credentials.credentials
+    payload = decodeToken(accessToken)
+    return payload

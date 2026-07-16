@@ -141,6 +141,29 @@ def checkDoctorId(doctor_id:str):
         if conn:
             conn.close()
 
+def checkDoctorClinicId(doctorId:str, clinicId:str):
+    conn = None
+    try:
+        conn = sqlite3.connect(database_path)
+        curs = conn.cursor()
+        doctorId = int(doctorId)
+        clinicId = int(clinicId)
+        curs.execute("""
+                        SELECT doctor_id, password
+                        FROM doctors
+                        WHERE doctor_id=? AND clinic_id=?
+                    """, (doctorId,clinicId))
+        result = curs.fetchone()
+        return result
+    except Exception as e:
+        if conn:
+            conn.rollback()
+        logger.exception("Error while checking the Details of clinic and doctor")
+        raise e
+    finally:
+        if conn:
+            conn.close()
+
 def create_patient_session(health_id:str, clinic_id:str, department:str, assigned_doctor_id:str):
     conn = None
     try:

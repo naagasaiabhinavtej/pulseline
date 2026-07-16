@@ -159,7 +159,7 @@ class LoginRequest(BaseModel):
 
     @field_validator("person")
     @classmethod
-    def validate_gender(cls, value):
+    def validate_person(cls, value):
         allowed = {"doctor", "patient"}
         if value not in allowed:
             raise ValueError("Invalid person")
@@ -185,4 +185,33 @@ class LoginRequest(BaseModel):
         if not re.search(r"[!@#$%^&*(),.?\":{}|<>]", value):
             raise ValueError("Password must contain one symbol")
 
+        return value
+
+
+
+class MakeSessionRequest(BaseModel):
+    healthId: int = Field(gt=0)
+    clinicId: int = Field(gt=0)
+    doctorId: int = Field(gt=0)
+    department: str
+
+    @field_validator("department")
+    @classmethod
+    def validate_deparment(cls, value):
+        allowed = {
+            "General_Medicine",
+            "Ophthalmology",
+            "Otolaryngology",
+            "Cardiology",
+            "Orthopedics",
+            "Neurology",
+            "Gastroenterology",
+            "Dermatology",
+            "OB-GYN",
+            "Pediatrics",
+            "Psychiatry",
+            "Urology"
+        }
+        if value not in allowed:
+                raise ValueError("Invalid department")
         return value

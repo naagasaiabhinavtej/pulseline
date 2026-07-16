@@ -1,12 +1,14 @@
 import os
-from fastapi import FastAPI, UploadFile, File, Form, HTTPException, Request, Query, WebSocket, Response
-from crud import create_patient_session, complete_patient_session, emergency_connect_hospitals, make_available_doctor, patientLogin,doctorLogin, checkPatientId, checkDoctorId
+from fastapi import FastAPI, UploadFile, File, Form, HTTPException, Request, Query, WebSocket, Response, Depends, RequestValidationError
+from crud import create_patient_session, complete_patient_session, emergency_connect_hospitals, make_available_doctor, patientLogin,doctorLogin, checkPatientId, checkDoctorId, checkDoctorClinicId
 from datetime import datetime
 from typing import Optional
 from fastapi.middleware.cors import CORSMiddleware
-from auth import createAccessToken, createRefreshToken, decodeToken, hash_password, validate_password
-from schema import patientRegister, doctorRegister, LoginRequest
+from auth import createAccessToken, createRefreshToken, decodeToken, hash_password, validate_password, getCurrentUser
+from schema import patientRegister, doctorRegister, LoginRequest, MakeSessionRequest
 from utils import makeAvatarIdP
+from fastapi.responses import JSONResponse
+
 
 app = FastAPI(title="Rural Clinic Telemedicine Platform")
 
@@ -18,6 +20,20 @@ app.add_middleware(
     allow_methods = ["*"],
 )
 
+@app.exception_handler(RequestValidationError)
+async def validation_exception_handler(request, exc):
+
+    error = exc.errors()[0]
+
+    return JSONResponse(
+        status_code=422,
+        content={
+            "type": "ValidationError",
+            "field": error["loc"][-1],
+            "message": error["msg"]
+        }
+    )
+    
 @app.get("/refresh")
 def refresh_token(request:Request):  #request is the entire piece of data or what you send to backend no need ot send the cookie if sent in htppsonlycookie
     refreshToken = request.cookies.get(
@@ -168,8 +184,31 @@ def loading(request: Request):
         "type": payload["type"]
     }
 
+@app.post("/makeSession")
+def createSession(data:MakeSessionRequest, currentUser=Depends(getCurrentUser)):
+    doctorId = currentUser["userId"]
 
-@app.post("/api/sessions/start")
+    if doctorId != data.doctorId:
+        raise HTTPException(
+            status_code=403,
+            detail="Unauthorized"
+        )
+    
+    result1 = checkPatientId(data.healthId)
+    result2 = checkDoctorId(doctorId)
+    result3 = checkDoctorClinicId(doctorId, data.clinicId)
+    if not result1:
+        return {"type":"errorInDetails",
+                "errorPlace":"healthId"}
+    if not result2:
+        return {"type":"errorInDetails",
+                "errorPlace":"doctorId"}
+    if not result3:
+        return {"type":"errorInDetails",
+                "errorPlace":"clinicId"}
+    if result1 and result2 and result3:
+        return {"type":"validDetails"}
+
 def make_session(health_id:str = Form(...), clinic_id:str = Form(...), department:str = Form(...), assigned_doctor_id:str = Form(...)):
     #make check when unkown patient_name comes or unknown_doc_name or clinic name comes
     return create_patient_session(health_id, clinic_id, department, assigned_doctor_id)
