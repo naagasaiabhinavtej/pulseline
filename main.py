@@ -1,6 +1,6 @@
 import os
 from fastapi import FastAPI, UploadFile, File, Form, HTTPException, Request, Query, WebSocket, Response, Depends, RequestValidationError, WebSocketDisconnect
-from crud import create_patient_session, complete_patient_session, emergency_connect_hospitals, make_available_doctor, patientLogin,doctorLogin, checkPatientId, checkDoctorId, checkDoctorClinicId
+from crud import create_patient_session, complete_patient_session, emergency_connect_hospitals, make_available_doctor, patientLogin,doctorLogin, checkPatientId, checkDoctorId, checkDoctorClinicId, createSessionMessage
 from datetime import datetime
 from typing import Optional
 from fastapi.middleware.cors import CORSMiddleware
@@ -11,8 +11,10 @@ from fastapi.responses import JSONResponse
 from uuid import uuid4
 from pathlib import Path
 import shutil
+import base64
+
 UPLOAD_DIR = Path("uploads/chat")
-UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
+os.makedirs(UPLOAD_DIR, exist_ok = True)
 
 
 app = FastAPI(title="Rural Clinic Telemedicine Platform")
@@ -62,61 +64,42 @@ async def websocketEndpoint(websocket:WebSocket):
             message = await websocket.receive_json()
             if message["type"] == "new_message":
                 data = NewMessage(**message)         #gives the message in object form now
+                uploadedFile = None
                 try:
-
-                # -------------------------
-                    # Validate incoming data
-                    # -------------------------
                     data = NewMessage.model_validate(message)
-
-                    uploaded_files = []
-
-                    # -------------------------
-                    # Save uploaded files
-                    # -------------------------
-                    for file in data.files:
-
-                        extension = Path(file.file_name).suffix
-
+                    uploadedFile = data.files
+                    if uploadedFile is not None:
+                        extension = Path(uploadedFile.name).suffix
                         stored_name = f"{uuid4().hex}{extension}"
+                        filePath = UPLOAD_DIR / stored_name             #creates a new path 
+                        with open(filePath, "wb") as f:
+                            f.write(base64.b64decode(uploadedFile.data))            #we are using base64 because when frontend sends via websocket json cant stringify the bytes so hence the base64 format
+                        uploadedFile = {
+                            "fileName": uploadedFile.name,
+                            "filePath": str(filePath)
+                        }
 
-                        file_path = UPLOAD_DIR / stored_name
-
-                        with open(file_path, "wb") as f:
-                            f.write(base64.b64decode(file.file_data))
-
-                        uploaded_files.append({
-                            "file_name": file.file_name,
-                            "file_path": str(file_path)
-                        })
-
-                    # -------------------------
-                    # Insert into database
-                    # -------------------------
-                    result = create_session_message(
-                        session_id=data.sessionId,
-                        sender_id=userId,
+                    result = createSessionMessage(
+                        sessionId=data.sessionId,
+                        senderId=userId,
                         text=data.text,
-                        files=uploaded_files,
-                        timestamp=data.timestamp
+                        files=uploadedFile,
                     )
 
-                    # -------------------------
-                    # Success response
-                    # -------------------------
                     await websocket.send_json({
                         "type": "delivered",
                         "tempId": data.tempId,
-                        "messageId": result["messageId"]
+                        "messageId": result["messageId"],
+                        "timeStamp":result["timeStamp"]
                     })
 
                 except Exception as e:
 
                     # remove already uploaded files
-                    for file in uploaded_files:
+                    if uploadedFile:
 
                         try:
-                            Path(file["file_path"]).unlink(missing_ok=True)
+                            Path(uploadedFile["filePath"]).unlink(missing_ok=True)
                         except Exception:
                             pass
 
@@ -126,14 +109,14 @@ async def websocketEndpoint(websocket:WebSocket):
                     })
                             
 
-                except WebSocketDisconnect:
-                    if userId is not None:
-                        socket.disconnect(userId)
-                except Exception:
-                    if userId is not None:
-                        socket.disconnect(userId)
-                    await websocket.close(code=1008)
-                    return
+    except WebSocketDisconnect:
+        if userId is not None:
+            socket.disconnect(userId)
+    except Exception:
+        if userId is not None:
+            socket.disconnect(userId)
+        await websocket.close(code=1008)
+        return
 
 @app.exception_handler(RequestValidationError)
 async def validation_exception_handler(request, exc):

@@ -2,7 +2,7 @@ import sqlite3
 from typing import Optional
 import math
 import logging
-# import datetime
+from datetime import datetime
 
 database_path = "medical_platform.db"
 
@@ -84,7 +84,7 @@ def doctorLogin(doctorDict:dict):
                         doctorDict["specialization"],
                         doctorDict["contact_number"],
                         doctorDict["assigned_clinic_id"]))
-        userId = curs.lastrowid("doctor_id")
+        userId = curs.lastrowid
         conn.commit()
         return {"userId":userId,
                 "message":"Details Uploaded"}
@@ -163,9 +163,49 @@ def checkDoctorClinicId(doctorId:str, clinicId:str):
     finally:
         if conn:
             conn.close()
+def createSessionMessage(sessionId:int, senderId:int, text:str, files:dict | None = None):
+    conn = None
+    try:
+        conn = sqlite3.connect(database_path)
+        curs = conn.cursor()
+        curs.execute("""
+                        INSERT INTO session_messages
+                        (session_id, uploaded_by, message)
+                        VALUES
+                        (?,?,?)
+                        """, (sessionId, senderId, text))
+        messageId = curs.lastrowid
+        attachmentId = None
+        if files is not None:
+            curs.execute("""
+                        INSERT INTO session_attachments
+                        (message_id, file_name, file_path)
+                        VALUES
+                        (?,?,?)
+                        """, (messageId, files["fileName"], files["filePath"]))
+            attachmentId = curs.lastrowid
+        conn.commit()
+        curs.execute("""
+                        SELECT uploaded_at
+                        FROM session_messages
+                        WHERE message_id=?
+                            """, messageId)
+        timeStamp = curs.fetchone()
+        timeStamp = datetime.fromisoformat(timeStamp).strftime("%I:%M %p")
+        return {
+            "messageId":messageId,
+            "attachmentId":attachmentId,
+            "timeStamp":timeStamp
+        }
+    except Exception as e:
+        if conn:
+            conn.rollback()
+        logger.exception("Error while adding the message into the database")
+        raise e
+    finally:
+        if conn:
+            conn.close()
 
-
-def addMessage(data:dict)
 def create_patient_session(health_id:str, clinic_id:str, department:str, assigned_doctor_id:str):
     conn = None
     try:
