@@ -1,6 +1,6 @@
 -- patients table
 CREATE TABLE patients (
-    health_id VARCHAR(50) PRIMARY KEY AUTOINCREMENT,
+    health_id INTEGER PRIMARY KEY AUTOINCREMENT,
     password VARCHAR(32) NOT NULL,
     name VARCHAR(100) NOT NULL,
     avatarId VARCHAR(50) NOT NULL,
@@ -68,7 +68,7 @@ CREATE INDEX idx_doctors_specialization ON doctors(specialization);
 --the data of issue
 CREATE TABLE consultation_sessions (
     session_id INTEGER PRIMARY KEY AUTOINCREMENT,
-    health_id VARCHAR(50) NOT NULL,
+    health_id INTEGER NOT NULL,
     clinic_id INTEGER NOT NULL,          
     assigned_doctor_id INTEGER,          
     blood_pressure VARCHAR(20), 
@@ -95,6 +95,7 @@ CREATE TABLE consultation_sessions (
     session_status VARCHAR(20) DEFAULT 'started',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     resolved_at TIMESTAMP,
+    is_referred BOOLEAN DEFAULT 0,
     referred_hospital_id INTEGER DEFAULT NULL,
     referred_doctor_id INTEGER DEFAULT NULL,
     FOREIGN KEY (referred_hospital_id) REFERENCES clinics(clinic_id),
@@ -119,10 +120,21 @@ CREATE INDEX idx_attachment_session ON session_attachments(message_id);
 CREATE TABLE session_messages(
     message_id INTEGER PRIMARY KEY AUTOINCREMENT,
     session_id INTEGER NOT NULL,
-    uploaded_by VARCHAR(50) NOT NULL,
+    uploaded_by INT NOT NULL,
     message TEXT,
     uploaded_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (session_id) REFERENCES consultation_sessions(session_id)
 );
 
 CREATE INDEX idx_message_session ON session_messages(session_id);
+
+CREATE TABLE message_reads (
+    message_id INTEGER NOT NULL,
+    user_id INTEGER NOT NULL,
+
+    PRIMARY KEY (message_id, user_id),
+
+    FOREIGN KEY (message_id) REFERENCES session_messages(message_id)
+);
+
+CREATE INDEX idx_message_reads ON message message_reads(message_id);

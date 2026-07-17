@@ -307,6 +307,48 @@ def createSession(data:MakeSessionRequest, currentUser=Depends(getCurrentUser)):
     if result1 and result2 and result3:
         return {"type":"validDetails"}
 
+@app.get("/session_detail/{sessionId}")
+def giveDataSessionDetail(sessionId:int, currentUser=Depends(getCurrentUser)):
+    result = checkSessionId(sessionId)
+    if not result:
+        raise HTTPException(
+            status_code=404,
+            detail="Session Not Found"
+        )
+    doctorId = currentUser["userId"]
+    if doctorId not in {result.doctor1Id, result.doctor2Id}:
+        raise HTTPException(
+            status_code=401,
+            detail="User Unauthorised"
+        )
+    userDetails = getDoctorDetails(doctorId)
+    sessionDetails = getSessionDetails(sessionId)
+    messages = getSessionMessages(sessionId)
+    participantCount = 2
+    if session.doctor2Id is not None:
+        participantCount += 1
+    for message in messages:
+
+        readCount = getReadCount(message["messageId"])
+        message["bluetick"] = (readCount == participantCount)
+        
+    result = {}
+    result.update(userDetails)
+    result.update(sessionDetails)
+    result["messages"] = messages
+
+    return result
+
+
+
+
+
+
+
+
+
+
+
 def make_session(health_id:str = Form(...), clinic_id:str = Form(...), department:str = Form(...), assigned_doctor_id:str = Form(...)):
     #make check when unkown patient_name comes or unknown_doc_name or clinic name comes
     return create_patient_session(health_id, clinic_id, department, assigned_doctor_id)

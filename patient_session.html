@@ -615,7 +615,7 @@ notesBox.addEventListener("input", () => {
 });
 
 //websocket setup
-const socket = new WebSocket("`ws://${window.location.host}/ws`");
+const socket = new WebSocket(`ws://${window.location.host}/ws`);
 messageInputField.addEventListener("keydown", (e) => {
     if (e.key === "Enter") {
         e.preventDefault();
