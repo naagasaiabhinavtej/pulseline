@@ -288,6 +288,7 @@
             }
         }
         let accessToken = null;
+        let sessionId = null; //use params to get the value
         async function refreshtoken()
         {
             const result = await fetch("/refresh",
@@ -389,6 +390,7 @@
         // let recentDate = null; dont use this because sometimes backend may send the text late but before that forward dates gets uploaded and it will create a mess the late becasue of network speed, delays etc
         let user_id = null;
         let avatarSrc = "";
+        let socket = null;
         async function askData()
         {
             const result = await giveData();
@@ -426,12 +428,98 @@
             {
                 tabTrigger.classList.add('disabled-tag');  //make sure you have done check in report submission
             }
-            showAllMessages();
             avatarSrc = patientAvatar.src;
             let merged_start = new Date(`${startDate}T${startTime}`);             //T is a seperator
             startTimer(merged_start);
             setInterval(startTimer, 1000, merged_start );     //setInterval(startTimer, 1000, arg1, arg2, arg3);
-        }
+            socket = new WebSocket(`ws://${window.location.host}/ws`);
+            socket.onopen = ()=>
+            {
+                console.log("Connected")
+                socket.send(JSON.stringify({
+                    type: "connect",
+                    accessToken: accessToken,
+                    page:"sessionChatBox",
+                    sessionId: sessionId
+                }));
+                showAllMessages();
+            }
+            socket.onclose = () => {
+                console.log("Disconnected");
+            };
+            socket.onerror = (err)=>{
+                console.error(err);
+            };
+            socket.onmessage = (message)=>{
+            const data = JSON.parse(message.data); //as message is like object having data, websokcet no, and additional details.
+            if(data.type === "delivered" || data.type === "read")
+            {
+                const msg = document.querySelector(`[data-id=${data.tempId}] i`);
+                const link = document.querySelector(`[data-id=${data.tempId}] .attachments-container a`)
+                const timestamp = document.querySelector(`[data-id="${data.tempId}"] .timestamp`);
+                if(msg)
+                {
+                    msg.setAttribute("data-lucide", "check-check");
+                    msg.className = data.type === "read" ? "read-receipt" : "delivered";
+                    lucide.createIcons(); 
+                    msg.closest(".chat-row").setAttribute("data-id", data.messageId);    //closest() shows the recent top data which has this class name
+                    timestamp.textContent = data.timestamp
+
+                }
+                if(link && data.type === "delivered")
+                {
+                    link.href = `/download-file-chat/${data.attachmentId}`;
+                }
+            }
+            else if(data.type === "sent")
+            {
+                showMessage(data);
+                const link = document.querySelector(`[data-id = ${data.tempId}] .attachments-container a `);
+                if(link) link.href = `/download-file-chat/${data.attachmentId}`;
+                socket.send(JSON.stringify({
+                    type: "read",
+                    message: data.messageId
+                }));
+            }
+            else if(data.type === "callStarted")
+            {
+                videoBtn.classList.add("call-started");
+                videoBtn.querySelector("span").textContent = "Join Session";
+            }
+            else if(data.type === "callEnded")
+            {
+                videoBtn.classList.remove("call-started");
+                videoBtn.querySelector("span").textContent = "Start Video Call";
+            }
+            else if(data.type === "startedSearching")
+            {
+                updateReferralStatus("searching");
+            }
+            else if(data.type === "startedExpanding")
+            {
+                updateReferralStatus("expanding");
+            }
+            else if(data.type === "searchingFailed")
+            {
+                updateReferralStatus("failed");
+                emergencyBtn.disabled = false;
+                referralStatus.classList.add("hidden");
+            }
+            else if(data.type === "searchingSuccess")
+            {
+                updateReferralStatus("success");
+                referralStatus.classList.add("hidden");
+                socket.send(JSON.stringify({
+                    type:"wantDoctor2Details"
+                }));
+            }
+            else if(data.type === "doctor2Details")
+            {
+                
+            }
+
+        };
+            }
         document.addEventListener("DOMContentLoaded", askData);
         function startTimer(merged_start)
         {
@@ -443,7 +531,6 @@
             let seconds = diff%60;
             timerDigits.textContent = `${days}D:${String(hours).padStart(2, "0")}:${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`;
         }
-        const socket = new WebSocket(`ws://${window.location.host}/ws/session/${sessionIdValue.textContent}`);
         async function fileToBase64(file)              //converts file into base64 format to send to backend
         {
             try
@@ -472,7 +559,7 @@
                 console.error(error);
                 throw error;
             }
-}
+        }
         function showAllMessages()      
         {
             chatBox.innerHTML = "";
@@ -520,11 +607,12 @@
                 }
                 else 
                 {
+                    if (socket && socket.readyState === WebSocket.OPEN){
                     socket.send(JSON.stringify({
                         type:"read",
                         message:message.tempId
-                    }));
-                    makehtml += `<div class="chat-row message-incoming" data-id="${message.tempId}>
+                    }));}
+                    makehtml += `<div class="chat-row message-incoming" data-id="${message.tempId}">
                                     <img src=${avatarsrc} alt="Doctor" class="msg-avatar">
                                     <div class="message-wrapper">
                                         <span class="sender-title">${message.senderName}</span>
@@ -636,7 +724,7 @@ function handleSend() {
             tempId,
             text,
             files: [],
-            sessionId: sessionIdValue.textContent,
+            sessionId: sessionId,
         }));
 
         messageInputField.value = "";
@@ -667,7 +755,7 @@ function handleSend() {
             tempId,
             text: index === 0 ? text : "",
             files: [fileObj],
-            sessionId: sessionIdValue.textContent,
+            sessionId: sessionId,
         }));
     });
 
@@ -770,75 +858,6 @@ function showMessage({
     chatBox.insertAdjacentHTML("beforeend", isOutgoing ? outgoingHTML : incomingHTML);  //because we are sending strings but if you want to send the objects like div and div.innerHtml then you can use appendchild
     lucide.createIcons();
 }
-socket.onmessage = (message)=>{
-    const data = JSON.parse(message.data); //as message is like object having data, websokcet no, and additional details.
-    if(data.type === "delivered" || data.type === "read")
-    {
-        const msg = querySelector(`[data-id=${data.tempId}] i`);
-        const link = querySelector(`[data-id=${data.tempId}] .attachment-container a`)
-        const timestamp = document.querySelector(`[data-id="${data.tempId}"] .timestamp`);
-        if(msg)
-        {
-            msg.setAttribute("data-lucide", "check-check");
-            msg.className = data.type === "read" ? "read-receipt" : "delivered";
-            lucide.createIcons(); 
-            msg.closest(".chat-row").setAttribute("data-id", data.messageId);    //closest() shows the recent top data which has this class name
-            timestamp.textContent = data.timestamp
-
-        }
-        if(link && data.type === "delivered")
-        {
-            link.href = `/download-file-chat/${data.attachmentId}`;
-        }
-    }
-    else if(message.type === "sent")
-    {
-        showMessage(data);
-        const link = querySelector(`[data-id = ${data.tempId}] .attachments-container a `);
-        if(link) link.href = `/download-file-chat/${data.attachmentId}`;
-        socket.send(JSON.stringify({
-            type:"read",
-            message:data.messageId
-        }));
-    }
-    else if(data.type === "callStarted")
-    {
-        videoBtn.classList.add("call-started");
-        videoBtn.querySelector("span").textContent = "Join Session";
-    }
-    else if(data.type === "callEnded")
-    {
-        videoBtn.classList.remove("call-started");
-        videoBtn.querySelector("span").textContent = "Start Video Call";
-    }
-    else if(data.type === "startedSearching")
-    {
-        updateReferralStatus("searching");
-    }
-    else if(data.type === "startedExpanding")
-    {
-        updateReferralStatus("expanding");
-    }
-    else if(data.type === "searchingFailed")
-    {
-        updateReferralStatus("failed");
-        emergencyBtn.disabled = false;
-        referralStatus.classList.add("hidden");
-    }
-    else if(data.type === "searchingSuccess")
-    {
-        updateReferralStatus("success");
-        referralStatus.classList.add("hidden");
-        socket.send(JSON.stringify({
-            type:"wantDoctor2Details"
-        }));
-    }
-    else if(data.type === "doctor2Details")
-    {
-        
-    }
-
-};
 const emergencyBtn = document.querySelector("#emergency-dispatch-btn");
 const referralStatus = document.querySelector("#referral-status");
 const statusTitle = document.querySelector("#status-title");
@@ -853,7 +872,7 @@ emergencyBtn.addEventListener("click", ()=>
             Authorization:`Bearer ${accessToken}`
         },
         body:JSON.stringify({
-            sessionId:sessionIdValue.textContent
+            sessionId:sessionId
         })
     });
 });
@@ -917,6 +936,10 @@ function updateReferralStatus(state)
 
     lucide.createIcons();
 }
+window.addEventListener("beforeunload", () => {
+    if(socket)
+        socket.close();
+});
     </script>
 </body>
 </html>
