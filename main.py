@@ -12,6 +12,7 @@ from uuid import uuid4
 from pathlib import Path
 import shutil
 import base64
+from enum import Enum
 
 UPLOAD_DIR = Path("uploads/chat")
 os.makedirs(UPLOAD_DIR, exist_ok = True)
@@ -27,14 +28,38 @@ app.add_middleware(
     allow_methods = ["*"],
 )
 
+class ConnectionType(Enum):
+    ACTIVE = "active"
+    SESSION = "session"
+    CALL = "call"
+
+
 class ConnectionManager:
     def __init__(self):
         self.activeConnections = {}
-    async def connect(self, userId:int,websocket:WebSocket, role:str):
-        self.activeConnections[userId] = {
-            "websocket": websocket,
-            "role": role
-        }
+        self.SessionConnections = {}
+        self.CallConnections = {}
+    async def connect(self, userId:int,websocket:WebSocket, role:str, connectionType:str, sessionId:int|None=None):
+        
+        if connectionType == ConnectionType.ACTIVE:
+            self.activeConnections[userId] = {
+                "websocket": websocket,
+                "role": role
+            }
+        elif connectionType == ConnectionType.SESSION:
+            if sessionId not in self.SessionConnections:
+                self.SessionConnections[sessionId] = {}
+            self.SessionConnections[sessionId].update({
+                "userId":userId,
+                "role":role
+            })
+        elif connectionType == ConnectionType.CALL:
+            if sessionId not in self.CallConnections:
+                self.CallConnections[sessionId] = {}
+            self.CallConnections[sessionId][userId] = {
+                "websocket": websocket,
+                "role": role
+            }
     def disconnect(self, userId:int):
         self.activeConnections.pop(userId, None)       #do nothing if not exists
     def get(self,userId: int):
