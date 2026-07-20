@@ -5,9 +5,9 @@ from datetime import datetime
 from typing import Optional
 from fastapi.middleware.cors import CORSMiddleware
 from auth import createAccessToken, createRefreshToken, decodeToken, hash_password, validate_password, getCurrentUser
-from schema import patientRegister, doctorRegister, LoginRequest, MakeSessionRequest, NewMessage
+from schema import patientRegister, doctorRegister, LoginRequest, MakeSessionRequest, NewMessage, Notes
 from utils import makeAvatarIdP
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, FileResponse
 from uuid import uuid4
 from pathlib import Path
 import shutil
@@ -39,7 +39,7 @@ class ConnectionManager:
         self.activeConnections = {}
         self.SessionConnections = {}
         self.CallConnections = {}
-    async def connect(self, userId:int,websocket:WebSocket, role:str, connectionType:str, sessionId:int|None=None):
+    async def connect(self, userId:int,websocket:WebSocket, role:str, connectionType:ConnectionType,sessionId:int|None=None):
         
         if connectionType == ConnectionType.ACTIVE:
             self.activeConnections[userId] = {
@@ -49,10 +49,10 @@ class ConnectionManager:
         elif connectionType == ConnectionType.SESSION:
             if sessionId not in self.SessionConnections:
                 self.SessionConnections[sessionId] = {}
-            self.SessionConnections[sessionId].update({
-                "userId":userId,
-                "role":role
-            })
+            self.SessionConnections[sessionId][userId] = {
+                "websocket": websocket,
+                "role": role
+            }
         elif connectionType == ConnectionType.CALL:
             if sessionId not in self.CallConnections:
                 self.CallConnections[sessionId] = {}
@@ -62,12 +62,17 @@ class ConnectionManager:
             }
     def disconnect(self, userId:int):
         self.activeConnections.pop(userId, None)       #do nothing if not exists
-    def get(self,userId: int):
-        return self.activeConnections.get(userId)
+    def get(self, connectionType:ConnectionType, userId: int|None=None, sessionId:int|None=None):  #make sure the compulsary ones comes first
+        if connectionType == ConnectionType.ACTIVE:
+            return self.activeConnections.get(userId)
+        elif connectionType == ConnectionType.SESSION:
+            return self.SessionConnections.get(sessionId, {})
+        elif connectionType == ConnectionType.CALL:
+            return self.CallConnections.get(sessionId)
     async def message(self, userId:int, message:dict):
-        websocket = self.activeConnections.get(userId)
-        if websocket:
-            await websocket.send_json(message)
+        connection = self.activeConnections.get(userId)
+        if connection:
+            await connection.send_json(message)
 
 socket = ConnectionManager()
 
@@ -77,14 +82,15 @@ async def websocketEndpoint(websocket:WebSocket):
     userId = None
     try:
         data = await websocket.receive_json()
-        if data.get("type") != "authenticate":
+        if data.get("type") != "connect":
             await websocket.close()
             return
         accessToken = data["accessToken"]
         payload = decodeToken(accessToken)
         userId = payload["userId"]
         role = payload["role"]
-        await socket.connect(userId, websocket)
+        sessionId = data.get("sessionId")
+        await socket.connect(userId=userId, websocket=websocket, role=role, connectionType=ConnectionType(data["page"]), sessionId=data.get("sessionId"))
         while True:
             message = await websocket.receive_json()
             if message["type"] == "new_message":
@@ -115,9 +121,54 @@ async def websocketEndpoint(websocket:WebSocket):
                         "type": "delivered",
                         "tempId": data.tempId,
                         "messageId": result["messageId"],
-                        "timeStamp":result["timeStamp"]
+                        "attachmentId":result["attachmentId"],
+                        "timestamp":result["timestamp"]
                     })
+                    participants = socket.get(connectionType=ConnectionType.SESSION, sessionId=data.sessionId, )
+                    for uid, info in participants.items():
+                        if uid == userId:
+                            continue
 
+                        await info["websocket"].send_json(
+                            {
+                                "type": "sent",
+
+                                "messageId": result["messageId"],
+
+                                "sender_id": result["senderId"],
+                                "senderName": result["senderName"],
+                                "avatarId": result["avatarId"],
+
+                                "chattext": result["text"],
+
+                                "files": [{
+                                    "attachmentId": result["attachmentId"],
+                                    "file_name": result["fileName"]
+                                }] if result.get("attachmentId") else [],
+
+                                "timestamp": result["timestamp"],
+                                "date": result["date"]
+                            }
+                        )
+
+
+# {
+#createSession should send this
+#     "messageId": messageId,
+#     "attachmentId": attachmentId,      # None if no file
+#     "fileName": fileName,              # None if no file
+
+#     "senderId": senderId,
+#     "senderName": senderName,
+#     "avatarId": avatarId,
+
+#     "text": text,
+
+#     "timestamp": timestamp,            # e.g. "10:31 AM"
+#     "date": date,                      # e.g. "24 May 2025"
+
+#     "sessionId": sessionId
+# }
                 except Exception as e:
 
                     # remove already uploaded files
@@ -132,7 +183,30 @@ async def websocketEndpoint(websocket:WebSocket):
                         "type": "error",
                         "message": str(e)
                     })
-                            
+            elif message["type"] == "read":
+                try:
+                    result = markMessageRead(
+                        messageId=message["messageId"],
+                        userId=userId
+                    )
+                    if result.get("Read"):
+                        participants = socket.get(
+                            sessionId=sessionId,
+                            connectionType=ConnectionType.SESSION
+                        )
+                        if participants:
+                            sender = participants.get(result["senderId"])
+                            if sender:
+                                await sender["websocket"].send_json({
+                                    "type": "read",
+                                    "tempId": message["messageId"]
+                                })   
+                except Exception as e:
+                    await websocket.send_json({
+                        "type": "error",
+                        "message": str(e)
+                    })
+
 
     except WebSocketDisconnect:
         if userId is not None:
@@ -223,7 +297,7 @@ def doctorDatabaseLogin(doctorData:doctorRegister, response:Response):
         doctorDict["password"] = hashedPassword
         doctorDict.update({"avatarId":"first"})
         result = doctorLogin(doctorDict)
-        userId = result[userId]
+        userId = result["userId"]
         accessToken = createAccessToken({"userId":userId,
                                          "role":"doctor"})
         refreshToken = createRefreshToken({"userId":userId,
@@ -332,6 +406,7 @@ def createSession(data:MakeSessionRequest, currentUser=Depends(getCurrentUser)):
     if result1 and result2 and result3:
         return {"type":"validDetails"}
 
+
 @app.get("/session_detail/{sessionId}")
 def giveDataSessionDetail(sessionId:int, currentUser=Depends(getCurrentUser)):
     result = checkSessionId(sessionId)
@@ -366,14 +441,48 @@ def giveDataSessionDetail(sessionId:int, currentUser=Depends(getCurrentUser)):
 
 
 
+@app.get("/download-file/{attachmentId}")
+def giveFile(request:Request, attachmentId:int):
+    refreshToken = request.cookies.get("refreshToken")
+    if not refreshToken:
+        raise(HTTPException(
+            status_code=401,
+            detail="Unauthorised"
+        ))
+    payload = decodeToken(refreshToken)
+    if payload["type"] != "refresh":
+        raise HTTPException(
+            status_code=401,
+            detail="Invalid token"
+        )
+    userId = payload["userId"]
+    result = getAttachmentDetails(userId=userId, attachmentId = attachmentId)
+    if result is None:
+        raise(HTTPException(
+            status_code=404,
+            detail="User Not Found"
+        ))
+    
+    return FileResponse(path=result["filePath"], filename=result["fileName"])
+    
+@app.post("/logout")
+def logout(response:Response):
+    response.delete_cookie("refreshToken")       #doesnt give any erroos safely deletes even when there is no refreshToken
+    return {
+        "message": "Logged out successfully"
+    }            #for the logout in frontend mostly it wont cause any error but if there is server issue and then if sends then in frontend it goes to login.html but later as refresh token is not deleted user is login simultaneously
 
-
-
-
-
-
-
-
+@app.post("/notes/update")
+def notesUpdate(data:Notes, userId=Depends(getCurrentUser)):
+    sessionId = data.sessionId  #after pydantic you will get the object
+    notes = data.notes
+    result = updateNotes(sessionId=sessionId, userId=userId, notes=notes)
+    if result is None:
+        raise HTTPException(
+            status_code=404,
+            detail="User Not Found"
+        )
+    return {"message":"Notes Updatad Finally"}
 def make_session(health_id:str = Form(...), clinic_id:str = Form(...), department:str = Form(...), assigned_doctor_id:str = Form(...)):
     #make check when unkown patient_name comes or unknown_doc_name or clinic name comes
     return create_patient_session(health_id, clinic_id, department, assigned_doctor_id)

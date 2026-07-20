@@ -641,11 +641,14 @@
             window.location.href = "doctor_dashboard.html";
         }
         logoutBtn.addEventListener("click", async () => {
-            await fetch("/logout", {
+            const result = await fetch("/logout", {
                 method: "POST",
                 credentials: "include"
             });
-
+            if (!result.ok) {
+                throw new Error("Logout failed");
+            }
+            accessToken = "";
             window.location.href = "login.html";
         });
         copyIc.addEventListener("click",async()=>

@@ -236,3 +236,8 @@ class NewMessage(BaseModel):
                 "Message must contain text or at least one file."
             )
         return self
+    
+
+class Notes(BaseModel):
+    sessionId:int = Field(gt=0)
+    notes:str = Field(le=5000)

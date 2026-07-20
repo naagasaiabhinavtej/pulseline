@@ -365,6 +365,7 @@
         const tablename = document.querySelector(".sessions-table tbody");
         const searchInput = document.getElementById("searchInput");
         const filterButton = document.querySelector(".filter-btn");
+        const logoutBtn = document.querySelector(".logout-btn");
         let active_sessions = null;
         let completed_today = null;
         let sessions = [];  //not null
@@ -795,7 +796,7 @@
 
             renderEmergency();
         }
-        logoutButton.addEventListener("click", async ()=>
+        logoutBtn.addEventListener("click", async ()=>
         {
             const result = await fetch("/logout", {
                 method:"POST",
@@ -804,6 +805,9 @@
                 }, 
                 credentials:"include"
             });
+            if (!result.ok) {
+                throw new Error("Logout failed");
+            }
             accessToken = "";
             window.location.href="login.html";
         });

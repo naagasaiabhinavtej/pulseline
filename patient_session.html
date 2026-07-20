@@ -437,7 +437,7 @@
                 socket.send(JSON.stringify({
                     type: "connect",
                     accessToken: accessToken,
-                    page:"sessionChatBox",
+                    page:"session",
                     sessionId: sessionId
                 }));
                 showAllMessages();
@@ -697,7 +697,6 @@ notesBox.addEventListener("input", () => {
         const payload = {
             sessionId: sessionId,
             notes: notesBox.value.trim(),
-            updatedAt: new Date().toISOString()
         };
 
         try {
@@ -801,7 +800,7 @@ function showMessage({
     sender_id,
     chattext = "",
     files = [],
-    avatarId = null,
+    avatarId,
     senderName = "",
     timestamp = "",
     status = "sent",   // "sent" | "sending" | "delivered" | "read"
@@ -896,6 +895,17 @@ sendDataActionBtn.addEventListener("click", ()=>
         type:"patient_medical_history"
     }));
 });
+logoutBtn.addEventListener("click", async () => {
+            const result = await fetch("/logout", {
+                method: "POST",
+                credentials: "include"
+            });
+            if (!result.ok) {
+                    throw new Error("Logout failed");
+                }
+            accessToken = "";
+            window.location.href = "login.html";
+        });
 </script>
 </body>
 </html>

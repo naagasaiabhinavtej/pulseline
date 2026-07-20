@@ -96,6 +96,7 @@ CREATE TABLE consultation_sessions (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     resolved_at TIMESTAMP,
     is_referred BOOLEAN DEFAULT 0,
+    notes TEXT DEFAULT NULL,
     referred_hospital_id INTEGER DEFAULT NULL,
     referred_doctor_id INTEGER DEFAULT NULL,
     FOREIGN KEY (referred_hospital_id) REFERENCES clinics(clinic_id),
