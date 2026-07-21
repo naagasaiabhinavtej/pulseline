@@ -510,9 +510,6 @@
             {
                 updateReferralStatus("success");
                 referralStatus.classList.add("hidden");
-                socket.send(JSON.stringify({
-                    type:"wantDoctor2Details"
-                }));
             }
             else if(data.type === "doctor2Details")
             {
