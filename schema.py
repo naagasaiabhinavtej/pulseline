@@ -241,3 +241,6 @@ class NewMessage(BaseModel):
 class Notes(BaseModel):
     sessionId:int = Field(gt=0)
     notes:str = Field(le=5000)
+
+class AcceptEmergency(BaseModel):
+    sessionId: int = Field(gt=0)

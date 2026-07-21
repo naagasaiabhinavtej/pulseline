@@ -328,10 +328,10 @@
 
             const data = JSON.parse(event.data);
 
-            if (data.type === "EmergencyConnection") {
+            if (data.type === "emergencyConnection") {
 
                 emergencyQueue.push({
-                    requestId: data.requestId,
+                    // requestId: data.requestId,
                     sessionId: data.sessionId,
                     patientName: data.patientName,
                     hospitalName: data.hospitalName,
@@ -349,7 +349,7 @@
             else if (data.type === "EmergencyResolved") {
 
                 emergencyQueue = emergencyQueue.filter(                                 //good idea of filtering
-                    emergency => emergency.requestId !== data.requestId
+                    emergency => emergency.sessionId !== data.sessionId
                 );
 
                 if (currentIndex >= emergencyQueue.length) {

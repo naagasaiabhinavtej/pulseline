@@ -5,7 +5,7 @@ from datetime import datetime
 from typing import Optional
 from fastapi.middleware.cors import CORSMiddleware
 from auth import createAccessToken, createRefreshToken, decodeToken, hash_password, validate_password, getCurrentUser
-from schema import patientRegister, doctorRegister, LoginRequest, MakeSessionRequest, NewMessage, Notes
+from schema import patientRegister, doctorRegister, LoginRequest, MakeSessionRequest, NewMessage, Notes, AcceptEmergency
 from utils import makeAvatarIdP
 from fastapi.responses import JSONResponse, FileResponse
 from uuid import uuid4
@@ -13,6 +13,7 @@ from pathlib import Path
 import shutil
 import base64
 from enum import Enum
+import asyncio
 
 UPLOAD_DIR = Path("uploads/chat")
 os.makedirs(UPLOAD_DIR, exist_ok = True)
@@ -75,7 +76,8 @@ class ConnectionManager:
             await connection.send_json(message)
 
 socket = ConnectionManager()
-
+pendingConnections = {}
+activeEmergencies = {}
 @app.websocket("/ws")
 async def websocketEndpoint(websocket:WebSocket):
     await websocket.accept()
@@ -90,7 +92,20 @@ async def websocketEndpoint(websocket:WebSocket):
         userId = payload["userId"]
         role = payload["role"]
         sessionId = data.get("sessionId")
-        await socket.connect(userId=userId, websocket=websocket, role=role, connectionType=ConnectionType(data["page"]), sessionId=data.get("sessionId"))
+        if data["page"] == "session" or data["page"] == "call":
+            result = getRole(sessionId, userId)
+            if result is None:
+                if result is None:
+                    await websocket.close(code=1008)
+                    return
+            await socket.connect(userId=userId, websocket=websocket, role=result["role"], connectionType=ConnectionType(data["page"]), sessionId=data.get("sessionId"))
+        else:
+            await socket.connect(userId=userId, websocket=websocket, role=role, connectionType=ConnectionType(data["page"]), sessionId=data.get("sessionId"))
+        curr = datetime.now()
+        pendingConnections[userId] = [notification for notification in pendingConnections.get(userId, []) if notification["expireAt"]>curr]
+        for pending in pendingConnections[userId]:
+            await websocket.send_json(pending)
+            pendingConnections.pop(pending)
         while True:
             message = await websocket.receive_json()
             if message["type"] == "new_message":
@@ -109,7 +124,7 @@ async def websocketEndpoint(websocket:WebSocket):
                             "fileName": uploadedFile.name,
                             "filePath": str(filePath)
                         }
-
+                    
                     result = createSessionMessage(
                         sessionId=data.sessionId,
                         senderId=userId,
@@ -124,7 +139,7 @@ async def websocketEndpoint(websocket:WebSocket):
                         "attachmentId":result["attachmentId"],
                         "timestamp":result["timestamp"]
                     })
-                    participants = socket.get(connectionType=ConnectionType.SESSION, sessionId=data.sessionId, )
+                    participants = socket.get(connectionType=ConnectionType.SESSION, sessionId=data.sessionId)
                     for uid, info in participants.items():
                         if uid == userId:
                             continue
@@ -418,7 +433,7 @@ def giveDataSessionDetail(sessionId:int, currentUser=Depends(getCurrentUser)):
     doctorId = currentUser["userId"]
     if doctorId not in {result.doctor1Id, result.doctor2Id}:
         raise HTTPException(
-            status_code=401,
+            status_code=403,
             detail="User Unauthorised"
         )
     userDetails = getDoctorDetails(doctorId)
@@ -446,7 +461,7 @@ def giveFile(request:Request, attachmentId:int):
     refreshToken = request.cookies.get("refreshToken")
     if not refreshToken:
         raise(HTTPException(
-            status_code=401,
+            status_code=403,
             detail="Unauthorised"
         ))
     payload = decodeToken(refreshToken)
@@ -473,7 +488,8 @@ def logout(response:Response):
     }            #for the logout in frontend mostly it wont cause any error but if there is server issue and then if sends then in frontend it goes to login.html but later as refresh token is not deleted user is login simultaneously
 
 @app.post("/notes/update")
-def notesUpdate(data:Notes, userId=Depends(getCurrentUser)):
+def notesUpdate(data:Notes, currUser=Depends(getCurrentUser)):
+    userId = currUser["userId"]
     sessionId = data.sessionId  #after pydantic you will get the object
     notes = data.notes
     result = updateNotes(sessionId=sessionId, userId=userId, notes=notes)
@@ -483,6 +499,127 @@ def notesUpdate(data:Notes, userId=Depends(getCurrentUser)):
             detail="User Not Found"
         )
     return {"message":"Notes Updatad Finally"}
+
+
+async def emergencyWorkFlow(sessionId:int, doctorId:int, patientName:str, clinicName:str, deparment:str, timestamp:str):
+    try:
+        ldoctors = getLocalDoctors(doctorId, sessionId)
+        for doctors in ldoctors:
+            ws = socket.get(connectionType=ConnectionType.ACTIVE, userId=doctors)
+            if ws:
+                ws.send_json({
+                    "type":"emergencyConnection",
+                    "sessionId":sessionId,
+                    "patientName":patientName,
+                    "hospitalName":clinicName,
+                    "problem":deparment,
+                    "createdAt":timestamp
+                })
+            else:
+                pendingConnections[doctors].append({
+                    "type":"emergencyConnection",
+                    "sessionId":sessionId,
+                    "patientName":patientName,
+                    "hospitalName":clinicName,
+                    "problem":deparment,
+                    "createdAt":timestamp
+                })
+        connection = socket.get(connectionType=ConnectionType.SESSION, sessionId=sessionId)
+        if connection:
+            requestId = connection.get(doctorId)
+            if requestId:
+                await requestId["websocket"].send_json({
+                    "type":"startedSearching"
+                })
+            else:
+                pendingConnections["doctorId"].append({"type":"startedSearching"})
+        try:
+            await asyncio.wait_for(
+                activeEmergencies[sessionId]["event"].wait(),
+                timeout=30*60
+            )
+            #assigned doctorId = activeEmergeines one
+        except asyncio.TimeoutError:
+            pass
+
+        adoctors = getLocalDoctors(doctorId, sessionId)
+        for doctors in adoctors:
+            ws = socket.get(connectionType=ConnectionType.ACTIVE, userId=doctors)
+            if ws:
+                ws.send_json({
+                    "type":"emergencyConnection",
+                    "sessionId":sessionId,
+                    "patientName":patientName,
+                    "hospitalName":clinicName,
+                    "problem":deparment,
+                    "createdAt":timestamp
+                })
+            else:
+                pendingConnections[doctors].append({
+                    "type":"emergencyConnection",
+                    "sessionId":sessionId,
+                    "patientName":patientName,
+                    "hospitalName":clinicName,
+                    "problem":deparment,
+                    "createdAt":timestamp
+                })
+        if requestId:
+            await requestId["websocket"].send_json({
+                "type":"startedExpanding"
+            })
+        else:
+            pendingConnections["doctorId"].append({"type":"startedExpanding"})
+        try:
+            await asyncio.wait_for(
+                activeEmergencies[sessionId]["event"].wait(),
+                timeout=30*60
+            )
+        except asyncio.TimeoutError:
+            if requestId:
+                await requestId["websocket"].send_json({
+                    "type":"searchingFailed"
+                })
+            else:
+                pendingConnections["sessionId"].append({"type":"searchingFailed"})
+    finally:
+        activeEmergencies.pop(sessionId, None)
+        
+
+@app.post("/sessions/emergency")
+def makeEmergency(data:AcceptEmergency, currUser=Depends(getCurrentUser)):
+    if currUser["role"] != "doctor":
+        raise HTTPException(
+            status_code=403,
+            detail="Only doctors can start emergency"
+        )
+    sessionId = data.sessionId
+    userId = currUser["userId"]
+    result = checkDoctorClinicId(doctorId=userId, clinicId=sessionId)
+    if result is None:
+        raise HTTPException(
+            status_code=403,
+            detail="Unauthorised"
+        )
+    if activeEmergencies.get(sessionId):
+        raise HTTPException(
+            status_code=409,
+            detail="Emergency already in progress"
+        )
+    activeEmergencies[sessionId] = {
+        "event": asyncio.Event(),
+        "assignedDoctor":None
+    }
+    res = getSessionDetailsToConnect(sessionId=sessionId)
+    if res:
+        asyncio.create_task(emergencyWorkFlow(sessionId=sessionId, doctorId=res["doctorId"], patientName=res["patientName"], clinicName=res["clinicName"], deparment=res["department"], timestamp=res["timestamp"]))
+    return{
+        "status":"started"
+    }
+    
+
+
+
+
 def make_session(health_id:str = Form(...), clinic_id:str = Form(...), department:str = Form(...), assigned_doctor_id:str = Form(...)):
     #make check when unkown patient_name comes or unknown_doc_name or clinic name comes
     return create_patient_session(health_id, clinic_id, department, assigned_doctor_id)
