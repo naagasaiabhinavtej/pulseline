@@ -113,11 +113,11 @@
             card.className = 'card success';
             icon.innerHTML = '✓';
             title.innerText = 'Session Created Successfully!';
-            message.innerHTML = `A new session has been created for <span class="name">${data.patient_name || 'the patient'}</span>`;
+            message.innerHTML = `A new session has been created for <span class="name">${data.patientName || 'the patient'}</span>`;
             
-            document.getElementById('val-sid').innerText = data.session_id || 'N/A';
-            document.getElementById('val-clinic').innerText = data.clinic || 'N/A';
-            document.getElementById('val-doctor').innerText = data.doctor || 'N/A';
+            document.getElementById('val-sid').innerText = data.sessionId || 'N/A';
+            document.getElementById('val-clinic').innerText = data.clinicName || 'N/A';
+            document.getElementById('val-doctor').innerText = data.doctorName || 'N/A';
             document.getElementById('val-dt').innerText = data.createdAt;
             
             successDetails.style.display = 'block';

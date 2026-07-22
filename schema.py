@@ -1,5 +1,5 @@
 from pydantic import BaseModel, Field, field_validator, model_validator
-from typing import Optional
+from typing import Optional, Literal
 import re
 from datetime import date, datetime
 class SessionResponse(BaseModel):
@@ -244,3 +244,6 @@ class Notes(BaseModel):
 
 class AcceptEmergency(BaseModel):
     sessionId: int = Field(gt=0)
+
+class sessionResponse(BaseModel):
+    message: Literal["success", "failure"]

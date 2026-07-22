@@ -619,13 +619,38 @@
 
                 renderEmergency();
             }
-            else if(data.type === "Emergency_success_details")
+            else if(data.type === "session_success_details")
             {
                 const sessionDetails = data.sessionDetails;
                 sessions.push(sessionDetails);              //try to check if there already exists that session id if needed.
                 let avatarId = getAvatar(sessionDetails.avatarId);
                 let index = sessions.length-1;
                 let presentColor = getColor(index);
+                active_sessions = sessions.length;
+                statNumber1.textContent = active_sessions;
+                progressBar[0].style.width = `${Math.min(active_sessions * 5, 100)}%`;
+                statTitle.classList.remove(
+                    "color-blue",
+                    "color-orange",
+                    "color-red"
+                );
+                progressBar[0].classList.remove(
+                    "bg-blue",
+                    "bg-orange",
+                    "bg-red"
+                );
+                if (active_sessions <= 7) {
+                    statTitle.classList.add("color-blue");
+                    progressBar[0].classList.add("bg-blue");
+                }
+                else if (active_sessions <= 14) {
+                    statTitle.classList.add("color-orange");
+                    progressBar[0].classList.add("bg-orange");
+                }
+                else {
+                    statTitle.classList.add("color-red");
+                    progressBar[0].classList.add("bg-red");
+                }
                     let row = document.createElement("tr");
                     row.innerHTML = `
                                     <td><span class="session-id id-${presentColor}">${sessionDetails.sessionId}</span></td>
@@ -652,6 +677,7 @@
                                 `
                     tablename.appendChild(row);
             }
+
         };
 
         function renderEmergency()

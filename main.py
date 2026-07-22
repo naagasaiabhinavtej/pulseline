@@ -5,7 +5,7 @@ from datetime import datetime, timedelta
 from typing import Optional
 from fastapi.middleware.cors import CORSMiddleware
 from auth import createAccessToken, createRefreshToken, decodeToken, hash_password, validate_password, getCurrentUser
-from schema import patientRegister, doctorRegister, LoginRequest, MakeSessionRequest, NewMessage, Notes, AcceptEmergency
+from schema import patientRegister, doctorRegister, LoginRequest, MakeSessionRequest, NewMessage, Notes, AcceptEmergency, sessionResponse
 from utils import makeAvatarIdP
 from fastapi.responses import JSONResponse, FileResponse
 from uuid import uuid4
@@ -486,7 +486,44 @@ async def createSession(data:MakeSessionRequest, currentUser=Depends(getCurrentU
         timeout=5*60
         )
         connection = socket.get(connectionType=ConnectionType.ACTIVE, userId=doctorId)
-        if connection:
+        status = pendingRequests[data.healthId]["status"]
+        if status == "success":
+            result = makeSession(doctorId=doctorId, patientId=data.healthId, department = data.department, clinicId= data.clinicId)
+            if connection:
+                await connection["websocket"].send_json({
+                    "type":"Accepted",
+                    "sessionId":data.sessionId
+                })
+            else:
+                pendingConnections["active"].setdefault("doctorId", []).append({
+                    "type":"Accepted",
+                    "sessionId":data.sessionId
+                })
+            res = getSessionDetails(data.sessionId)
+            if res is not None:
+                pconnection = socket.get(connectionType=ConnectionType.ACTIVE, userId=data.healthId)
+                if pconnection:
+                    await pconnection["websocket"].send_json(
+                        {
+                            "type":"session_success_details",
+                            "sessionId":data.sessionId,
+                            "avatarId":data.pavatarId,
+                            "patientName":data.patientName,
+                            "patientAge":data.patientAge,
+                            "patientGender":data.patientGender,
+                            "sessionStartDate":data.createdAt.strftime("%d %b %Y"),            #22 july 2026
+                            "sessionStartTime":data.createdAt.strftime("%I:%M %p")             # 7:45pm
+                        }
+                    )
+        elif status == "failure":
+            if connection:
+                        await connection["websocket"].send_json({
+                            "type":"Rejected"
+                        })
+            else:
+                pendingConnections["active"].setdefault("doctorId", []).append({
+                    "type":"Rejected"
+                })
             #fill here what happens when user clicks success or when user rejects and other things
 
 
@@ -504,10 +541,45 @@ async def createSession(data:MakeSessionRequest, currentUser=Depends(getCurrentU
             )
 
             
+@app.post("/sessionvalidation")
+async def respondSession(data:sessionResponse, currentUser=getCurrentUser()):
+    userId = currentUser["userId"]
+    result1 = checkPatientId(userId)
+    if result1 is None:
+        raise HTTPException(
+            status_code=404,
+            detail="User Not Found"
+        )
+    res = pendingRequests.get(userId, [])
+    if res is None:
+        raise HTTPException(
+            status_code=404,
+            detail="No session Requested for the User"
+        )
+    if data.message == "success":
+        pendingRequests[userId]["status"] = "success"
+        pendingRequests[userId]["event"].set()
+    elif data.message == "failure":
+        pendingRequests[userId]["status"] = "failure"
+        pendingRequests[userId]["event"].set()
 
-
-
-    
+  
+@app.get("/success-failure/sessionDetails/{sessionId}")
+def giveSessionBasicDetails(sessionId:int, currentUser = getCurrentUser()):
+    doctorId = currentUser["doctorId"]
+    result1 = checkDoctorClinicId(sessionId=sessionId, doctorId=doctorId)
+    if not result1:
+        raise HTTPException(
+            status_code=404,
+            detail="Session Not Found"
+        )
+    result = getSessionDetails(sessionId)
+    return {
+        "patientName":result["patientName"],
+        "sessionId":sessionId,
+        "doctorName":result["doctorName"],
+        "createdAt":result["createdAt"]
+    }
 
 
 @app.get("/session_detail/{sessionId}")
