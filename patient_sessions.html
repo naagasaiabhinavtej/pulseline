@@ -299,7 +299,7 @@
         const rejectBtn = document.querySelector(".reject-btn");
         let active_sessions = null;
         let sessions = [];  //not null
-        let requestId = null;
+        // let requestId = null; no need because only at max of 1 session is for the user so backend can get it
         async function askData()
         {
             const result = await giveData();
@@ -430,7 +430,6 @@
                 const doctor = data.doctorName;
                 const clinic = data.clinicName;
                 const department = data.department;
-                requestId = data.requestId;
                 doctorNameEl.textContent = `${doctor}`;
                 clinicNameEl.textContent = `${clinic}`;
                 departmentNameEl.textContent = `${department}`;
@@ -487,6 +486,7 @@
                     tablename.appendChild(row);
             }
         }
+    //try to do these accept and reject in websockets as they are faster 
     async function acceptSession()
     {
         const result = await fetch("/sessionvalidatation", {
@@ -496,8 +496,7 @@
                 Authorization: `Bearer ${accessToken}`
             },
             body:JSON.stringify({
-                message:"success",
-                requestId:requestId})
+                message:"success"})
         });
         if(result.ok)
         {
@@ -518,8 +517,7 @@
                 Authorization: `Bearer ${accessToken}`
             },
             body:JSON.stringify({
-                message:"failure",
-                requestId:requestId})
+                message:"failure"})
         });
         if(result.ok)
         {

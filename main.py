@@ -1,7 +1,7 @@
 import os
 from fastapi import FastAPI, UploadFile, File, Form, HTTPException, Request, Query, WebSocket, Response, Depends, RequestValidationError, WebSocketDisconnect
 from crud import create_patient_session, complete_patient_session, emergency_connect_hospitals, make_available_doctor, patientLogin,doctorLogin, checkPatientId, checkDoctorId, checkDoctorClinicId, createSessionMessage
-from datetime import datetime
+from datetime import datetime, timedelta
 from typing import Optional
 from fastapi.middleware.cors import CORSMiddleware
 from auth import createAccessToken, createRefreshToken, decodeToken, hash_password, validate_password, getCurrentUser
@@ -17,7 +17,7 @@ import asyncio
 
 UPLOAD_DIR = Path("uploads/chat")
 os.makedirs(UPLOAD_DIR, exist_ok = True)
-
+#dont give the same names of websocket to all the users
 
 app = FastAPI(title="Rural Clinic Telemedicine Platform")
 
@@ -76,8 +76,13 @@ class ConnectionManager:
             await connection.send_json(message)
 
 socket = ConnectionManager()
-pendingConnections = {}
+pendingConnections = {
+    "active": {},
+    "session": {},
+    "chat": {}
+}
 activeEmergencies = {}
+pendingRequests = {}
 @app.websocket("/ws")
 async def websocketEndpoint(websocket:WebSocket):
     await websocket.accept()
@@ -110,10 +115,16 @@ async def websocketEndpoint(websocket:WebSocket):
         else:
             await socket.connect(userId=userId, websocket=websocket, role=role, connectionType=ConnectionType(data["page"]), sessionId=data.get("sessionId"))
         curr = datetime.now()
-        pendingConnections[userId] = [notification for notification in pendingConnections.get(userId, []) if notification["expireAt"]>curr]
-        for pending in pendingConnections[userId]:
-            await websocket.send_json(pending)
-            pendingConnections.pop(pending)
+        pendingConnections[data["page"]][userId] = [notification for notification in pendingConnections[data["page"]].get(userId, []) if notification.get("expireAt", datetime.max)>curr]
+        notifications = pendingConnections[data["page"]].get(userId, [])
+        while notifications:           #because if user disconnects in middle then we will have the still the others
+            pending = notifications[0]
+            data = notifications[0].copy()
+            data.pop("expireAt", None)
+            await websocket.send_json(data)
+            notifications.pop(0)
+        pendingConnections[data["page"]].pop(userId, None)
+
         while True:
             message = await websocket.receive_json()
             if message["type"] == "new_message":
@@ -437,7 +448,7 @@ def loading(request: Request):
     }
 
 @app.post("/makeSession")
-def createSession(data:MakeSessionRequest, currentUser=Depends(getCurrentUser)):
+async def createSession(data:MakeSessionRequest, currentUser=Depends(getCurrentUser)):
     doctorId = currentUser["userId"]
 
     if doctorId != data.doctorId:
@@ -460,6 +471,43 @@ def createSession(data:MakeSessionRequest, currentUser=Depends(getCurrentUser)):
                 "errorPlace":"clinicId"}
     if result1 and result2 and result3:
         return {"type":"validDetails"}
+    if data.healthId in pendingRequests:
+        raise HTTPException(
+            status_code=409,
+            detail="Patient has been requested with other session"
+        )
+    pendingRequests[data.healthId] = {
+        "event":asyncio.Event(),
+        "doctorId":doctorId
+    }
+    try:
+        await asyncio.wait_for( 
+        pendingRequests[data.healthId]["event"].wait(),
+        timeout=5*60
+        )
+        connection = socket.get(connectionType=ConnectionType.ACTIVE, userId=doctorId)
+        if connection:
+            #fill here what happens when user clicks success or when user rejects and other things
+
+
+    except asyncio.TimeoutError:
+        connection = socket.get(connectionType=ConnectionType.ACTIVE, userId=doctorId)
+        if connection:
+            await connection["websocket"].send_json({
+                "type":"Expired"
+            })
+        else:
+            pendingConnections[ConnectionType.SESSION].setdefault(doctorId, []).append(
+                {
+                    "type":"Expired"
+                }
+            )
+
+            
+
+
+
+    
 
 
 @app.get("/session_detail/{sessionId}")
@@ -556,13 +604,14 @@ async def emergencyWorkFlow(sessionId:int, doctorId:int, patientName:str, clinic
                     "createdAt":timestamp
                 })
             else:
-                pendingConnections.setdefault(doctors, []).append({    #so that if key doesnt exist makes a list 
+                pendingConnections[ConnectionType.ACTIVE].setdefault(doctors, []).append({    #so that if key doesnt exist makes a list 
                     "type":"emergencyConnection",
                     "sessionId":sessionId,
                     "patientName":patientName,
                     "hospitalName":clinicName,
                     "problem":deparment,
-                    "createdAt":timestamp
+                    "createdAt":timestamp,
+                    "expireAt":datetime.now()+timedelta(minutes=30)
                 })
         requestId = None
         connection = socket.get(connectionType=ConnectionType.SESSION, sessionId=sessionId)
@@ -573,7 +622,7 @@ async def emergencyWorkFlow(sessionId:int, doctorId:int, patientName:str, clinic
                     "type":"startedSearching"
                 })
             else:
-                pendingConnections.setdefault(doctorId, []).append({"type":"startedSearching"})
+                pendingConnections[ConnectionType.SESSION].setdefault(doctorId, []).append({"type":"startedSearching"})
         try:
             await asyncio.wait_for(
                 activeEmergencies[sessionId]["event"].wait(),
@@ -585,7 +634,7 @@ async def emergencyWorkFlow(sessionId:int, doctorId:int, patientName:str, clinic
                     "type":"searchingSuccess"
                 })
             else:
-                pendingConnections.setdefault(doctorId, []).append({
+                pendingConnections[ConnectionType.SESSION].setdefault(doctorId, []).append({
                     "type": "searchingSuccess"
                 })
             return {
@@ -594,7 +643,7 @@ async def emergencyWorkFlow(sessionId:int, doctorId:int, patientName:str, clinic
         except asyncio.TimeoutError:
             pass
 
-        adoctors = getLocalDoctors(doctorId, sessionId)
+        adoctors = getAllDoctors(doctorId, sessionId)
         for doctors in adoctors:
             ws = socket.get(connectionType=ConnectionType.ACTIVE, userId=doctors)
             if ws:
@@ -607,20 +656,21 @@ async def emergencyWorkFlow(sessionId:int, doctorId:int, patientName:str, clinic
                     "createdAt":timestamp
                 })
             else:
-                pendingConnections.setdefault(doctors, []).append({
+                pendingConnections[ConnectionType.ACTIVE].setdefault(doctors, []).append({
                     "type":"emergencyConnection",
                     "sessionId":sessionId,
                     "patientName":patientName,
                     "hospitalName":clinicName,
                     "problem":deparment,
-                    "createdAt":timestamp
+                    "createdAt":timestamp,
+                    "expireAt":datetime.now()+timedelta(minutes=30)
                 })
         if requestId:
             await requestId["websocket"].send_json({
                 "type":"startedExpanding"
             })
         else:
-            pendingConnections.setdefault(doctorId, []).append({"type":"startedExpanding"})
+            pendingConnections[ConnectionType.SESSION].setdefault(doctorId, []).append({"type":"startedExpanding"})
         try:
             await asyncio.wait_for(
                 activeEmergencies[sessionId]["event"].wait(),
@@ -631,7 +681,7 @@ async def emergencyWorkFlow(sessionId:int, doctorId:int, patientName:str, clinic
                     "type":"searchingSuccess"
                 })
             else:
-                pendingConnections.setdefault(doctorId, []).append({
+                pendingConnections[ConnectionType.SESSION].setdefault(doctorId, []).append({
                     "type": "searchingSuccess"
                 })
             return {
@@ -643,7 +693,7 @@ async def emergencyWorkFlow(sessionId:int, doctorId:int, patientName:str, clinic
                     "type":"searchingFailed"
                 })
             else:
-                pendingConnections.setdefault(doctorId, []).append({"type":"searchingFailed"})
+                pendingConnections[ConnectionType.SESSION].setdefault(doctorId, []).append({"type":"searchingFailed"})
     finally:
         activeEmergencies.pop(sessionId, None)  #so that it will happen regardless of whtever will happen
         
