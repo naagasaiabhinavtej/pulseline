@@ -254,7 +254,7 @@
         let accessToken = null;
         let sessionId = null;
         let selectedReport = null;
-
+        //make sure you send a message so that entire socket connection is going to be removed
         const params = new URLSearchParams(window.location.search);
         sessionId = params.get("sessionId");
 

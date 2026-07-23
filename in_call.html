@@ -119,7 +119,7 @@
         <button class="ctrl-btn"><i data-lucide="video"></i>Stop Video</button>
         <button class="ctrl-btn"><i data-lucide="monitor-up"></i>Share</button>
         <button class="ctrl-btn" onclick="toggleNotes()"><i data-lucide="file-text"></i>Notes</button>
-        <button class="ctrl-btn" style="color: #ef4444;" onclick="location.href='report_submission.html'"><i data-lucide="phone-off"></i>End</button>
+        <button class="ctrl-btn" id="endCall" style="color: #ef4444;"><i data-lucide="phone-off"></i>End</button>
     </div>
 </div>
 
@@ -413,7 +413,7 @@
     }
     async function giveData()
     {
-        const result = await fetch(`/in_call.html?sessionId=${sessionId}`,
+        const result = await fetch(`/in_call?sessionId=${sessionId}`,
         {
             method:"GET",
             headers:{
@@ -474,12 +474,55 @@
             alert("Unable to access camera or microphone");
         }
     }
+    document.getElementById("endCall").addEventListener("click", endCall);
+    function endCall()
+    {
+        // stop camera and mic
+        if(localStream)
+        {
+            localStream.getTracks().forEach(track => {
+                track.stop();
+            });
+        }
+
+        // close all peer connections
+        for(const id in peerConnections)
+        {
+            peerConnections[id].close();
+        }
+
+        peerConnections = {};
+
+        // inform backend
+        socket.send(JSON.stringify({
+            type:"leave_call",
+            sessionId:sessionId
+        }));
+
+        // close websocket
+        socket.close();
+
+        if(userId == doctor1Id || userId == doctor2Id)
+        {
+            window.location.href = "waiting_room.html";
+        }
+        else if(userId == patientId)
+        {
+            window.location.href = "patient_waitingroom.html";
+        }
+    }
     async function connectWebSocket()
     {
         socket = new WebSocket(`ws://${window.location.host}/ws`);
         socket.onopen = ()=>
         {
             console.log("Connected");
+            socket.send(JSON.stringify({
+                "type":"connect",
+                "accessToken":accessToken,
+                "sessionId":sessionId,
+                "page":"call"
+            }));
         }
         socket.onmessage = async (event) => {
         // Handle incoming messages
@@ -535,7 +578,7 @@
             doctor2Id = data.userId;
         }
 
-        createPeerConnection(data.userId, true);
+        createPeerConnection(data.userId, data.isInitiator);
     }
 
     function participantLeft(data)
@@ -550,16 +593,19 @@
         {
             patientId = null;
             patientVideo.srcObject = null;
+            patientVideo.parentElement.remove();
         }
         else if(doctor1Id === data.userId)
         {
             doctor1Id = null;
             doctor1Video.srcObject = null;
+            doctor1Video.parentElement.remove();
         }
         else if(doctor2Id === data.userId)
         {
             doctor2Id = null;
             doctor2Video.srcObject = null;
+            doctor2Video.parentElement.remove();
         }
     }
     function createPeerConnection(remoteUserId, isInitiator)

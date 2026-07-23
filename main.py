@@ -61,15 +61,32 @@ class ConnectionManager:
                 "websocket": websocket,
                 "role": role
             }
-    def disconnect(self, userId:int):
-        self.activeConnections.pop(userId, None)       #do nothing if not exists
+    def disconnect(self, userId:int, connectionType:ConnectionType, sessionId:sessionId|None = None):
+        if connectionType == ConnectionType.ACTIVE:
+            self.activeConnections.pop(userId, None)       #do nothing if not exists
+        elif connectionType == ConnectionType.SESSION:
+            if sessionId in self.SessionConnections:
+                self.SessionConnections[sessionId].pop(userId, None)
+        elif connectionType == ConnectionType.CALL:
+            if sessionId in self.CallConnections:
+                self.CallConnections[sessionId].pop(userId, None)
+                if len(self.CallConnections[sessionId]) == 0:
+                    del self.CallConnections[sessionId]
     def get(self, connectionType:ConnectionType, userId: int|None=None, sessionId:int|None=None):  #make sure the compulsary ones comes first
         if connectionType == ConnectionType.ACTIVE:
             return self.activeConnections.get(userId)
         elif connectionType == ConnectionType.SESSION:
             return self.SessionConnections.get(sessionId, {})
         elif connectionType == ConnectionType.CALL:
-            return self.CallConnections.get(sessionId)
+            return self.CallConnections.get(sessionId, {})
+    def createSessionBlock(self, connectionType, sessionId):
+        if connectionType == ConnectionType.SESSION:
+            if sessionId not in self.SessionConnections:
+                self.SessionConnections[sessionId] = {}
+
+        elif connectionType == ConnectionType.CALL:
+            if sessionId not in self.CallConnections:
+                self.CallConnections[sessionId] = {}
     async def message(self, userId:int, message:dict):
         connection = self.activeConnections.get(userId)
         if connection:
@@ -87,33 +104,80 @@ pendingRequests = {}
 async def websocketEndpoint(websocket:WebSocket):
     await websocket.accept()
     userId = None
+    sessionId = None
+    connectionType = None
     try:
         data = await websocket.receive_json()
         if data.get("type") != "connect":
-            await websocket.close()
+            await websocket.close(code=1008)
             return
         accessToken = data["accessToken"]
         payload = decodeToken(accessToken)
         userId = payload["userId"]
         role = payload["role"]
         sessionId = data.get("sessionId")
+        connectionType = data["page"]
         if sessionId:
-            result = checkDoctorClinicId(sessionId, doctorId)
+            result = checkSessionUser(sessionId, userId)
             if result is None:
-                raise HTTPException(
-                    status_code=403,
-                    detail="Unothorised user or session"
-                )
+                await websocket.close(code=1008)
+                return
 
         if data["page"] == "session" or data["page"] == "call":
-            result = getRole(sessionId, userId)
-            if result is None:
-                if result is None:
-                    await websocket.close(code=1008)
-                    return
+            flag = False
+            participants = socket.get(
+                            connectionType=ConnectionType(data["page"]),
+                            sessionId=data["sessionId"]
+                        )
+            if participants is None:
+                flag = True
+                socket.createSessionBlock(connectionType=ConnectionType(data["page"]), sessionId=data["sessionId"])
             await socket.connect(userId=userId, websocket=websocket, role=result["role"], connectionType=ConnectionType(data["page"]), sessionId=data.get("sessionId"))
+            if data["page"] == "call":
+                if flag == True:
+                    users = getSessionUsers(sessionId=data["sessionId"])
+                    connections = socket.get(connectionType=ConnectionType.CALL, sessionId=data["sessionId"])
+                    for user in users:
+                        if user == userId:
+                            continue
+                        else:
+                            connection = connections.get(user, {})
+                            if connection:
+                                await connection["websocket"].send_json({"type":"call started"})
+                            else:
+                                pendingConnections["session"].setdefault(user, []).append(
+                                    {
+                                        "type":"call started"
+                                    }
+                                )
         else:
             await socket.connect(userId=userId, websocket=websocket, role=role, connectionType=ConnectionType(data["page"]), sessionId=data.get("sessionId"))
+        if data["page"] == "call":
+            participants = socket.get(
+                connectionType=ConnectionType.CALL,
+                sessionId=sessionId
+            )
+            for uid, info in participants.items():
+                if uid == userId:
+                    continue
+
+                await info["websocket"].send_json({
+                    "type": "participant_joined",
+                    "userId": userId,
+                    "role": result["role"],
+                    "initiator": True
+                })
+            for uid, info in participants.items():
+                if uid == userId:
+                    continue
+
+                await websocket.send_json({
+                    "type": "participant_joined",
+                    "userId": uid,
+                    "role": info["role"],
+                    "initiator": False
+                })
+
         curr = datetime.now()
         pendingConnections[data["page"]][userId] = [notification for notification in pendingConnections[data["page"]].get(userId, []) if notification.get("expireAt", datetime.max)>curr]
         notifications = pendingConnections[data["page"]].get(userId, [])
@@ -245,15 +309,17 @@ async def websocketEndpoint(websocket:WebSocket):
             elif message["type"] == "accept_emergency":
                 emergency = activeEmergencies.get(sessionId)    #{} is not none so be careful or simply if sessionId not in activeEmergencies
                 if emergency is None:                                #if you dont know where to write what just have that order where what will happen first and decide
-                    raise HTTPException(
-                        status_code=404,
-                        detail="Emergency Not Found"
-                    )
+                    await websocket.send_json({
+                        "type": "error",
+                        "message": "Emergency not found"
+                    })
+                    continue
                 if activeEmergencies[sessionId]["assignedDoctor"] is not None:     #if 2 people clicks at a time
-                    raise HTTPException(
-                        status_code=409,
-                        detail="Emergency already accepted"
-                    )
+                    await websocket.send_json({
+                        "type": "error",
+                        "message": "Emergency already accepted"
+                    })
+                    continue
                 activeEmergencies[sessionId]["assignedDoctor"] = userId
                 result = updateRefferedDoctorDetails(sessionId, userId)
                 if result:
@@ -262,12 +328,112 @@ async def websocketEndpoint(websocket:WebSocket):
                         #fill out here
                     activeEmergencies[sessionId]["event"].set()
                     participants = socket.get(ConnectionType.SESSION, sessionId=sessionId)
-                    for user in participants:
+                    for user in participants.values():
                         await user["websocket"].send_json({
                             "type" : "doctor2Details",
                             "name": result["Doctor2name"]
                         })
-                    
+            elif message["type"] == "offer":
+                if message.get("offer") is None:
+                    await websocket.send_json({
+                        "type":"error",
+                        "message":"offer Missing"
+                    })
+                    continue
+                if message.get("userId") is None:
+                    await websocket.send_json({
+                        "type":"error",
+                        "message":"UserId missing"
+                    })
+                    continue
+                targetUserId = message["userId"]
+                connections = socket.get(connectionType=ConnectionType.CALL, sessionId=sessionId)
+                if targetUserId in connections:
+                    connection = connections[targetUserId]
+                    await connection["websocket"].send_json({
+                        "type":"offer",
+                        "offer":message["offer"],
+                        "userId":userId
+                    })
+                else:
+                    await websocket.send_json({
+                        "type":"error",
+                        "message":"User Not Found"
+                    })
+            elif message["type"] == "answer":
+                if message.get("answer") is None:
+                    await websocket.send_json({
+                        "type":"error",
+                        "message":"Answer Missing"
+                    })
+                    continue
+                if message.get("userId") is None:
+                    await websocket.send_json({
+                        "type":"error",
+                        "message":"UserId missing"
+                    })
+                    continue
+                targetUserId = message["userId"]
+                connections = socket.get(connectionType=ConnectionType.CALL, sessionId=sessionId)
+                if targetUserId in connections:
+                    connection = connections[targetUserId]
+                    await connection["websocket"].send_json({
+                        "type":"answer",
+                        "answer":message["answer"],
+                        "userId":userId
+                    })
+                else:
+                    await websocket.send_json({
+                        "type":"error",
+                        "message":"User Not Found"
+                    })
+            elif message["type"] == "ice-candidate":
+                if message.get("candidate") is None:
+                    await websocket.send_json({
+                        "type":"error",
+                        "message":"Candidate is missing"
+                    })
+                    continue
+                if message.get("userId") is None:
+                    await websocket.send_json({
+                        "type":"error",
+                        "message":"UserId missing"
+                    })
+                    continue
+                targetUserId = message["userId"]
+                connections = socket.get(connectionType=ConnectionType.CALL, sessionId=sessionId)
+                if targetUserId in connections:
+                    connection = connections[targetUserId]
+                    await connection["websocket"].send_json({
+                        "type":"ice-candidate",
+                        "candidate":message["candidate"],
+                        "userId":userId
+                    })
+                else:
+                    await websocket.send_json({
+                        "type":"error",
+                        "message":"User Not Found"
+                    })
+            elif message["type"] == "leave_call":
+
+                participants = socket.get(
+                    connectionType=ConnectionType.CALL,
+                    sessionId=sessionId
+                )
+                for uid, info in participants.items():
+                    if uid != userId:
+                        await info["websocket"].send_json({
+                            "type":"participant_left",
+                            "userId":userId
+                        })
+                socket.disconnect(
+                    userId=userId,
+                    connectionType=ConnectionType.CALL,
+                    sessionId=sessionId
+                    )
+
+                
+
                 
 
 
@@ -276,11 +442,12 @@ async def websocketEndpoint(websocket:WebSocket):
 
     except WebSocketDisconnect:
         if userId is not None:
-            socket.disconnect(userId)
-    except Exception:
+            socket.disconnect(connectionType, userId, sessionId)
+    except Exception as e:
+        print(e)
         if userId is not None:
-            socket.disconnect(userId)
-        await websocket.close(code=1008)
+            socket.disconnect(connectionType, userId, sessionId)
+        await websocket.close(code=1011)
         return
 
 @app.exception_handler(RequestValidationError)
@@ -534,7 +701,7 @@ async def createSession(data:MakeSessionRequest, currentUser=Depends(getCurrentU
                 "type":"Expired"
             })
         else:
-            pendingConnections[ConnectionType.SESSION].setdefault(doctorId, []).append(
+            pendingConnections[ConnectionType.ACTIVE].setdefault(doctorId, []).append(
                 {
                     "type":"Expired"
                 }
@@ -802,6 +969,30 @@ def makeEmergency(data:AcceptEmergency, currUser=Depends(getCurrentUser)):
     }
     
 
+@app.get("/in_call")
+# SELECT
+#     CASE
+#         WHEN patientId = ? THEN 'patient'
+#         WHEN doctor1Id = ? THEN 'doctor1'
+#         WHEN doctor2Id = ? THEN 'doctor2'
+#     END AS myRole
+# FROM sessions
+# WHERE sessionId = ?
+# AND (
+#     patientId = ?
+#     OR doctor1Id = ?
+#     OR doctor2Id = ?
+# );
+def enterCall(sessionId:int, curr = Depends(getCurrentUser)):
+    userId = curr["userId"]
+    result = checkSessionUser(userId=userId, sessionId=sessionId)
+    if result is None:
+        raise HTTPException(
+            status_code=403,
+            detail="Unauthorised user or session"
+        )
+    return {"userId":userId,
+            "myRole":result["myRole"]}
 
 
 
