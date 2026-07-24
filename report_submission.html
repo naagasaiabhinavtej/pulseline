@@ -30,10 +30,6 @@
                     <i data-lucide="layout-dashboard"></i>
                     <span>Dashboard</span>
                 </a>
-                <a href="#" class="nav-item">
-                    <i data-lucide="settings"></i>
-                    <span>Settings</span>
-                </a>
             </nav>
 
             <div class="sidebar-footer">
@@ -52,10 +48,10 @@
                     <span>Back to Active Sessions</span>
                 </a>
                 <div class="header-profile">
-                    <div class="notification-bell">
+                    <!-- <div class="notification-bell">
                         <i data-lucide="bell"></i>
                         <span class="badge">3</span>
-                    </div>
+                    </div> -->
                     <div class="profile-card">
                         <img src="https://images.unsplash.com/photo-1559839734-2b71ea197ec2?auto=format&fit=crop&q=80&w=100" alt="Doctor Profile" class="avatar">
                         <div class="profile-info">
@@ -240,7 +236,13 @@
 
     <script>
         lucide.createIcons();      //if this is a project with many symobls of lucid its not recommended to do this always especially when the copy ic is made 
-        function openVideoConfirmationModal() {
+        let accessToken = null;
+        let sessionId = null;
+        let selectedReport = null;
+        //make sure you send a message so that entire socket connection is going to be removed
+        const params = new URLSearchParams(window.location.search);
+        sessionId = params.get("sessionId");
+                function openVideoConfirmationModal() {
 
             if(!sessionId)
             {
@@ -251,15 +253,8 @@
                 window.location.href = `waiting_room.html?sessionId=${sessionId}`;
             }
         }
-        let accessToken = null;
-        let sessionId = null;
-        let selectedReport = null;
-        //make sure you send a message so that entire socket connection is going to be removed
-        const params = new URLSearchParams(window.location.search);
-        sessionId = params.get("sessionId");
-
         const reportForm = document.querySelector("#clinical-report-form");
-
+        const submitBtn = document.querySelector(".finish-session-submit-action-btn");
         const bpInput = document.querySelector('input[placeholder="e.g. 120/80"]');
         const sugarInput = document.querySelector('input[placeholder="e.g. 95"]');
         const tempInput = document.querySelector('input[placeholder="e.g. 98.6"]');
@@ -307,21 +302,24 @@
         const patientAgeGenderTop =
         document.querySelector(".patient-title p");
 
-        async function refreshToken()
+        async function refreshtoken()
         {
             const result = await fetch("/refresh",
-            {
-                method:"GET",
-                credentials:"include"
-            });
+                {
+                    method:"GET",
+                    credentials: "include"
+                });
             if(result.ok)
             {
                 const data = await result.json();
                 accessToken = data.access_token;
                 return accessToken;
             }
-            window.location.href="login.html";
-            return null;
+            else
+            {
+                window.location.href="login.html";
+                return null;
+            }
         }
 
             async function giveData()
@@ -359,7 +357,7 @@
                 {
                     alert("You are not authorized.");
 
-                    window.location.href="login.html";
+                    window.location.href="index.html";
 
                     return null;
                 }
@@ -377,16 +375,12 @@
 
         async function askData()
         {
-            sessionId = new URLSearchParams(
-                window.location.search
-            ).get("sessionId");
-
-            if(!sessionId)
-            {
-                alert("Invalid session.");
-                window.location.href="index.html";
-                return;
-            }
+            // if(!sessionId)
+            // {
+            //     alert("Invalid session.");
+            //     window.location.href="index.html";
+            //     return;
+            // }
 
             const token = await refreshToken();
             if(!token) return;
@@ -502,7 +496,12 @@
         {
             e.preventDefault();
 
-            if(!validateForm()) return;
+            if(!validateForm())
+            {
+                submitBtn.disabled = false;
+                submitBtn.textContent = "Finalize and Submit Report";
+                 return;
+            }
 
             const confirmSubmit = confirm(
         `Are you sure you want to submit this report?
@@ -512,80 +511,53 @@
         The report cannot be modified after submission.`
             );
 
-            if(!confirmSubmit) return;
+            if(!confirmSubmit)
+            {   submitBtn.disabled = false;
+                submitBtn.textContent = "Finalize and Submit Report";
+                return;
+            }
+            submitBtn.disabled = true;
+            submitBtn.textContent = "Submitting...";
+
 
             const formData = new FormData();
-
-            formData.append("report",selectedReport);
+            // use form data when you want to send the info of files and text
             formData.append("sessionId", sessionId);
 
-            let uploadResult = await fetch("/upload_report_file",
-            {
-                method:"POST",
+            formData.append(
+                "bloodPressure",
+                bpInput.value.trim()
+            );
 
-                headers:
-                {
-                    Authorization:`Bearer ${accessToken}`
-                },
+            formData.append(
+                "bloodSugar",
+                sugarInput.value.trim()
+            );
 
-                body:formData
-            });
+            formData.append(
+                "temperature",
+                tempInput.value.trim()
+            );
 
-            if(uploadResult.status===401)
-            {
-                const token = await refreshToken();
+            formData.append(
+                "heartRate",
+                heartRateInput.value.trim()
+            );
 
-                if(!token) return;
+            formData.append(
+                "chiefComplaint",
+                chiefComplaint.value.trim()
+            );
 
-                uploadResult = await fetch("/upload_report_file",
-                {
-                    method:"POST",
+            formData.append(
+                "additionalVitals",
+                additionalVitals.value.trim()
+            );
 
-                    headers:
-                    {
-                        Authorization:`Bearer ${accessToken}`
-                    },
-
-                    body:formData
-                });
-            }
-
-            if(uploadResult.status===403)
-            {
-                alert("You are not authorized to perform this action.");
-
-                window.location.href="login.html";
-
-                return;
-            }
-
-            if(!uploadResult.ok)
-            {
-                alert("Unable to upload report.");
-
-                return;
-            }
-
-            const uploadData = await uploadResult.json();
-
-            const report =
-            {
-                sessionId,
-
-                bloodPressure:bpInput.value.trim(),
-
-                bloodSugar:sugarInput.value.trim(),
-
-                temperature:tempInput.value.trim(),
-
-                heartRate:heartRateInput.value.trim(),
-
-                chiefComplaint:chiefComplaint.value.trim(),
-
-                additionalVitals:additionalVitals.value.trim(),
-
-                attachmentId:uploadData.attachmentId
-            };
+            formData.append(
+                "report",
+                selectedReport
+            );
 
             let submitResult = await fetch("/submit_report",
             {
@@ -594,10 +566,9 @@
                 headers:
                 {
                     Authorization:`Bearer ${accessToken}`,
-                    "Content-Type":"application/json"
                 },
 
-                body:JSON.stringify(report)
+                body:formData
             });
 
             if(submitResult.status===401)
@@ -613,10 +584,9 @@
                     headers:
                     {
                         Authorization:`Bearer ${accessToken}`,
-                        "Content-Type":"application/json"
                     },
 
-                    body:JSON.stringify(report)
+                    body:formData
                 });
             }
 
@@ -624,7 +594,7 @@
             {
                 alert("You are not authorized to perform this action.");
 
-                window.location.href="login.html";
+                window.location.href="index.html";
 
                 return;
             }
@@ -632,7 +602,8 @@
             if(!submitResult.ok)
             {
                 alert("Unable to submit report.");
-
+                submitBtn.disabled = false;
+                submitBtn.textContent = "Finalize and Submit Report";
                 return;
             }
 

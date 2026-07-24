@@ -15,9 +15,15 @@ import base64
 from enum import Enum
 import asyncio
 
+#using path
 UPLOAD_DIR = Path("uploads/chat")
 os.makedirs(UPLOAD_DIR, exist_ok = True)
-#dont give the same names of websocket to all the users
+#dont give the same names of websocket to all the files
+#using os
+TO_UPLOAD_DIR = "folder"
+os.makedirs(TO_UPLOAD_DIR, exist_ok = True)
+
+
 
 app = FastAPI(title="Rural Clinic Telemedicine Platform")
 
@@ -987,7 +993,81 @@ def enterCall(sessionId:int, curr = Depends(getCurrentUser)):
             "myRole":result["myRole"]}
 
 
-
+@app.post("/submit_report")
+async def submit_report(
+    report: UploadFile = File(...),
+    sessionId: int = Form(...),
+    bloodPressure: str = Form(""),
+    bloodSugar: str = Form(""),
+    temperature: str = Form(""),
+    heartRate: str = Form(""),
+    chiefComplaint: str = Form(...),
+    additionalVitals: str = Form(...),
+    currentUser=Depends(getCurrentUser)
+):
+    userId = currentUser["userId"]
+    # doing these because user can even change the html and submit so 
+    result1 = checkUserPermissionToEndSession(userId, sessionId)
+    #should see if the user can modify the result submission or not
+    if result1 is not None:
+        raise HTTPException(
+            status_code=403,
+            detail="User Forbidden"
+        )
+    # these are MIME types so remember these
+    allowed = {
+        "application/pdf",
+        "image/png",
+        "image/jpeg"
+    }
+    if report.content_type not in allowed:
+        raise HTTPException(
+            status_code=400,               #bad request means 400
+            detail="Invalid file type."
+        )
+    contents = await report.read()
+    if len(contents)>10*1024*1024:
+        raise HTTPException(
+            status_code=400,
+            detail="Maximum size of file is 10mb"
+        )
+    file_path = None
+    try:
+        _, file_ext = os.path.splitext(report.filename)
+        resolved_time = datetime.now().strftime("%Y%m%d_%H%M%S")
+        file_total_name = f"{str(sessionId)}_{resolved_time}{file_ext}"
+        file_path = os.path.join(TO_UPLOAD_DIR, file_total_name)
+        with open(file_path, "wb") as f:
+            f.write(contents)
+        result = complete_patient_session(session_id=int(sessionId), chief_complaint=chiefComplaint, additional_vitals=additionalVitals,uploaded_filepath=file_path,resolved_time=resolved_time, blood_pressure=bloodPressure, blood_sugar=bloodSugar,temperature=temperature, heart_rate=heartRate )
+        #dont forget to make the session resolved and reffered
+        #dont forget to increase the count of doctorId 
+        if result is None:
+            raise HTTPException(
+                status_code=500,
+                detail="Unable to complete session."
+            )
+        connections = socket.get(connectionType=ConnectionType.SESSION, sessionId=sessionId)
+        if connections:
+            for users in connections:
+                if users:
+                    await users["websocket"].send_json({
+                        "type":"sessionCompleted",
+                        "sessionId":sessionId
+                    })
+        return {
+            "message":"Session Completed Finally"
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        if file_path and os.path.exists(file_path):
+            os.remove(file_path)
+        raise HTTPException(status_code=500, detail=f"Internal server problem ")  #no need of priing the str because no need to say whats problem with the server
+    
+    
+    
+    
 def make_session(health_id:str = Form(...), clinic_id:str = Form(...), department:str = Form(...), assigned_doctor_id:str = Form(...)):
     #make check when unkown patient_name comes or unknown_doc_name or clinic name comes
     return create_patient_session(health_id, clinic_id, department, assigned_doctor_id)

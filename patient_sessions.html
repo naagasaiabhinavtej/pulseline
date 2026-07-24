@@ -452,7 +452,7 @@
                 }
 
             }
-            else if(data.type === "session_add_details")
+            else if(data.type === "session_success_details")
             {
                 const sessionDetails = data.sessionDetails;
                 sessions.push(sessionDetails);              //try to check if there already exists that session id if needed.
@@ -484,6 +484,10 @@
                                 <td style="text-align: right;"><button onclick="window.location.href='patient_session.html'" class="action-btn"><i data-lucide="chevron-right"></i></button></td>
                             `
                     tablename.appendChild(row);
+            }
+            else if(data.type === "sessionCompleted")
+            {
+
             }
         }
     //try to do these accept and reject in websockets as they are faster 
