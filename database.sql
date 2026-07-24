@@ -9,8 +9,10 @@ CREATE TABLE patients (
     blood_group VARCHAR(10) CHECK (blood_group IN ('A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-')),
     height REAL NOT NULL, -- Stored in cm
     weight REAL NOT NULL, -- Stored in kg
-    eye_sight VARCHAR(150), 
-    hearing VARCHAR(150),   
+    right_eye VARCHAR(10) DEFAULT NULL,
+    left_eye  VARCHAR(10) DEFAULT NULL,
+    right_ear INT DEFAULT NULL,
+    left_ear INT DEFAULT NULL,
     medical_history TEXT,  
     allergies TEXT,        
     emergency_contact VARCHAR(150) NOT NULL,
