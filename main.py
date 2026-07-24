@@ -781,7 +781,7 @@ def giveDataSessionDetail(sessionId:int, currentUser=Depends(getCurrentUser)):
 
 
 
-@app.get("/download-file/{attachmentId}")
+@app.get("/download-file-chat/{attachmentId}")
 def giveFile(request:Request, attachmentId:int):
     refreshToken = request.cookies.get("refreshToken")
     if not refreshToken:
@@ -825,7 +825,43 @@ def notesUpdate(data:Notes, currUser=Depends(getCurrentUser)):
         )
     return {"message":"Notes Updatad Finally"}
 
+from fastapi import Depends, HTTPException
+from fastapi.responses import FileResponse
+from pathlib import Path
 
+@app.get("/download_report/{sessionId}")
+async def download_report(
+    sessionId: int,
+    currentUser = Depends(getCurrentUser)
+):
+    userId = currentUser["userId"]
+    # Only patients can download reports
+    if currentUser["type"] != "patient":
+        raise HTTPException(
+            status_code=403,
+            detail="Access denied."
+        )
+
+    report = getReport(sessionId, userId)      # checks if user is valid and gives the file
+    if not report:
+        raise HTTPException(
+            status_code=403,
+            detail="User is Forbidden"
+        )
+
+    file_path = Path(report["reportPath"])
+
+    if not file_path.exists():
+        raise HTTPException(
+            status_code=404,
+            detail="File missing."
+        )
+
+    return FileResponse(
+        path=file_path,
+        media_type=report["content_type"],
+        filename=file_path.name
+    )
 async def emergencyWorkFlow(sessionId:int, doctorId:int, patientName:str, clinicName:str, deparment:str, timestamp:str):
     try:
         ldoctors = getLocalDoctors(doctorId, sessionId)
@@ -1039,7 +1075,7 @@ async def submit_report(
         file_path = os.path.join(TO_UPLOAD_DIR, file_total_name)
         with open(file_path, "wb") as f:
             f.write(contents)
-        result = complete_patient_session(session_id=int(sessionId), chief_complaint=chiefComplaint, additional_vitals=additionalVitals,uploaded_filepath=file_path,resolved_time=resolved_time, blood_pressure=bloodPressure, blood_sugar=bloodSugar,temperature=temperature, heart_rate=heartRate )
+        result = complete_patient_session(session_id=int(sessionId), chief_complaint=chiefComplaint, additional_vitals=additionalVitals,uploaded_filepath=file_path,content_type=report.content_type, resolved_time=resolved_time, blood_pressure=bloodPressure, blood_sugar=bloodSugar,temperature=temperature, heart_rate=heartRate )
         #dont forget to make the session resolved and reffered
         #dont forget to increase the count of doctorId 
         if result is None:

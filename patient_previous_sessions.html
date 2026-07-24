@@ -517,7 +517,7 @@ async function downloadReport(sessionId)
 
         if(!refresh)
             return;
-
+        //here javascript makes the request so it ask browswer ot make the https request backend sends to browser and browser sends to javascript but in the chat style javascript is not involved at all browser asks and browser recieves and shows the file
         response = await fetch(`/download_report/${sessionId}`,{
             method:"GET",
             headers:{

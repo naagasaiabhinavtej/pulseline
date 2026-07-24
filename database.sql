@@ -91,6 +91,7 @@ CREATE TABLE consultation_sessions (
     )),       
     chief_complaint TEXT DEFAULT NULL,       
     uploaded_file_path TEXT DEFAULT NULL, 
+    content_type TEXT DEFAULT NULL,
     additional_vitals TEXT DEFAULT '{}', 
     session_status VARCHAR(20) DEFAULT 'started',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,

@@ -205,7 +205,7 @@ def createSessionMessage(sessionId:int, senderId:int, text:str, files:dict | Non
     finally:
         if conn:
             conn.close()
-
+# dont forget to give here for the below function the content type newly updated
 def create_patient_session(health_id:str, clinic_id:str, department:str, assigned_doctor_id:str):
     conn = None
     try:
