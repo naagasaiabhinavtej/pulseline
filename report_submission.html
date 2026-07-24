@@ -170,7 +170,7 @@
                                     <span class="upload-link-action">Upload File</span>
                                 </div>
                                 <div class="drag-drop-zone-area">
-                                    <input type="file" id="lab-file-uploader" class="hidden-file-input" required>
+                                    <input type="file" id="lab-file-uploader" class="hidden-file-input" accept=".pdf,.png,.jpg,.jpeg" required>
                                     <i data-lucide="upload-cloud" class="cloud-icon-upload"></i>
                                     <p>Click to upload <span>files</span></p>
                                     <small>Lab Documentation / Test Reports</small>
@@ -239,7 +239,7 @@
     </div>
 
     <script>
-        lucide.createIcons();
+        lucide.createIcons();      //if this is a project with many symobls of lucid its not recommended to do this always especially when the copy ic is made 
         function openVideoConfirmationModal() {
 
             if(!sessionId)
@@ -638,7 +638,7 @@
 
             alert("Report submitted successfully.");
 
-            window.location.href = "doctor_dashboard.html";
+            window.location.href = "index.html";
         }
         logoutBtn.addEventListener("click", async () => {
             const result = await fetch("/logout", {
@@ -646,7 +646,8 @@
                 credentials: "include"
             });
             if (!result.ok) {
-                throw new Error("Logout failed");
+                alert("Logout failed.");
+                return;
             }
             accessToken = "";
             window.location.href = "login.html";

@@ -431,15 +431,7 @@ async def websocketEndpoint(websocket:WebSocket):
                     connectionType=ConnectionType.CALL,
                     sessionId=sessionId
                     )
-
-                
-
-                
-
-
-
-
-
+        
     except WebSocketDisconnect:
         if userId is not None:
             socket.disconnect(connectionType, userId, sessionId)

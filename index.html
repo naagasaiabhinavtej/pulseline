@@ -832,7 +832,8 @@
                 credentials:"include"
             });
             if (!result.ok) {
-                throw new Error("Logout failed");
+                alert("Logout failed.");
+                return;
             }
             accessToken = "";
             window.location.href="login.html";
