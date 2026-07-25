@@ -705,9 +705,9 @@ async function askData() {
     updateEditableFields(data);
     updateBMI(data);
     updateAge(data.dateOfBirth);
-    updateLastCheckup(data.sessionData);
+    updateLastCheckup(data.sessionsData);
     updateHeartRate(data.sessionsData);
-    updateCharts(data.sessionData);
+    updateCharts(data.sessionsData);
 }
 function updatePermanentRecord(data)
 {
@@ -1226,9 +1226,15 @@ function validateMedicalData()
 
 
     // Emergency contact validation
-    if(emergencyContactInput.value.trim().length < 5)
-    {
-        return "Please enter a valid emergency contact";
+    const contact = emergencyContactInput.value.trim();
+
+    // Remove spaces, hyphens, parentheses
+    const normalized = contact.replace(/[\s()-]/g, "");
+
+    const indianPhonePattern = /^(?:\+91|91)?[6-9]\d{9}$/;
+
+    if (!indianPhonePattern.test(normalized)) {
+        return "Please enter a valid Indian emergency contact number";
     }
 
 
@@ -1277,7 +1283,7 @@ confirmSaveBtn.onclick = async ()=>{
         Allergies: allergiesInput.value
     };
     try{
-        const result = await fetch("/update_medical_data",
+        let result = await fetch("/update_medical_data",
         {
             method:"POST",
             headers:{
@@ -1286,6 +1292,19 @@ confirmSaveBtn.onclick = async ()=>{
             },
             body:JSON.stringify(updatedData)
         });
+        if (result.status === 401) {
+            const token = await refreshtoken();
+            if (!token) return;
+
+            result = await fetch("/update_medical_data", {
+                method: "POST",
+                headers: {
+                    "Authorization": `Bearer ${accessToken}`,
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify(updatedData)
+            });
+        }
         if(result.ok)
         {
             showSavedToast();
@@ -1295,6 +1314,9 @@ confirmSaveBtn.onclick = async ()=>{
         }
         else
         {
+            isSaving = false;
+            confirmSaveBtn.disabled = false;
+            confirmSaveBtn.textContent = "Yes, Save";
             alert("Failed to save data");
         }
     }

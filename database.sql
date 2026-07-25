@@ -74,7 +74,7 @@ CREATE TABLE consultation_sessions (
     clinic_id INTEGER NOT NULL,          
     assigned_doctor_id INTEGER,          
     blood_pressure VARCHAR(20), 
-    blood_sugar REAL,           
+    blood_sugar VARCHAR(20),           
     temperature REAL,           
     heart_rate INTEGER,  
     department VARCHAR(50) CHECK (department in (

@@ -205,6 +205,338 @@ def createSessionMessage(sessionId:int, senderId:int, text:str, files:dict | Non
     finally:
         if conn:
             conn.close()
+
+def updateMedicalDataDB(patientId, data):
+    conn = None
+    try:
+        conn = sqlite3.connect(database_path)
+        cursor = conn.cursor()
+
+        cursor.execute("""
+        UPDATE patients
+        SET
+            height=?,
+            weight=?,
+            right_eye=?,
+            left_eye=?,
+            right_ear_hearing=?,
+            left_ear_hearing=?,
+            emergency_contact=?,
+            medical_history=?,
+            allergies=?
+        WHERE patient_id=?
+        """,
+        (
+            data.Height,
+            data.Weight,
+            data.RightEye,
+            data.LeftEye,
+            data.RightEarHearing,
+            data.LeftEarHearing,
+            data.EmergencyContact,
+            data.MedicalHistory,
+            data.Allergies,
+            patientId
+        ))
+        conn.commit()
+        updated = cursor.rowcount      
+        #gives no of rows affected by previous sql query
+        return updated > 0
+    except Exception as e:
+        if conn:
+            conn.rollback()
+        logger.exception("Error while adding the message into the database")
+        raise e   
+    finally:
+        if conn:
+            conn.close()
+
+
+#you have to still update the down code      
+def getPreviousSessions(patientId):
+    conn = sqlite3.connect(DB_NAME)
+    cursor = conn.cursor()
+
+    # Check patient exists
+    cursor.execute("""
+        SELECT name, avatar_id
+        FROM patients
+        WHERE patient_id = ?
+    """, (patientId,))
+
+    patient = cursor.fetchone()
+
+    if patient is None:
+        conn.close()
+        return None
+
+    # Fetch previous sessions here...
+    # ...
+
+    conn.close()
+
+    return {
+        "patientName": patient[0],
+        "avatarId": patient[1],
+        "previousSessions": previousSessions
+    }
+#still there and also this is incorrect too as i dint give the doctor2 detials 
+def getReportSubmissionData(sessionId, doctorId):
+    conn = sqlite3.connect(DATABASE)
+    conn.row_factory = sqlite3.Row
+    cursor = conn.cursor()
+
+    cursor.execute("""
+        SELECT
+            s.session_id,
+            s.start_time,
+
+            d.doctor_id,
+            d.name AS doctor_name,
+
+            p.name AS patient_name,
+            p.gender,
+            p.date_of_birth,
+            p.avatar_id
+
+        FROM sessions s
+
+        JOIN doctors d
+            ON s.doctor_id = d.doctor_id
+
+        JOIN patients p
+            ON s.patient_id = p.patient_id
+
+        WHERE
+            s.session_id = ?
+            AND s.doctor_id = ?
+            AND s.status = 'Active'
+    """, (sessionId, doctorId))
+
+    row = cursor.fetchone()
+
+    conn.close()
+
+    if row is None:
+        return None
+
+    dob = datetime.strptime(
+        row["date_of_birth"],
+        "%Y-%m-%d"
+    ).date()
+
+    today = date.today()
+
+    age = (
+        today.year
+        - dob.year
+        - (
+            (today.month, today.day)
+            <
+            (dob.month, dob.day)
+        )
+    )
+
+    start = datetime.fromisoformat(row["start_time"])
+
+    return {
+        "doctorName": row["doctor_name"],
+
+        "patientName": row["patient_name"],
+
+        "patientAvatar": row["avatar_id"],
+
+        "age": age,
+
+        "gender": row["gender"],
+
+        "ageGender": f"{age} / {row['gender']}",
+
+        "startDate": start.strftime("%Y-%m-%d"),
+
+        "startTime": start.strftime("%H:%M:%S")
+    }
+#still have this to complete but almost completed
+def getDoctorHomeData(doctorId):
+    conn = sqlite3.connect(DATABASE)
+    conn.row_factory = sqlite3.Row
+    cursor = conn.cursor()
+
+    # Doctor information
+    cursor.execute("""
+        SELECT
+            name,
+            avatar_id
+        FROM doctors
+        WHERE doctor_id = ?
+    """, (doctorId,))
+
+    doctor = cursor.fetchone()
+
+    if doctor is None:
+        conn.close()
+        return None
+
+    # Active sessions
+    cursor.execute("""
+        SELECT
+            s.session_id,
+            s.start_time,
+
+            p.name,
+            p.date_of_birth,
+            p.gender,
+            p.avatar_id
+
+        FROM sessions s
+        JOIN patients p
+            ON s.patient_id = p.patient_id
+
+        WHERE s.doctor_id = ?
+        AND s.status = 'Active'
+
+        ORDER BY s.start_time DESC
+    """, (doctorId,))
+
+    rows = cursor.fetchall()
+
+    currentSessions = []
+
+    for row in rows:
+
+        dob = datetime.strptime(row["date_of_birth"], "%Y-%m-%d").date()
+
+        today = date.today()
+
+        age = (
+            today.year
+            - dob.year
+            - (
+                (today.month, today.day)
+                < (dob.month, dob.day)
+            )
+        )
+
+        start = datetime.fromisoformat(row["start_time"])
+
+        currentSessions.append({
+            "sessionId": row["session_id"],
+            "patientName": row["name"],
+            "patientAge": age,
+            "patientGender": row["gender"],
+            "avatarId": row["avatar_id"],
+            "sessionStartdate": start.strftime("%b %d, %Y"),
+            "sessionStarttime": start.strftime("%I:%M %p")
+        })
+
+    conn.close()
+
+    return {
+        "doctorName": doctor["name"],
+        "avatar": doctor["avatar_id"],
+        "currentSessions": currentSessions
+    }
+#still have this to complete but almost completed
+def getDoctorDashboardData(doctorId):
+    conn = sqlite3.connect(DATABASE)
+    conn.row_factory = sqlite3.Row
+    cursor = conn.cursor()
+
+    cursor.execute("""
+        SELECT
+            d.doctor_id,
+            d.name,
+            d.contact_number,
+            d.specialization,
+            d.avatar_id,
+            d.total_cases_solved,
+
+            c.clinic_id,
+            c.name AS clinic_name,
+            c.type,
+            c.scale,
+            c.speciality_stream,
+            c.address,
+            c.latitude,
+            c.longitude,
+            c.emergency_hotline
+
+        FROM doctors d
+        JOIN clinics c
+            ON d.clinic_id = c.clinic_id
+        WHERE d.doctor_id = ?
+    """, (doctorId,))
+
+    row = cursor.fetchone()
+
+    conn.close()
+
+    if row is None:
+        return None
+
+    return {
+        "doctorId": row["doctor_id"],
+        "doctorName": row["name"],
+        "contactNumber": row["contact_number"],
+        "specialization": row["specialization"],
+        "avatarId": row["avatar_id"],
+        "totalCasesSolved": row["total_cases_solved"],
+
+        "clinic": {
+            "id": row["clinic_id"],
+            "name": row["clinic_name"],
+            "type": row["type"],
+            "scale": row["scale"],
+            "specialityStream": row["speciality_stream"],
+            "address": row["address"],
+            "latitude": row["latitude"],
+            "longitude": row["longitude"],
+            "emergencyHotline": row["emergency_hotline"]
+        }
+    }
+
+#even this still have to do 
+def getPatientSessions(patientId):
+    conn = sqlite3.connect(DB_NAME)
+    conn.row_factory = sqlite3.Row
+    cur = conn.cursor()
+
+    # patient information
+    cur.execute("""
+        SELECT patient_name,
+               avatar_id
+        FROM patients
+        WHERE patient_id = ?
+    """, (patientId,))
+
+    patient = cur.fetchone()
+
+    if patient is None:
+        conn.close()
+        return None
+    sessions = []
+
+    for row in cur.fetchall():
+
+        dt = datetime.fromisoformat(row["start_time"])
+
+        sessions.append({
+            "sessionId": row["session_id"],
+            "doctorName": row["doctor_name"],
+            "doctorSpeciality": row["speciality"],
+            "avatarId": row["avatar_id"],
+            "sessionStartdate": dt.strftime("%b %d, %Y"),
+            "sessionStarttime": dt.strftime("%I:%M %p")
+        })
+
+    conn.close()
+
+    return {
+        "patientName": patient["patient_name"],
+        "avatar": patient["avatar_id"],
+        "currentSessions": sessions
+    }
+
 # dont forget to give here for the below function the content type newly updated
 def create_patient_session(health_id:str, clinic_id:str, department:str, assigned_doctor_id:str):
     conn = None
@@ -256,7 +588,63 @@ def create_patient_session(health_id:str, clinic_id:str, department:str, assigne
     finally:
         if conn:
             conn.close()
+def getDoctorDashboardData(doctorId):
+    conn = sqlite3.connect(DATABASE)
+    conn.row_factory = sqlite3.Row
+    cursor = conn.cursor()
 
+    cursor.execute("""
+        SELECT
+            d.doctor_id,
+            d.name,
+            d.contact_number,
+            d.specialization,
+            d.avatar_id,
+            d.total_cases_solved,
+
+            c.clinic_id,
+            c.name AS clinic_name,
+            c.type,
+            c.scale,
+            c.speciality_stream,
+            c.address,
+            c.latitude,
+            c.longitude,
+            c.emergency_hotline
+
+        FROM doctors d
+        JOIN clinics c
+            ON d.clinic_id = c.clinic_id
+        WHERE d.doctor_id = ?
+    """, (doctorId,))
+
+    row = cursor.fetchone()
+
+    conn.close()
+
+    if row is None:
+        return None
+
+    return {
+        "doctorId": row["doctor_id"],
+        "doctorName": row["name"],
+        "contactNumber": row["contact_number"],
+        "specialization": row["specialization"],
+        "avatarId": row["avatar_id"],
+        "totalCasesSolved": row["total_cases_solved"],
+
+        "clinic": {
+            "id": row["clinic_id"],
+            "name": row["clinic_name"],
+            "type": row["type"],
+            "scale": row["scale"],
+            "specialityStream": row["speciality_stream"],
+            "address": row["address"],
+            "latitude": row["latitude"],
+            "longitude": row["longitude"],
+            "emergencyHotline": row["emergency_hotline"]
+        }
+    }
 #dont use None things first 
 def complete_patient_session( 
     session_id:int,

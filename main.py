@@ -1,12 +1,12 @@
 import os
 from fastapi import FastAPI, UploadFile, File, Form, HTTPException, Request, Query, WebSocket, Response, Depends, RequestValidationError, WebSocketDisconnect
-from crud import create_patient_session, complete_patient_session, emergency_connect_hospitals, make_available_doctor, patientLogin,doctorLogin, checkPatientId, checkDoctorId, checkDoctorClinicId, createSessionMessage
+from crud import create_patient_session, complete_patient_session, emergency_connect_hospitals, make_available_doctor, patientLogin,doctorLogin, checkPatientId, checkDoctorId, checkDoctorClinicId, createSessionMessage, updateMedicalDataDB, getPreviousSessions, getPatientSessions, getDoctorDashboardData, getDoctorHomeData, getReportSubmissionData
 from datetime import datetime, timedelta
 from typing import Optional
 from fastapi.middleware.cors import CORSMiddleware
 from auth import createAccessToken, createRefreshToken, decodeToken, hash_password, validate_password, getCurrentUser
-from schema import patientRegister, doctorRegister, LoginRequest, MakeSessionRequest, NewMessage, Notes, AcceptEmergency, sessionResponse
-from utils import makeAvatarIdP
+from schema import patientRegister, doctorRegister, LoginRequest, MakeSessionRequest, NewMessage, Notes, AcceptEmergency, sessionResponse,  UpdateMedicalData
+from utils import makeAvatarIdP, loadBmiData
 from fastapi.responses import JSONResponse, FileResponse
 from uuid import uuid4
 from pathlib import Path
@@ -331,6 +331,7 @@ async def websocketEndpoint(websocket:WebSocket):
                 if result:
                     users = activeEmergencies[sessionId]["doctorList"]
                     for user in users:
+                        connections = socket.get(connectionType=ConnectionType.ACTIVE, userId=user)
                         #fill out here
                     activeEmergencies[sessionId]["event"].set()
                     participants = socket.get(ConnectionType.SESSION, sessionId=sessionId)
@@ -986,6 +987,12 @@ def makeEmergency(data:AcceptEmergency, currUser=Depends(getCurrentUser)):
             status_code=403,
             detail="Unauthorised"
         )
+    res = checkSessionEmergency(sessionId)
+    if res is not None:
+        raise HTTPException(
+            status_code=403,
+            detail="New Emergency cant be created"
+        )
     if activeEmergencies.get(sessionId):
         raise HTTPException(
             status_code=409,
@@ -1019,7 +1026,7 @@ def makeEmergency(data:AcceptEmergency, currUser=Depends(getCurrentUser)):
 # );
 def enterCall(sessionId:int, curr = Depends(getCurrentUser)):
     userId = curr["userId"]
-    result = checkSessionUser(userId=userId, sessionId=sessionId)
+    result = checkSessionUser(userId=userId, sessionId=sessionId)  
     if result is None:
         raise HTTPException(
             status_code=403,
@@ -1028,6 +1035,29 @@ def enterCall(sessionId:int, curr = Depends(getCurrentUser)):
     return {"userId":userId,
             "myRole":result["myRole"]}
 
+@app.get("/report_submission")
+async def reportSubmission(
+    sessionId: int,
+    currentUser=Depends(getCurrentUser)
+):
+    doctorId = currentUser["userId"]
+    result1 = checkUserPermissionToEndSession(doctorId, sessionId)
+    #should see if the user can modify the result submission or not
+    if result1 is not None:
+        raise HTTPException(
+            status_code=403,
+            detail="User Forbidden"
+        )
+
+    data = getReportSubmissionData(sessionId, doctorId)
+
+    if data is None:
+        raise HTTPException(
+            status_code=404,
+            detail="Session not found."
+        )
+
+    return data
 
 @app.post("/submit_report")
 async def submit_report(
@@ -1101,15 +1131,140 @@ async def submit_report(
             os.remove(file_path)
         raise HTTPException(status_code=500, detail=f"Internal server problem ")  #no need of priing the str because no need to say whats problem with the server
     
+@app.post("/update_medical_data")
+async def updateMedicalData(
+    data: UpdateMedicalData,
+    currentUser=Depends(getCurrentUser)
+): 
+    userId = currentUser["userId"]
+    success = updateMedicalDataDB(patientId, data)
+    if not success:
+        raise HTTPException(
+            status_code=500,
+            detail="Unable to update medical data"
+        )
+
+    return {
+        "message": "Medical data updated successfully"
+    }
     
-    
-    
+@app.get("/patient_medical_data")
+async def patientMedicalData(currentUser=Depends(getCurrentUser)):
+    patientId = currentUser["userId"]
+    role = currentUser["role"]
+    if role!="patient":
+        raise HTTPException(
+            status_code=403,
+            detail="User Forbidden"
+        )
+
+    data = getPatientMedicalData(patientId)
+    if data is None:
+        raise HTTPException(
+            status_code=404,
+            detail="Patient not found"
+        )
+    gender = data["gender"]
+    age = data["age"]
+    if gender == "Male":
+        if age < 2:
+            file = "Excel/birth_2_boys.csv"
+        elif age < 5:
+            file = "Excel/2_5_boys.csv"
+        elif age <= 19:
+            file = "Excel/bmi-boys-perc-who2007-exp.csv"
+        else:
+            file = None
+    else:
+        if age < 2:
+            file = "Excel/birth_2_girls.csv"
+        elif age < 5:
+            file = "Excel/2_5_girls.csv"
+        elif age <= 19:
+            file = "Excel/bmi-girls-perc-who2007-exp.csv"
+        else:
+            file = None
+    data["file"] = loadBmiData(file) if file else None 
+    return data
+
+@app.get("/patient_previous_sessions")
+async def patientPreviousSessions(currentUser=Depends(getCurrentUser)):
+    if currentUser["role"] != "patient":
+        raise HTTPException(
+            status_code=403,
+            detail="Only patients can access previous sessions."
+        )
+
+    patientId = currentUser["userId"]
+
+    data = getPreviousSessions(patientId)
+
+    if data is None:
+        raise HTTPException(
+            status_code=404,
+            detail="Patient data not found."
+        )
+
+    return data
+
+@app.get("/patient_sessions")
+async def patientSessions(currentUser = Depends(getCurrentUser)):
+    userId = currentUser["userId"]
+    if currentUser["role"] != "patient":
+            raise HTTPException(
+                status_code=403,
+                detail="Only patients can access previous sessions."
+            ) 
+    data = getPatientSessions(userId)
+    if data is None:
+        raise HTTPException(
+            status_code=404,
+            detail="Patient not found."
+        )
+    return data
+
+@app.get("/doctor_dashboard")
+async def doctorDashboard(currentUser=Depends(getCurrentUser)):
+    if currentUser["role"] != "doctor":
+        raise HTTPException(
+            status_code=403,
+            detail="Only doctors can access this page."
+        )
+    doctorId = currentUser["userId"]
+    data = getDoctorDashboardData(doctorId)
+    if data is None:
+        raise HTTPException(
+            status_code=404,
+            detail="Doctor not found."
+        )
+
+    return data
+
+@app.get("/index")
+async def doctorIndex(currentUser=Depends(getCurrentUser)):
+    if currentUser["role"] != "doctor":
+        raise HTTPException(
+            status_code=403,
+            detail="Only doctors can access this page."
+        )
+
+    doctorId = currentUser["userId"]
+
+    data = getDoctorHomeData(doctorId)
+
+    if data is None:
+        raise HTTPException(
+            status_code=404,
+            detail="Doctor not found."
+        )
+
+    return data
+
+
 def make_session(health_id:str = Form(...), clinic_id:str = Form(...), department:str = Form(...), assigned_doctor_id:str = Form(...)):
     #make check when unkown patient_name comes or unknown_doc_name or clinic name comes
     return create_patient_session(health_id, clinic_id, department, assigned_doctor_id)
 
-TO_UPLOAD_DIR = "folder"
-os.makedirs(TO_UPLOAD_DIR, exist_ok = True)
 
 @app.post("/api/sessions/{session_id}/submit")
 async def complete_session(request:Request,chief_complaint:str = Form(...), additional_vitals:str = Form(...), uploaded_filepath:UploadFile = File(...),

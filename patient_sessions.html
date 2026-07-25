@@ -380,11 +380,11 @@
             {
                 return ele.sessionId.toLowerCase().includes(s) || ele.doctorName.toLowerCase().includes(s);
             });
-            let avatarId = getAvatar(element.avatarId);
             tablename.innerHTML = "";
             let index = 0;
             searchedSessions.forEach((element)=>
             {
+                let avatarId = getAvatar(element.avatarId);
                 let presentColor = getColor(index);
                 index++;
                 let row = document.createElement("tr");

@@ -568,8 +568,8 @@ function showSearchedInputs()
     let s = searchInput.value.toLowerCase();  //please make sure you do this 
     const searchedResult = previousSessionsData.filter((session)=>                 //session please write that 
     {
-        return          (session.doctorOne.name.toLowerCase().includes(s)|| (session.doctorTwo && session.doctorTwo.name.toLowerCase().includes(s)
-                        || session.doctorTwo.hospital.toLowerCase().includes(s)) || session.sessionId.toLowerCase().includes(s) 
+        return          (session.doctorOne.name.toLowerCase().includes(s)|| (session.doctorTwo && (session.doctorTwo.name.toLowerCase().includes(s)
+                        || session.doctorTwo.hospital.toLowerCase().includes(s))) || session.sessionId.toString().toLowerCase().includes(s) 
                         || session.doctorOne.hospital.toLowerCase().includes(s) || session.department.toLowerCase().includes(s)
                         || session.date.toLowerCase().includes(s) || session.issue.toLowerCase().includes(s));
     })

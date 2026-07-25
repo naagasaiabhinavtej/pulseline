@@ -247,3 +247,49 @@ class AcceptEmergency(BaseModel):
 
 class sessionResponse(BaseModel):
     message: Literal["success", "failure"]
+
+class UpdateMedicalData(BaseModel):
+    Height: float = Field(gt=50, lt=250)
+    Weight: float = Field(gt=10, lt=300)
+
+    RightEye: str
+    LeftEye: str
+
+    RightEarHearing: int = Field(gt=0, lt=120)
+    LeftEarHearing: int = Field(gt=0, lt=120)
+
+    EmergencyContact: str
+
+    MedicalHistory: str | None = None
+    Allergies: str | None = None
+
+    @field_validator("RightEye", "LeftEye")
+    @classmethod
+    def validate_eye(cls, value: str):
+        if not re.fullmatch(r"\d{2}/\d{2}", value):
+            raise ValueError("Eye vision must be in the format 20/20")
+        return value
+
+    @field_validator("EmergencyContact")
+    @classmethod
+    def validate_emergency_contact(cls, value: str):
+        normalized = re.sub(r"[\s()-]", "", value)
+
+        if not re.fullmatch(r"(?:\+91|91)?[6-9]\d{9}", normalized):
+            raise ValueError("Invalid Indian emergency contact number")
+
+        return value
+
+    @field_validator("MedicalHistory")
+    @classmethod
+    def validate_medical_history(cls, value: str | None):
+        if value is not None and len(value) > 500:
+            raise ValueError("Medical history cannot exceed 500 characters")
+        return value
+
+    @field_validator("Allergies")
+    @classmethod
+    def validate_allergies(cls, value: str | None):
+        if value is not None and len(value) > 300:
+            raise ValueError("Allergies cannot exceed 300 characters")
+        return value
