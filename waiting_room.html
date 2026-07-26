@@ -30,10 +30,10 @@
                     <i data-lucide="layout-dashboard"></i>
                     <span>Dashboard</span>
                 </a>
-                <a href="#" class="nav-item">
+                <!-- <a href="#" class="nav-item">
                     <i data-lucide="settings"></i>
                     <span>Settings</span>
-                </a>
+                </a> -->
             </nav>
 
             <div class="sidebar-footer">
@@ -52,10 +52,10 @@
                     <span>Back to Active Sessions</span>
                 </a>
                 <div class="header-profile">
-                    <div class="notification-bell">
+                    <!-- <div class="notification-bell">
                         <i data-lucide="bell"></i>
                         <span class="badge">3</span>
-                    </div>
+                    </div> -->
                     <div class="profile-card">
                         <img src="https://images.unsplash.com/photo-1559839734-2b71ea197ec2?auto=format&fit=crop&q=80&w=100" alt="Doctor Profile" class="avatar">
                         <div class="profile-info">
@@ -72,7 +72,7 @@
                     <img src="https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?auto=format&fit=crop&q=80&w=100" alt="John Doe" class="patient-avatar">
                     <div class="patient-title">
                         <h2>John Doe <span class="status-dot-active">Active</span></h2>
-                        <p>Age: 28 • Male</p>
+                        <p>Patient Name</p>
                     </div>
                 </div>
                 
@@ -146,7 +146,7 @@
                                 <span>Patient <strong>John Doe</strong> is inside the room awaiting connection.</span>
                             </div>
                             
-                            <button class="action-join-stream-btn" onclick="alert('Establishing streaming broadcast protocols...')">
+                            <button class="action-join-stream-btn" id="joinButton">
                                 <span>Join Session Now</span>
                                 <i data-lucide="arrow-right"></i>
                             </button>
@@ -188,16 +188,21 @@
                             <span class="status-pill-green">Active</span>
                         </div>
                         <div class="detail-row">
-                            <span class="row-label">Doctor</span>
+                            <span class="row-label" id="Doctor1">Doctor 1</span>
                             <div class="doctor-sub-profile">
-                                <img src="https://images.unsplash.com/photo-1559839734-2b71ea197ec2?auto=format&fit=crop&q=80&w=60" alt="Doctor avatar">
                                 <span>Dr. Sarah Johnson</span>
                             </div>
                         </div>
-                        <div class="detail-row notes-vertical-layout">
+                        <div class="detail-row">
+                            <span class="row-label" id="Doctor2">Doctor 2</span>
+                            <div class="doctor-sub-profile">
+                                <span>Dr. Sarah Johnson</span>
+                            </div>
+                        </div>
+                        <!-- <div class="detail-row notes-vertical-layout">
                             <span class="row-label">Notes</span>
                             <p class="row-paragraph-value">Discuss test results and follow-up treatment plan.</p>
-                        </div>
+                        </div> -->
                     </div>
                 </aside>
 
@@ -207,11 +212,349 @@
 
     <script>
         lucide.createIcons();
-        if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
-            navigator.mediaDevices.getUserMedia({ video: true, audio: false })
-                .then(stream => { document.getElementById('local-preview-mirror').srcObject = stream; })
-                .catch(err => { console.warn("Camera pipeline visualization bypassed.", err); });
+        let accessToken = null;
+        const params = new URLSearchParams(window.location.search);
+        const sessionId = params.get("sessionId");
+        async function refreshtoken()
+        {
+            const result = await fetch("/refresh",
+            {
+                method:"GET",
+                credentials:"include"
+            });
+            if(result.ok)
+            {
+                const data = await result.json();
+                accessToken = data.access_token;
+                return accessToken;
+            }
+            window.location.href="login.html";
+            return null;
         }
+        function getAvatar(id)
+        {
+            if(id==="first") return "avatar_doctors/adult_female.png";
+            if(id==="second") return "avatar_doctors/adult_male.png";
+            if(id==="third") return "avatar_doctors/old_female.png";
+            if(id==="fourth") return "avatar_doctors/old_male.png";
+        }
+        async function giveData()
+        {
+            const result = await fetch(`/doctor_waiting_room/${sessionId}`,
+            {
+                method:"GET",
+                headers:
+                {
+                    Authorization:`Bearer ${accessToken}`
+                }
+            });
+            if(result.status===401)
+            {
+                const token = await refreshtoken();
+                if(!token) return;
+            }
+            const finalresult = await fetch(`/doctor_waiting_room/${sessionId}`,
+            {
+                method:"GET",
+                headers:
+                {
+                    Authorization:`Bearer ${accessToken}`
+                }
+            });
+            return finalresult;
+        }
+        /* ---------------- DOM ---------------- */
+        const logoutBtn = document.querySelector(".logout-btn");
+        const profileName = document.querySelector(".profile-name");
+        const profileAvatar = document.querySelector(".profile-card .avatar");
+        const patientAvatar = document.querySelector(".patient-avatar");
+        const patientName = document.querySelector(".patient-title h2");
+
+        const sessionIdTop = document.querySelector(".meta-value-code span");
+        const sessionStartTop = document.querySelector(".meta-value span");
+
+        const timerDigits = document.querySelector(".timer-digits");
+
+        const cameraStatus = document.querySelectorAll(".telemetry-row")[0];
+        const micStatus = document.querySelectorAll(".telemetry-row")[1];
+
+        const participantStatusBox = document.querySelector(
+            ".participant-status-callout span"
+        );
+
+        const joinButton = document.querySelector(".action-join-stream-btn");
+        const joinButtonText = joinButton.querySelector("span");
+
+        const sessionIdSide = document.querySelector(".badge-id");
+
+        const patientNameSide =
+        document.querySelector(".detail-row:nth-child(2) .row-value");
+
+        const patientAgeGenderSide =
+        document.querySelector(".detail-row:nth-child(3) .row-value");
+
+        const startDateSide =
+        document.querySelector(".detail-row:nth-child(4) .weight-bold");
+
+        const startTimeSide =
+        document.querySelector(".detail-row:nth-child(4) small");
+
+        const doctor1Value =
+        document.querySelector(".detail-row:nth-child(6) .doctor-sub-profile span");
+
+        const doctor2Value =
+        document.querySelector(".detail-row:nth-child(7) .doctor-sub-profile span");
+
+        const copyIcon = document.querySelector(".copy-ic");
+
+        const reportTab =
+        document.querySelectorAll(".tab-trigger")[1];
+
+        const micButton = document.querySelector(
+        ".preview-overlay-controls .icon-toggle-circle:first-child"
+        );
+
+        const videoButton = document.querySelector(
+        ".preview-overlay-controls .icon-toggle-circle:last-child"
+        );
+
+        const localPreview =
+        document.getElementById("local-preview-mirror");
+
+        /* ---------------- VARIABLES ---------------- */
+
+        let localStream;
+        let socket=null;
+
+        /* ---------------- CAMERA ---------------- */
+
+        if(navigator.mediaDevices && navigator.mediaDevices.getUserMedia)
+        {
+            navigator.mediaDevices
+            .getUserMedia(
+            {
+                video:true,
+                audio:true
+            })
+            .then(stream=>
+            {
+                localStream=stream;
+                localPreview.srcObject=stream;
+            })
+            .catch(err=>
+            {
+                console.warn(err);
+            });
+        }
+
+        /* ---------------- MIC ---------------- */
+
+        micButton.addEventListener("click",toggleMic);
+
+        function toggleMic()
+        {
+            if(!localStream) return;
+
+            const audioTrack=localStream.getAudioTracks()[0];
+
+            if(!audioTrack) return;
+
+            audioTrack.enabled=!audioTrack.enabled;
+
+            micButton.innerHTML=`
+                <i data-lucide="${audioTrack.enabled?"mic":"mic-off"}"></i>
+            `;
+
+            if(audioTrack.enabled)
+            {
+                micStatus.classList.remove("warning");
+                micStatus.classList.add("passing");
+
+                micStatus.innerHTML=`
+                    <i data-lucide="check-circle-2"></i>
+                    Mic: Active
+                `;
+            }
+            else
+            {
+                micStatus.classList.remove("passing");
+                micStatus.classList.add("warning");
+
+                micStatus.innerHTML=`
+                    <i data-lucide="mic-off"></i>
+                    Mic: Muted
+                `;
+            }
+
+            lucide.createIcons();
+        }
+
+        /* ---------------- VIDEO ---------------- */
+
+        videoButton.addEventListener("click",toggleVideo);
+
+        function toggleVideo()
+        {
+            if(!localStream) return;
+
+            const videoTrack=localStream.getVideoTracks()[0];
+
+            if(!videoTrack) return;
+
+            videoTrack.enabled=!videoTrack.enabled;
+
+            videoButton.innerHTML=`
+                <i data-lucide="${videoTrack.enabled?"video":"video-off"}"></i>
+            `;
+
+            if(videoTrack.enabled)
+            {
+                cameraStatus.classList.remove("warning");
+                cameraStatus.classList.add("passing");
+
+                cameraStatus.innerHTML=`
+                    <i data-lucide="check-circle-2"></i>
+                    Camera: Active
+                `;
+            }
+            else
+            {
+                cameraStatus.classList.remove("passing");
+                cameraStatus.classList.add("warning");
+
+                cameraStatus.innerHTML=`
+                    <i data-lucide="video-off"></i>
+                    Camera: Off
+                `;
+            }
+
+            lucide.createIcons();
+        }
+
+        /* ---------------- LOAD DATA ---------------- */
+
+        async function askData()
+        {
+            const res=await giveData();
+
+            if(!res || !res.ok) return;
+
+            const data=await res.json();
+
+            profileName.textContent=data.name;
+            const userId = data.userId;
+            const doctor2Id = data.doctor2Id;
+            const doctor1Id = data.doctor1Id;
+            profileAvatar.src=getAvatar(data.avatarId);
+            patientAvatar.src=data.patientAvatar;
+            patientName.innerHTML=
+            `${data.patientName}
+            <span class="status-dot-active">Active</span>`;
+            sessionIdTop.textContent=data.sessionId;
+            sessionIdSide.textContent=data.sessionId;
+            const start=new Date(data.startTime);
+            sessionStartTop.innerHTML=
+            `${start.toLocaleDateString()}
+            <small>
+            ${start.toLocaleTimeString([],{
+                hour:"2-digit",
+                minute:"2-digit"
+            })}
+            </small>`;
+            patientNameSide.textContent=data.patientName;
+            patientAgeGenderSide.textContent=
+            `${data.patientAge} / ${data.patientGender}`;
+            startDateSide.textContent=start.toLocaleDateString();
+            startTimeSide.textContent=
+            start.toLocaleTimeString([],{
+                hour:"2-digit",
+                minute:"2-digit"
+            });
+            doctor1Value.textContent=data.doctor1Name;
+            doctor2Value.textContent=
+            data.doctor2Name
+            ? data.doctor2Name
+            : "Not Assigned";
+            if(data.isReferred && userId===doctor1Id)
+            {
+                reportTab.classList.add("disabled-tag");
+            }
+            if(data.call.isCall)
+            {
+                joinButtonText.textContent="Join Session";
+                let html="";
+                data.call.participants.forEach(user=>
+                {
+                    html+=`${user.role}
+                    <strong>${user.name}</strong> `;
+                });
+                html+="are inside the room awaiting connection.";
+                participantStatusBox.innerHTML=html;
+            }
+            else
+            {
+                joinButtonText.textContent="Start Video Call";
+                participantStatusBox.innerHTML=
+                `No active call is in progress.
+                Click <strong>Start Video Call</strong>
+                to create a new video consultation.`;
+            }
+            startTimer(start);
+            setInterval(startTimer,1000,start);
+        }
+        /* ---------------- TIMER ---------------- */
+        window.addEventListener("DOMContentLoaded", askData)
+        function startTimer(merged_start)
+        {
+            let now = new Date();
+            let diff = Math.floor((now - merged_start)/1000);        //returns in milliseconds if subtracted hence /1000
+            let days = Math.floor(diff/86400);
+            let hours = Math.floor((diff%86400)/3600);
+            let minutes = Math.floor((diff%3600)/60);
+            let seconds = diff%60;
+            timerDigits.textContent = `${days}D:${String(hours).padStart(2, "0")}:${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`;
+        }
+        joinButton.addEventListener("click", joinSession);
+        function joinSession()
+        {
+            joinButton.disabled = true;
+            joinButtonText.textContent = "Joining";
+            window.open(`incall.html?sessionId=${sessionId}`, "_blank");
+        }
+        socket = new WebSocket(`ws://${window.location.host}/ws`)
+        socket.onopen = ()=>{
+            console.log("Connected");
+        }
+        socket.onclose = ()=>
+        {
+            console.log("Disconnected");
+        }
+        socket.onmessage = (message)=>
+        {
+            const data = JSON.parse(message.data);
+            if(data.type === "CallJoined")
+            {
+                joinButtonText.textContent = "Join Session";
+            }
+            else if(data.type === "CallCompleted")
+            {
+                joinButtonText.textContent = "Start Video Call ";
+                joinButton.disabled = false;
+            }
+        }
+        logoutBtn.addEventListener("click", async () => {
+            const result = await fetch("/logout", {
+                method: "POST",
+                credentials: "include"
+            });
+        if (!result.ok) {
+            alert("Logout failed.");
+            return;
+        }
+            accessToken = "";
+            window.location.href = "login.html";
+        });
+
     </script>
 </body>
 </html>

@@ -763,25 +763,206 @@ def giveDataSessionDetail(sessionId:int, currentUser=Depends(getCurrentUser)):
             detail="User Unauthorised"
         )
     userDetails = getDoctorDetails(doctorId)
-    sessionDetails = getSessionDetails(sessionId)
     messages = getSessionMessages(sessionId)
     participantCount = 2
-    if session.doctor2Id is not None:
+    if result.doctor2Id is not None:
         participantCount += 1
     for message in messages:
 
         readCount = getReadCount(message["messageId"])
         message["bluetick"] = (readCount == participantCount)
         
-    result = {}
-    result.update(userDetails)
-    result.update(sessionDetails)
-    result["messages"] = messages
+    res = {}
+    res.update(userDetails)
+    res.update(result)
+    res["messages"] = messages
 
+    return res
+
+@app.get("/patient_session/{sessionId}")
+def patientSessionDetail(sessionId: int, currentUser=Depends(getCurrentUser)):
+    result = checkSessionId(sessionId)
+
+    if not result:
+        raise HTTPException(
+            status_code=404,
+            detail="Session Not Found"
+        )
+
+    patientId = currentUser["userId"]
+
+    if patientId != result.patientId:
+        raise HTTPException(
+            status_code=403,
+            detail="User Unauthorised"
+        )
+
+    userDetails = getPatientDetails(patientId)
+    messages = getSessionMessages(sessionId)
+
+    participantCount = 2
+    if result.doctor2Id is not None:
+        participantCount += 1
+
+    for message in messages:
+        readCount = getReadCount(message["messageId"])
+        message["bluetick"] = (readCount == participantCount)
+
+    res = {}
+    res.update(userDetails)
+    res.update(result)
+    res["messages"] = messages
+
+    return res
+
+@app.get("/patient_waiting_room/{sessionId}")
+def patientWaitingRoom(sessionId: int, currentUser=Depends(getCurrentUser)):
+    # 1. Session exists?
+    session = checkSessionId(sessionId)
+    if not session:
+        raise HTTPException(
+            status_code=404,
+            detail="Session Not Found"
+        )
+
+    # 2. Logged in user is the patient?
+    patientId = currentUser["userId"]
+
+    if patientId != session.patientId:
+        raise HTTPException(
+            status_code=403,
+            detail="User Unauthorised"
+        )
+
+    # 3. Patient details
+    patientDetails = getPatientDetails(patientId)
+    # 4. Doctor details
+    doctor1Details = getDoctorDetails(session.doctor1Id)
+    doctor2Details = None
+    if session.doctor2Id:
+        doctor2Details = getDoctorDetails(session.doctor2Id)
+    # 5. Active call details
+    call = {
+        "isCall": False,
+        "participants": []
+    }
+    connections = socket.get(connectionType=ConnectionType.CALL, sessionId=sessionId)
+    if connections:
+        call["isCall"] = True
+        for connection in connections:
+            if connection["role"] == "patient":
+                details = getPatientDetails(connection["userId"])
+            else:
+                details = getDoctorDetails(connection["userId"])
+            call["participants"].append({
+                "userId": connection["userId"],
+                "role": connection["role"],
+                "name": details["name"]
+            })
+    # 6. Build response
+    result = {
+        "userId": patientId,
+        "name": patientDetails["name"],
+        "avatarId": patientDetails["avatarId"],
+        # Doctor displayed in banner
+        "doctorName": doctor1Details["name"],
+        "doctorAvatarId": doctor1Details["avatarId"],
+        # Session
+        "sessionId": session.sessionId,
+        "startTime": session.startTime,
+        # Patient information
+        "patientName": patientDetails["name"],
+        "patientAge": patientDetails["age"],
+        "patientGender": patientDetails["gender"],
+        # Assigned doctors
+        "doctor1Name": doctor1Details["name"],
+        "doctor2Name":
+            doctor2Details["name"]
+            if doctor2Details
+            else None,
+        # Video call state
+        "call":call
+    }
     return result
-
-
-
+@app.get("/doctor_waiting_room/{sessionId}")
+def doctorWaitingRoom(sessionId: int, currentUser=Depends(getCurrentUser)):
+    # 1. Session exists?
+    session = checkSessionId(sessionId)
+    if not session:
+        raise HTTPException(
+            status_code=404,
+            detail="Session Not Found"
+        )
+    doctorId = currentUser["userId"]
+    if doctorId not in {session.doctor1Id, session.doctor2Id}:
+        raise HTTPException(
+            status_code=403,
+            detail="User Unauthorised"
+        )
+    # Logged in doctor (profile card)
+    loginDoctorDetails = getDoctorDetails(userId)
+    # Actual doctor 1
+    doctor1Details = getDoctorDetails(session.doctor1Id)
+    # Actual doctor 2
+    doctor2Details = None
+    if session.doctor2Id:
+        doctor2Details = getDoctorDetails(session.doctor2Id)
+    # Patient
+    patientDetails = getPatientDetails(session.patientId)
+    # Call information
+    call = {
+        "isCall": False,
+        "participants": []
+    }
+    connections = socket.get(
+        connectionType=ConnectionType.CALL,
+        sessionId=sessionId
+    )
+    if connections:
+        call["isCall"] = True
+        for connection in connections:
+            if connection["role"] == "patient":
+                details = getPatientDetails(
+                    connection["userId"]
+                )
+            else:
+                details = getDoctorDetails(
+                    connection["userId"]
+                )
+            call["participants"].append(
+                {
+                    "userId": connection["userId"],
+                    "role": connection["role"],
+                    "name": details["name"]
+                }
+            )
+    result = {
+        # logged in doctor
+        "userId": doctorId,
+        "name": loginDoctorDetails["name"],
+        "avatarId": loginDoctorDetails["avatarId"],
+        # patient
+        "patientAvatar": patientDetails["avatarId"],
+        "patientName": patientDetails["name"],
+        "patientAge": patientDetails["age"],
+        "patientGender": patientDetails["gender"],
+        # session
+        "sessionId": session.sessionId,
+        "startTime": session.startTime,
+        # doctors in session
+        "doctor1Id": session.doctor1Id,
+        "doctor2Id": session.doctor2Id,
+        "doctor1Name": doctor1Details["name"],
+        "doctor2Name":
+            doctor2Details["name"]
+            if doctor2Details
+            else None,
+        # referral
+        "isReferred": session.isReferred,
+        # call
+        "call": call
+    }
+    return result
 @app.get("/download-file-chat/{attachmentId}")
 def giveFile(request:Request, attachmentId:int):
     refreshToken = request.cookies.get("refreshToken")

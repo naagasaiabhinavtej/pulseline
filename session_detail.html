@@ -288,7 +288,8 @@
             }
         }
         let accessToken = null;
-        let sessionId = null; //use params to get the value
+        const params = new URLSearchParams(window.location.search)
+        let sessionId = params.get(sessionId); 
         async function refreshtoken()
         {
             const result = await fetch("/refresh",
@@ -322,7 +323,7 @@
         }
         async function giveData()
         {
-            const result = await fetch("/session_detail",
+            const result = await fetch(`/session_detail/${sessionId}`,
             {
                 method:"GET",
                 headers:{
@@ -334,7 +335,7 @@
                 const data = await refreshtoken();
                 if(!data) return;
             }
-            const finalresult = await fetch("/session_detail",
+            const finalresult = await fetch(`/session_detail/${sessionId}`,
             {
                 method:"GET",
                 headers:{
@@ -401,6 +402,8 @@
             const doctor2Name = data.doctor2Name;
             const name = data.name;
             user_id = data.user_id;
+            let doctor1Id = doctor.doctor1Id;
+            let doctor2Id = doctor.doctor2Id;
             const patientFullName = data.patientName;
             const pavatarId = data.pavatarId;
             const davatarId = data.davatarId;
@@ -426,7 +429,7 @@
             doctor1Value.textContent = doctor1Name;
             doctor2Value.textContent = doctor2Name;
             patientName.innerHTML = `${patientFullName} <span class="status-dot-active">Active</span>`;
-            if(isReffered && name===doctor1Name) 
+            if(isReffered && user_id===doctor1Id) 
             {
                 tabTrigger.classList.add('disabled-tag');  //make sure you have done check in report submission
             }

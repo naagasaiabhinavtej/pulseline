@@ -59,8 +59,8 @@
                     <div class="profile-card">
                         <img src="https://images.unsplash.com/photo-1559839734-2b71ea197ec2?auto=format&fit=crop&q=80&w=100" alt="Doctor Profile" class="avatar">
                         <div class="profile-info">
-                            <span class="profile-name">Dr. Sarah Johnson</span>
-                            <span class="profile-role">Doctor</span>
+                            <span class="profile-name">Sarah Johnson</span>
+                            <span class="profile-role">Patient</span>
                         </div>
                         <i data-lucide="chevron-down" class="dropdown-icon"></i>
                     </div>
@@ -207,7 +207,8 @@
 
     <script>
         lucide.createIcons();
-        let accessToken = null;
+        const params = new URLSearchParams(window.location.search);
+        const sessionId = params.get("sessionId");  //remember this returns in string format
         async function refreshtoken()
         {
             const result = await fetch("/refresh",
@@ -243,7 +244,7 @@
         }
         async function giveData()
         {
-            const result = await fetch("/patient_session",
+            const result = await fetch(`/patient_waiting_room/${sessionId}`,
             {
                 method:"GET",
                 headers:{
@@ -255,7 +256,7 @@
                 const data = await refreshtoken();
                 if(!data) return;
             }
-            const finalresult = await fetch("/patient_session",
+            const finalresult = await fetch(`/patient_waiting_room/${sessionId}`,
             {
                 method:"GET",
                 headers:{
@@ -317,6 +318,7 @@
             ".profile-name"
         );
         const logoutBtn = document.querySelector(".logout-btn");
+        const copyIcon = document.querySelector('.copy-ic');
         // const micIcon = document.getElementById("mic-icon");
         // const videoIcon = document.getElementById("video-icon");
         let localStream;
@@ -414,16 +416,71 @@
         {
             const res = await giveData();
             if(!res || !res.ok) return;
-
+            const data = await res.json()
+            headerPatientName.textContent = data.name;
+            headerPatientAvatar.src = getAvatar(data.avatarId);
+            doctorAvatar.src = getAvatar(data.doctorAvatarId);
+            doctorName.innerHTML = `${data.doctorName} <span class="status-dot-active">Active</span>`;
+            sessionIdTop.textContent = data.sessionId;
+            const start = new Date(data.startTime);
+            sessionStartTop.innerHTML =
+            `${start.toLocaleDateString()} <small>${start.toLocaleTimeString([], {
+                hour: "2-digit",
+                minute: "2-digit"
+            })}</small>`;
+            sessionIdSide.textContent = sessionId;
+            patientNameSide.textContent = data.patientName;
+            patientAgeGenderSide.textContent =
+            `${data.patientAge} / ${data.patientGender}`;
+            startDateSide.textContent = start.toLocaleDateString();
+            startTimeSide.textContent = start.toLocaleTimeString([], {
+                hour: "2-digit",
+                minute: "2-digit"
+            });
+            Doctor1.innerHTML = `<span>${data.doctor1Name}</span>`;
+            if (data.doctor2Name) {
+                Doctor2.innerHTML = `<span>${data.doctor2Name}</span>`;
+            } else {
+                Doctor2.innerHTML = `<span>Not Assigned</span>`;
+            }
+            if(data.call.isCall)
+            {
+                joinButtonText.textContent = "Join Call Now"
+                let s = ""
+                for(let user of data.call.participants)  //not in in gives index and of gives the details and use let and const before user so that it doesnt become a global varialbe
+                {
+                    s+=`${user.role}<strong> ${user.name}</strong> `
+                }
+                s+="are inside the room awaiting connection."
+                participantStatusBox.innerHTML = s;
+            }
+            else
+            {
+                joinButtonText.textContent = "Start New Call"
+                participantStatusBox.innerHTML =`No active call is in progress. Click <strong>Make New Call</strong> to start a video consultation with your assigned doctor.`;
+            }
+            startTimer(start);
+            setInterval(startTimer, 1000, start);
+        }
+        window.addEventListener("DOMContentLoaded", askData)
+        function startTimer(merged_start)
+        {
+            let now = new Date();
+            let diff = Math.floor((now - merged_start)/1000);        //returns in milliseconds if subtracted hence /1000
+            let days = Math.floor(diff/86400);
+            let hours = Math.floor((diff%86400)/3600);
+            let minutes = Math.floor((diff%3600)/60);
+            let seconds = diff%60;
+            timerDigits.textContent = `${days}D:${String(hours).padStart(2, "0")}:${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`;
         }
         joinButton.addEventListener("click", joinSession);
         function joinSession()
         {
             joinButton.disabled = true;
-            joinButton.textContent = "Joining";
-            window.open(`incall.html?sessionid=${sessionId}`, "_blank");
+            joinButtonText.textContent = "Joining";
+            window.open(`incall.html?sessionId=${sessionId}`, "_blank");
         }
-        const socket = new Websocket(`ws://${window.location.host}/ws`)
+        const socket = new WebSocket(`ws://${window.location.host}/ws`)
         socket.onopen = ()=>{
             console.log("Connected");
         }
@@ -436,11 +493,11 @@
             const data = JSON.parse(message.data);
             if(data.type === "CallJoined")
             {
-                joinButton.textContent = "In call";
+                joinButtonText.textContent = "In call";
             }
             else if(data.type === "CallCompleted")
             {
-                joinButton.textContent = "Start Session";
+                joinButtonText.textContent = "Start Session";
                 joinButton.disabled = false;
             }
         }

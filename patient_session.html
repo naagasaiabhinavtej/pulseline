@@ -324,7 +324,7 @@
         }
         async function giveData()
         {
-            const result = await fetch("/patient_session",
+            const result = await fetch(`/patient_session/${sessionId}`,
             {
                 method:"GET",
                 headers:{
@@ -336,7 +336,7 @@
                 const data = await refreshtoken();
                 if(!data) return;
             }
-            const finalresult = await fetch("/patient_session",
+            const finalresult = await fetch(`/patient_session/${sessionId}`,
             {
                 method:"GET",
                 headers:{
@@ -391,7 +391,8 @@
         // let recentDate = null; dont use this because sometimes backend may send the text late but before that forward dates gets uploaded and it will create a mess the late becasue of network speed, delays etc
         let user_id = null;
         let avatarSrc = "";
-        let sessionId = "";
+        const params = new URLSearchParams(window.location.search)
+        let sessionId = params.get(sessionId); 
         let socket;
         async function askdata()
         {
