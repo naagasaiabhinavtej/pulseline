@@ -207,6 +207,7 @@
 
     <script>
         lucide.createIcons();
+        let accessToken = null;
         const params = new URLSearchParams(window.location.search);
         const sessionId = params.get("sessionId");  //remember this returns in string format
         async function refreshtoken()
@@ -510,7 +511,7 @@
             alert("Logout failed.");
             return;
         }
-            accessToken = "";
+            accessToken = null;
             window.location.href = "login.html";
         });
     </script>

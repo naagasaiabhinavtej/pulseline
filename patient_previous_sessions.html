@@ -225,9 +225,11 @@
 </div>
 
 <script>
+    //also dont forget to remove the lucide here after everything is completed
+    //in this page if suppose backend sends something wrong so for that you have to have defult things like defualt image or defualt data or empty data i mean everywhere you have to add these
 lucide.createIcons();
 let accessToken = null;
-function getAvatar(id) 
+function getpAvatar(id) 
 {
     if (id === "first") return "avatar_patients/adult_female.png";
     if (id === "second") return "avatar_patients/adult_male.png";
@@ -236,6 +238,13 @@ function getAvatar(id)
     if (id === "fifth") return "avatar_patients/young_boy.png";
     if (id === "sixth") return "avatar_patients/young_girl.png";            
 }
+function getdAvatar(id) 
+        {
+            if (id === "first") return "avatar_doctors/adult_female.png";
+            if (id === "second") return "avatar_doctors/adult_male.png";
+            if (id === "third") return "avatar_doctors/old_female.png";
+            if (id === "fourth") return "avatar_doctors/old_male.png";
+        }
 async function refreshtoken()
 {
     const response = await fetch("/refresh",{
@@ -244,7 +253,7 @@ async function refreshtoken()
     });
     if(!response.ok)
     {
-        window.location.href = "/login";
+        window.location.href = "login.html";
         return false;
     }
     const data = await response.json();
@@ -271,6 +280,28 @@ async function giveData()
             }
         });
     }
+    if(!result.ok)
+    {
+        const error = await result.json()
+        alert(error.detail); //because sometimes detail may not be present 
+        switch(error.code)
+        {
+            case("INVALID_TOKEN"):
+                window.location.href = "login.html";
+                break;
+            case("INVALID_USER"):
+                window.location.href = "login.html";
+                break;
+            case("USER_MISSING"):
+                window.location.href = "login.html";
+                break;
+            case("ValidationError"):
+                break;
+            default:
+                window.location.href = "login.html";
+        }
+        return null;
+    }
     return result;
 }
 const profileAvatar = document.querySelector(".avatar");
@@ -286,12 +317,13 @@ async function askData()
     if(!result || !result.ok)
         return;
     const data = await result.json();
-    profileAvatar.src = getAvatar(data.avatarId);
+    profileAvatar.src = getpAvatar(data.avatarId);
     profileName.textContent = data.patientName;
     previousSessionsData = data.previousSessions;
     createPreviousSessions(data.previousSessions);
     lucide.createIcons();
 }
+window.addEventListener("DOMContentLoaded", askData);
 function createPreviousSessions(previousSessions)
 {
     timeline.replaceChildren();
@@ -339,7 +371,7 @@ function createPreviousSessions(previousSessions)
                         <div class="doctor-block">
 
                             <div class="doctor-card">
-                                <img src="${getAvatar(session.doctorOne.avatarId)}">
+                                <img src="${getdAvatar(session.doctorOne.avatarId)}">
                                 <div class="doctor">
                                     <h4>${session.doctorOne.name}</h4>
                                     <p>${session.doctorOne.hospital}</p>
@@ -349,7 +381,7 @@ function createPreviousSessions(previousSessions)
                             <span class="doctor-cross">×</span>
 
                             <div class="doctor-card">
-                                <img src="${getAvatar(session.doctorTwo.avatarId)}">
+                                <img src="${getdAvatar(session.doctorTwo.avatarId)}">
                                 <div class="doctor">
                                     <h4>${session.doctorTwo.name}</h4>
                                     <p>${session.doctorTwo.hospital}</p>
@@ -441,7 +473,7 @@ function createPreviousSessions(previousSessions)
                         <div class="doctor-block">
 
                             <div class="doctor-card">
-                                <img src="${getAvatar(session.doctorOne.avatarId)}">
+                                <img src="${getdAvatar(session.doctorOne.avatarId)}">
                                 <div class="doctor">
                                     <h4>${session.doctorOne.name}</h4>
                                     <p>${session.doctorOne.hospital}</p>
@@ -527,18 +559,35 @@ async function downloadReport(sessionId)
     }
     if(!response.ok)  //for people who are curious to see other files for them 403 status code
     {
-        alert("Unable to open report.");
+        const error = await response.json()
+        alert(error.detail)
+        switch(error.code)
+        {
+            case("ValidationError"):
+                break;
+            case("TOKEN_EXPIRED"):
+                window.location.href = "login.html";
+                break;
+            case("INVALID_USER"):
+                window.location.href = "login.html";
+                break;
+            case("USER_PROHIBITED"):
+                break;
+            case("FILE_MISSING"):
+                break;
+            default:
+                window.location.href = "login.html";
+                break;
+        }
         return null;
     }
     const report = await response.blob();
     const url = URL.createObjectURL(report);
-    window.open(url, "_blank")
+    window.open(url, "_blank");
+    setTimeout(()=>
     {
-        setTimeout(()=>
-        {
-            URL.revokeObjectURL(url)
-        }, 1000);
-    };
+        URL.revokeObjectURL(url)
+    }, 1000);
 }
 
 //searchinput
@@ -573,7 +622,6 @@ function showSearchedInputs()
                         || session.doctorOne.hospital.toLowerCase().includes(s) || session.department.toLowerCase().includes(s)
                         || session.date.toLowerCase().includes(s) || session.issue.toLowerCase().includes(s));
     })
-    timeline.replaceChildren();
     createPreviousSessions(searchedResult);
 }
 logoutButton.addEventListener("click", async ()=>
@@ -589,7 +637,7 @@ logoutButton.addEventListener("click", async ()=>
         alert("Logout failed.");
         return;
     }
-    accessToken = "";
+    accessToken = null;
     window.location.href="login.html";
 });
 </script>

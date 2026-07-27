@@ -709,6 +709,7 @@ async function askData() {
     updateHeartRate(data.sessionsData);
     updateCharts(data.sessionsData);
 }
+window.addEventListener("DOMContentLoaded", askData);
 function updatePermanentRecord(data)
 {
     healthIdValue.textContent = data.HealthID;
@@ -1768,7 +1769,7 @@ logoutBtn.addEventListener("click", async () => {
                 alert("Logout failed.");
                 return;
             }
-            accessToken = "";
+            accessToken = null;
             window.location.href = "login.html";
         });
 </script>

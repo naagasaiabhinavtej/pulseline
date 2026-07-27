@@ -3,7 +3,7 @@ from jose import JWTError, jwt
 from fastApi import FastAPI, HTTPException, Response, Request, Depends
 from passlib.context import CryptContext
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
-
+from utils import APIException
 security = HTTPBearer()
 
 pwd_context = CryptContext(
@@ -37,8 +37,9 @@ def decodeToken(token:str):
     try:
         return jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
     except JWTError:
-        raise HTTPException(
+        raise APIException(
             status_code=401,
+            code="TOKEN_EXPIRED",
             detail="Invalid Token"
         )
 #for functions use _ in naming and in 

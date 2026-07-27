@@ -36,3 +36,9 @@ def loadBmiData(filePath):
             "P95": float(row["P95"])
         })
     return result
+
+class APIException(Exception):  #so this we make APIException and exception
+    def __init__(self, code, detail, statusCode):
+        self.statusCode = statusCode
+        self.code = code
+        self.detail = detail

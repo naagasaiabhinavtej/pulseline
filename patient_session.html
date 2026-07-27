@@ -394,7 +394,7 @@
         const params = new URLSearchParams(window.location.search)
         let sessionId = params.get(sessionId); 
         let socket;
-        async function askdata()
+        async function askData()
         {
             const result = await giveData();
             if(!result || !result.ok) return;
@@ -905,7 +905,7 @@ logoutBtn.addEventListener("click", async () => {
                 alert("Logout failed.");
                 return;
             }
-            accessToken = "";
+            accessToken = null;
             window.location.href = "login.html";
         });
 </script>

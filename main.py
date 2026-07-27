@@ -6,7 +6,7 @@ from typing import Optional
 from fastapi.middleware.cors import CORSMiddleware
 from auth import createAccessToken, createRefreshToken, decodeToken, hash_password, validate_password, getCurrentUser
 from schema import patientRegister, doctorRegister, LoginRequest, MakeSessionRequest, NewMessage, Notes, AcceptEmergency, sessionResponse,  UpdateMedicalData
-from utils import makeAvatarIdP, loadBmiData
+from utils import makeAvatarIdP, loadBmiData, APIException
 from fastapi.responses import JSONResponse, FileResponse
 from uuid import uuid4
 from pathlib import Path
@@ -93,10 +93,6 @@ class ConnectionManager:
         elif connectionType == ConnectionType.CALL:
             if sessionId not in self.CallConnections:
                 self.CallConnections[sessionId] = {}
-    async def message(self, userId:int, message:dict):
-        connection = self.activeConnections.get(userId)
-        if connection:
-            await connection.send_json(message)
 
 socket = ConnectionManager()
 pendingConnections = {
@@ -457,9 +453,18 @@ async def validation_exception_handler(request, exc):
     return JSONResponse(
         status_code=422,
         content={
-            "type": "ValidationError",
+            "code": "ValidationError",
             "field": error["loc"][-1],               #tuple
-            "message": error["msg"]
+            "detail": error["msg"]
+        }
+    )
+@app.exception_handler(APIException) 
+async def validate_response_error(request, exc):  #request is for the request which caused error
+    return JSONResponse(
+        status_code=exc.status_code,
+        content={
+            "code": exc.code,
+            "detail": exc.detail
         }
     )
 
@@ -469,14 +474,16 @@ def refresh_token(request:Request):  #request is the entire piece of data or wha
         "refreshToken"
     )
     if not refreshToken:
-        raise HTTPException(
+        raise APIException(
             status_code=401,
+            code="MISSING_REFRESH_TOKEN",
             detail="Refresh Token Missing"
         )
     payload = decodeToken(refreshToken)
     if(payload.get("type")!="refresh"):                  #jwtdecode only sees the signature correct not expire only these but you need others also right like whats the purpose of this token
-        raise HTTPException(
+        raise APIException(
             status_code=401,
+            code="INVALID_TOKEN",
             detail="Invalid refresh token"
         )
     
@@ -515,8 +522,9 @@ def patientDatabaseLogin(patientData:patientRegister, response:Response):
         )
         return {"message":"User Registered"}
     except:
-        raise HTTPException(
+        raise APIException(
             status_code=500,
+            code="SERVER_ISSUE",
             detail="Something went wrong while registering user"
         )
 
@@ -544,8 +552,9 @@ def doctorDatabaseLogin(doctorData:doctorRegister, response:Response):
         )
         return {"message":"User Registered"}
     except Exception as e:
-        raise HTTPException(
+        raise APIException(
             status_code=500,
+            code="SERVER_ISSUE",
             detail="Something went wrong while registering user"
         )
 
@@ -557,15 +566,17 @@ def user_database_login(user:LoginRequest, response:Response):
         result = checkPatientId(user.id)
 
     if result is None:
-        raise HTTPException(
+        raise APIException(
             status_code=404,
+            code="USER_MISSING",
             detail="User not found"
         )
     userId, passwordHash = result
 
     if not validate_password(user.password, passwordHash):
-        raise HTTPException(
+        raise APIException(
             status_code=401,
+            code="INVALID_PASSWORD",
             detail="Incorrect password"
         )
 
@@ -601,8 +612,9 @@ def loading(request: Request):
     refreshToken = request.cookies.get("refreshToken")
 
     if refreshToken is None:
-        raise HTTPException(
+        raise APIException(
             status_code=401,
+            code="REFRESH_TOKEN_MISSING",
             detail="Not logged in"
         )
 
@@ -618,8 +630,9 @@ async def createSession(data:MakeSessionRequest, currentUser=Depends(getCurrentU
     doctorId = currentUser["userId"]
 
     if doctorId != data.doctorId:
-        raise HTTPException(
+        raise APIException(
             status_code=403,
+            code="INVALID_USER",
             detail="Unauthorized"
         )
     
@@ -638,8 +651,9 @@ async def createSession(data:MakeSessionRequest, currentUser=Depends(getCurrentU
     if result1 and result2 and result3:
         return {"type":"validDetails"}
     if data.healthId in pendingRequests:
-        raise HTTPException(
+        raise APIException(
             status_code=409,
+            code="INVALID_REQUEST",
             detail="Patient has been requested with other session"
         )
     pendingRequests[data.healthId] = {
@@ -712,14 +726,16 @@ async def respondSession(data:sessionResponse, currentUser=getCurrentUser()):
     userId = currentUser["userId"]
     result1 = checkPatientId(userId)
     if result1 is None:
-        raise HTTPException(
+        raise APIException(
             status_code=404,
+            code="USER_MISSING",
             detail="User Not Found"
         )
     res = pendingRequests.get(userId, [])
     if res is None:
-        raise HTTPException(
+        raise APIException(
             status_code=404,
+            code="INVALID_REQUEST",
             detail="No session Requested for the User"
         )
     if data.message == "success":
@@ -735,8 +751,9 @@ def giveSessionBasicDetails(sessionId:int, currentUser = getCurrentUser()):
     doctorId = currentUser["doctorId"]
     result1 = checkDoctorClinicId(sessionId=sessionId, doctorId=doctorId)
     if not result1:
-        raise HTTPException(
+        raise APIException(
             status_code=404,
+            code="INVALID_SESSION",
             detail="Session Not Found"
         )
     result = getSessionDetails(sessionId)
@@ -752,14 +769,16 @@ def giveSessionBasicDetails(sessionId:int, currentUser = getCurrentUser()):
 def giveDataSessionDetail(sessionId:int, currentUser=Depends(getCurrentUser)):
     result = checkSessionId(sessionId)
     if not result:
-        raise HTTPException(
+        raise APIException(
             status_code=404,
+            code="INVALID_SESSION",
             detail="Session Not Found"
         )
     doctorId = currentUser["userId"]
     if doctorId not in {result.doctor1Id, result.doctor2Id}:
-        raise HTTPException(
+        raise APIException(
             status_code=403,
+            code="INVALID_USER",
             detail="User Unauthorised"
         )
     userDetails = getDoctorDetails(doctorId)
@@ -784,16 +803,18 @@ def patientSessionDetail(sessionId: int, currentUser=Depends(getCurrentUser)):
     result = checkSessionId(sessionId)
 
     if not result:
-        raise HTTPException(
+        raise APIException(
             status_code=404,
+            code="INVALID_SESSION",
             detail="Session Not Found"
         )
 
     patientId = currentUser["userId"]
 
     if patientId != result.patientId:
-        raise HTTPException(
+        raise APIException(
             status_code=403,
+            code="INVALID_USER",
             detail="User Unauthorised"
         )
 
@@ -820,8 +841,9 @@ def patientWaitingRoom(sessionId: int, currentUser=Depends(getCurrentUser)):
     # 1. Session exists?
     session = checkSessionId(sessionId)
     if not session:
-        raise HTTPException(
+        raise APIException(
             status_code=404,
+            code="INVALID_SESSION",
             detail="Session Not Found"
         )
 
@@ -829,8 +851,9 @@ def patientWaitingRoom(sessionId: int, currentUser=Depends(getCurrentUser)):
     patientId = currentUser["userId"]
 
     if patientId != session.patientId:
-        raise HTTPException(
+        raise APIException(
             status_code=403,
+            code="INVALID_USER",
             detail="User Unauthorised"
         )
 
@@ -889,14 +912,16 @@ def doctorWaitingRoom(sessionId: int, currentUser=Depends(getCurrentUser)):
     # 1. Session exists?
     session = checkSessionId(sessionId)
     if not session:
-        raise HTTPException(
+        raise APIException(
             status_code=404,
+            code="INVALID_SESSION",
             detail="Session Not Found"
         )
     doctorId = currentUser["userId"]
     if doctorId not in {session.doctor1Id, session.doctor2Id}:
-        raise HTTPException(
+        raise APIException(
             status_code=403,
+            code="INVALID_USER",
             detail="User Unauthorised"
         )
     # Logged in doctor (profile card)
@@ -967,23 +992,26 @@ def doctorWaitingRoom(sessionId: int, currentUser=Depends(getCurrentUser)):
 def giveFile(request:Request, attachmentId:int):
     refreshToken = request.cookies.get("refreshToken")
     if not refreshToken:
-        raise(HTTPException(
+        raise APIException(
             status_code=403,
+            code="INVALID_USER",
             detail="Unauthorised"
-        ))
+        )
     payload = decodeToken(refreshToken)
     if payload["type"] != "refresh":
-        raise HTTPException(
+        raise APIException(
             status_code=401,
+            code="INVALID_TOKEN",
             detail="Invalid token"
         )
     userId = payload["userId"]
     result = getAttachmentDetails(userId=userId, attachmentId = attachmentId)
     if result is None:
-        raise(HTTPException(
+        raise APIException(
             status_code=404,
+            code="USER_MISSING",  
             detail="User Not Found"
-        ))
+        )
     
     return FileResponse(path=result["filePath"], filename=result["fileName"])
     
@@ -1001,15 +1029,12 @@ def notesUpdate(data:Notes, currUser=Depends(getCurrentUser)):
     notes = data.notes
     result = updateNotes(sessionId=sessionId, userId=userId, notes=notes)
     if result is None:
-        raise HTTPException(
+        raise APIException(
             status_code=404,
+            code="USER_MISSING",
             detail="User Not Found"
         )
     return {"message":"Notes Updatad Finally"}
-
-from fastapi import Depends, HTTPException
-from fastapi.responses import FileResponse
-from pathlib import Path
 
 @app.get("/download_report/{sessionId}")
 async def download_report(
@@ -1019,23 +1044,26 @@ async def download_report(
     userId = currentUser["userId"]
     # Only patients can download reports
     if currentUser["type"] != "patient":
-        raise HTTPException(
+        raise APIException(
             status_code=403,
+            code="INVALID_USER",
             detail="Access denied."
         )
 
     report = getReport(sessionId, userId)      # checks if user is valid and gives the file
     if not report:
-        raise HTTPException(
+        raise APIException(
             status_code=403,
+            code="USER_PROHIBITED",
             detail="User is Forbidden"
         )
 
     file_path = Path(report["reportPath"])
 
     if not file_path.exists():
-        raise HTTPException(
+        raise APIException(
             status_code=404,
+            code="FILE_MISSING",
             detail="File missing."
         )
 
@@ -1156,27 +1184,31 @@ async def emergencyWorkFlow(sessionId:int, doctorId:int, patientName:str, clinic
 @app.post("/sessions/emergency")
 def makeEmergency(data:AcceptEmergency, currUser=Depends(getCurrentUser)):
     if currUser["role"] != "doctor":
-        raise HTTPException(
+        raise APIException(
             status_code=403,
+            code="INVALID_USER",
             detail="Only doctors can start emergency"
         )
     sessionId = data.sessionId
     userId = currUser["userId"]
     result = checkDoctorClinicId(doctorId=userId, clinicId=sessionId)
     if result is None:
-        raise HTTPException(
+        raise APIException(
             status_code=403,
+            code="INVALID_USER",
             detail="Unauthorised"
         )
     res = checkSessionEmergency(sessionId)
     if res is not None:
-        raise HTTPException(
+        raise APIException(
             status_code=403,
+            code="INVALID_REQUEST",
             detail="New Emergency cant be created"
         )
     if activeEmergencies.get(sessionId):
-        raise HTTPException(
+        raise APIException(
             status_code=409,
+            code="EMERGENCY_EXISTS",
             detail="Emergency already in progress"
         )
     activeEmergencies[sessionId] = {
@@ -1209,8 +1241,9 @@ def enterCall(sessionId:int, curr = Depends(getCurrentUser)):
     userId = curr["userId"]
     result = checkSessionUser(userId=userId, sessionId=sessionId)  
     if result is None:
-        raise HTTPException(
+        raise APIException(
             status_code=403,
+            code="USER_INVALID",
             detail="Unauthorised user or session"
         )
     return {"userId":userId,
@@ -1225,16 +1258,18 @@ async def reportSubmission(
     result1 = checkUserPermissionToEndSession(doctorId, sessionId)
     #should see if the user can modify the result submission or not
     if result1 is not None:
-        raise HTTPException(
+        raise APIException(
             status_code=403,
+            code="INVALID_USER",
             detail="User Forbidden"
         )
 
     data = getReportSubmissionData(sessionId, doctorId)
 
     if data is None:
-        raise HTTPException(
+        raise APIException(
             status_code=404,
+            code="INVALID_SESSION",
             detail="Session not found."
         )
 
@@ -1257,8 +1292,9 @@ async def submit_report(
     result1 = checkUserPermissionToEndSession(userId, sessionId)
     #should see if the user can modify the result submission or not
     if result1 is not None:
-        raise HTTPException(
+        raise APIException(
             status_code=403,
+            code="INVALID_USER",
             detail="User Forbidden"
         )
     # these are MIME types so remember these
@@ -1268,14 +1304,16 @@ async def submit_report(
         "image/jpeg"
     }
     if report.content_type not in allowed:
-        raise HTTPException(
+        raise APIException(
             status_code=400,               #bad request means 400
+            code="BAD_REQUEST",
             detail="Invalid file type."
         )
     contents = await report.read()
     if len(contents)>10*1024*1024:
-        raise HTTPException(
+        raise APIException(
             status_code=400,
+            code="BAD_REQUEST",
             detail="Maximum size of file is 10mb"
         )
     file_path = None
@@ -1290,8 +1328,9 @@ async def submit_report(
         #dont forget to make the session resolved and reffered
         #dont forget to increase the count of doctorId 
         if result is None:
-            raise HTTPException(
+            raise APIException(
                 status_code=500,
+                code="SERVER_ISSUE",
                 detail="Unable to complete session."
             )
         connections = socket.get(connectionType=ConnectionType.SESSION, sessionId=sessionId)
@@ -1305,12 +1344,12 @@ async def submit_report(
         return {
             "message":"Session Completed Finally"
         }
-    except HTTPException:
+    except APIException:
         raise
     except Exception as e:
         if file_path and os.path.exists(file_path):
             os.remove(file_path)
-        raise HTTPException(status_code=500, detail=f"Internal server problem ")  #no need of priing the str because no need to say whats problem with the server
+        raise APIException(status_code=500,code="SERVER_ISSUE", detail=f"Internal server problem ")  #no need of priing the str because no need to say whats problem with the server
     
 @app.post("/update_medical_data")
 async def updateMedicalData(
@@ -1320,8 +1359,9 @@ async def updateMedicalData(
     userId = currentUser["userId"]
     success = updateMedicalDataDB(patientId, data)
     if not success:
-        raise HTTPException(
+        raise APIException(
             status_code=500,
+            code="SERVER_ISSUE",
             detail="Unable to update medical data"
         )
 
@@ -1334,15 +1374,17 @@ async def patientMedicalData(currentUser=Depends(getCurrentUser)):
     patientId = currentUser["userId"]
     role = currentUser["role"]
     if role!="patient":
-        raise HTTPException(
+        raise APIException(
             status_code=403,
+            code="INVALID_USER",
             detail="User Forbidden"
         )
 
     data = getPatientMedicalData(patientId)
     if data is None:
-        raise HTTPException(
+        raise APIException(
             status_code=404,
+            code="USER_MISSING",
             detail="Patient not found"
         )
     gender = data["gender"]
@@ -1371,8 +1413,9 @@ async def patientMedicalData(currentUser=Depends(getCurrentUser)):
 @app.get("/patient_previous_sessions")
 async def patientPreviousSessions(currentUser=Depends(getCurrentUser)):
     if currentUser["role"] != "patient":
-        raise HTTPException(
+        raise APIException(
             status_code=403,
+            code="INVALID_USER",
             detail="Only patients can access previous sessions."
         )
 
@@ -1381,8 +1424,9 @@ async def patientPreviousSessions(currentUser=Depends(getCurrentUser)):
     data = getPreviousSessions(patientId)
 
     if data is None:
-        raise HTTPException(
+        raise APIException(
             status_code=404,
+            code="USER_MISSING",
             detail="Patient data not found."
         )
 
@@ -1392,14 +1436,16 @@ async def patientPreviousSessions(currentUser=Depends(getCurrentUser)):
 async def patientSessions(currentUser = Depends(getCurrentUser)):
     userId = currentUser["userId"]
     if currentUser["role"] != "patient":
-            raise HTTPException(
+            raise APIException(
                 status_code=403,
+                code="INVALID_USER",
                 detail="Only patients can access previous sessions."
             ) 
     data = getPatientSessions(userId)
     if data is None:
-        raise HTTPException(
+        raise APIException(
             status_code=404,
+            code="USER_MISSING",
             detail="Patient not found."
         )
     return data
@@ -1407,15 +1453,17 @@ async def patientSessions(currentUser = Depends(getCurrentUser)):
 @app.get("/doctor_dashboard")
 async def doctorDashboard(currentUser=Depends(getCurrentUser)):
     if currentUser["role"] != "doctor":
-        raise HTTPException(
+        raise APIException(
             status_code=403,
+            code="INVALID_USER",
             detail="Only doctors can access this page."
         )
     doctorId = currentUser["userId"]
     data = getDoctorDashboardData(doctorId)
     if data is None:
-        raise HTTPException(
+        raise APIException(
             status_code=404,
+            code="USER_MISSING",
             detail="Doctor not found."
         )
 
@@ -1424,8 +1472,9 @@ async def doctorDashboard(currentUser=Depends(getCurrentUser)):
 @app.get("/index")
 async def doctorIndex(currentUser=Depends(getCurrentUser)):
     if currentUser["role"] != "doctor":
-        raise HTTPException(
+        raise APIException(
             status_code=403,
+            code="INVALID_USER",
             detail="Only doctors can access this page."
         )
 
@@ -1434,127 +1483,128 @@ async def doctorIndex(currentUser=Depends(getCurrentUser)):
     data = getDoctorHomeData(doctorId)
 
     if data is None:
-        raise HTTPException(
+        raise APIException(
             status_code=404,
+            code="USER_MISSING",
             detail="Doctor not found."
         )
 
     return data
 
 
-def make_session(health_id:str = Form(...), clinic_id:str = Form(...), department:str = Form(...), assigned_doctor_id:str = Form(...)):
-    #make check when unkown patient_name comes or unknown_doc_name or clinic name comes
-    return create_patient_session(health_id, clinic_id, department, assigned_doctor_id)
+# def make_session(health_id:str = Form(...), clinic_id:str = Form(...), department:str = Form(...), assigned_doctor_id:str = Form(...)):
+#     #make check when unkown patient_name comes or unknown_doc_name or clinic name comes
+#     return create_patient_session(health_id, clinic_id, department, assigned_doctor_id)
 
 
-@app.post("/api/sessions/{session_id}/submit")
-async def complete_session(request:Request,chief_complaint:str = Form(...), additional_vitals:str = Form(...), uploaded_filepath:UploadFile = File(...),
-                            blood_pressure: Optional[str] = Form(None), blood_sugar: Optional[float] = Form(None), temperature:Optional[float] = Form(None), 
-                            heart_rate: Optional[int] = Form(None)):
-    file_path = None
-    try:
-        _, file_ext = os.path.splitext(uploaded_filepath.filename)
-        if not file_ext:
-            file_ext = '.jpg'
-        session_id = request.path_params.get("session_id")
-        resolved_time = datetime.now().strftime("%Y%m%d_%H%M%S")
-        file_total_name = f"{str(session_id)}_{resolved_time}{file_ext}"
-        file_path = os.path.join(TO_UPLOAD_DIR, file_total_name)
-        with open(file_path, "wb") as f:
-            content = await uploaded_filepath.read()
-            f.write(content)
-        result = complete_patient_session(session_id=int(session_id), chief_complaint=chief_complaint, additional_vitals=additional_vitals,uploaded_filepath=file_path,resolved_time=resolved_time, blood_pressure=blood_pressure, blood_sugar=blood_sugar,temperature=temperature, heart_rate=heart_rate )
-        return result
-    except Exception as e:
-        if file_path and os.path.exists(file_path):
-            os.remove(file_path)
-        raise HTTPException(status_code=500, detail=f"Internal server problem : {str(e)}")
+# @app.post("/api/sessions/{session_id}/submit")
+# async def complete_session(request:Request,chief_complaint:str = Form(...), additional_vitals:str = Form(...), uploaded_filepath:UploadFile = File(...),
+#                             blood_pressure: Optional[str] = Form(None), blood_sugar: Optional[float] = Form(None), temperature:Optional[float] = Form(None), 
+#                             heart_rate: Optional[int] = Form(None)):
+#     file_path = None
+#     try:
+#         _, file_ext = os.path.splitext(uploaded_filepath.filename)
+#         if not file_ext:
+#             file_ext = '.jpg'
+#         session_id = request.path_params.get("session_id")
+#         resolved_time = datetime.now().strftime("%Y%m%d_%H%M%S")
+#         file_total_name = f"{str(session_id)}_{resolved_time}{file_ext}"
+#         file_path = os.path.join(TO_UPLOAD_DIR, file_total_name)
+#         with open(file_path, "wb") as f:
+#             content = await uploaded_filepath.read()
+#             f.write(content)
+#         result = complete_patient_session(session_id=int(session_id), chief_complaint=chief_complaint, additional_vitals=additional_vitals,uploaded_filepath=file_path,resolved_time=resolved_time, blood_pressure=blood_pressure, blood_sugar=blood_sugar,temperature=temperature, heart_rate=heart_rate )
+#         return result
+#     except Exception as e:
+#         if file_path and os.path.exists(file_path):
+#             os.remove(file_path)
+#         raise APIException(status_code=500,code="SERVER_ISSUE", detail=f"Internal server problem : {str(e)}")
         
 
-@app.get("/api/sessions/emergency")
-async def connect_hospitals(session_id:int = Query(..., description="The ID of the current consultation session"),
-                      clinic_id: int = Query(..., description="The ID of the requesting clinic"),
-                      department: str = Query(..., description="The department stream (e.g., Cardiology)")):
-    try:
-        results = emergency_connect_hospitals(session_id=session_id, clinic_id=clinic_id, department=department)
+# @app.get("/api/sessions/emergency")
+# async def connect_hospitals(session_id:int = Query(..., description="The ID of the current consultation session"),
+#                       clinic_id: int = Query(..., description="The ID of the requesting clinic"),
+#                       department: str = Query(..., description="The department stream (e.g., Cardiology)")):
+#     try:
+#         results = emergency_connect_hospitals(session_id=session_id, clinic_id=clinic_id, department=department)
         
-        for result in results:
-            await connections[result[0]].send_text()
-        return results
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Internal sever issue: {str(e)}")
+#         for result in results:
+#             await connections[result[0]].send_text()
+#         return results
+#     except Exception as e:
+#         raise APIException(status_code=500, detail=f"Internal sever issue: {str(e)}")
     
-connections = {}
-@app.websocket("/ws/doctor")
-async def make_connections_doctor(websocket:WebSocket):
-    doctor_id = websocket.query_params["doctor_id"]
-    await websocket.accept()
-    connections[doctor_id] = websocket
-    result = make_available_doctor(doctor_id=doctor_id)
-    return result
-
-    
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+# connections = {}
+# @app.websocket("/ws/doctor")
+# async def make_connections_doctor(websocket:WebSocket):
+#     doctor_id = websocket.query_params["doctor_id"]
+#     await websocket.accept()
+#     connections[doctor_id] = websocket
+#     result = make_available_doctor(doctor_id=doctor_id)
+#     return result
 
     
-@app.post("/api/sessions/{session_id}/escalate")
-async def escalate_session(session_id: int):
-    try:
-        emergency_data = trigger_emergency_escalation(session_id)
 
-        if not emergency_data:
-            raise HTTPException(
-                status_code=404, 
-                detail=f"Session with ID {session_id} not found."
-            )
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    
+# @app.post("/api/sessions/{session_id}/escalate")
+# async def escalate_session(session_id: int):
+#     try:
+#         emergency_data = trigger_emergency_escalation(session_id)
+
+#         if not emergency_data:
+#             raise HTTPException(
+#                 status_code=404, 
+#                 detail=f"Session with ID {session_id} not found."
+#             )
             
-        return{
-            "status": "success",
-            "message": "Session escalated to emergency successfully.",
-            "data": emergency_data
-        }
+#         return{
+#             "status": "success",
+#             "message": "Session escalated to emergency successfully.",
+#             "data": emergency_data
+#         }
         
-    except Exception as e:
-        raise HTTPException(
-            status_code=500, 
-            detail=f"Internal server error during escalation: {str(e)}"
-        )
+#     except Exception as e:
+#         raise HTTPException(
+#             status_code=500, 
+#             detail=f"Internal server error during escalation: {str(e)}"
+#         )
 
 
 
