@@ -226,13 +226,14 @@
     <script>
         lucide.createIcons();
         let accessToken = null;
+        let socket = null;
         async function refreshtoken()
         {
             const result = await fetch("/refresh",
-                {
-                    method:"GET",
-                    credentials: "include"
-                });
+            {
+                method:"GET",
+                credentials: "include"
+            });
             if(result.ok)
             {
                 const data = await result.json();
@@ -250,7 +251,7 @@
             const colors = ["blue", "green", "purple", "orange"];
             return colors[index % 4];
         }
-        function getAvatar(id) 
+        function getpAvatar(id) 
         {
             if (id === "first") return "avatar_patients/adult_female.png";
             if (id === "second") return "avatar_patients/adult_male.png";
@@ -259,9 +260,16 @@
             if (id === "fifth") return "avatar_patients/young_boy.png";
             if (id === "sixth") return "avatar_patients/young_girl.png";            
         }
+        function getdAvatar(id) 
+        {
+            if (id === "first") return "avatar_doctors/adult_female.png";
+            if (id === "second") return "avatar_doctors/adult_male.png";
+            if (id === "third") return "avatar_doctors/old_female.png";
+            if (id === "fourth") return "avatar_doctors/old_male.png";
+        }
         async function giveData()
         {
-            const result = await fetch("/patient_sessions",
+            let result = await fetch("/patient_sessions",
             {
                 method:"GET",
                 headers:{
@@ -272,15 +280,37 @@
             {
                 const data = await refreshtoken();
                 if(!data) return;
+                result = await fetch("/patient_sessions",
+                {
+                    method:"GET",
+                    headers:{
+                        "Authorization":`Bearer ${accessToken}`
+                    }
+                });
             }
-            const finalresult = await fetch("/patient_sessions",
+            if(!result.ok)
             {
-                method:"GET",
-                headers:{
-                    "Authorization":`Bearer ${accessToken}`
+                const error = await result.json()
+                alert(error.detail); 
+                switch(error.code)
+                {
+                    case("TOKEN_EXPIRED"):
+                        window.location.href = "login.html";
+                        break;
+                    case("INVALID_USER"):
+                        window.location.href = "login.html";
+                        break;
+                    case("USER_MISSING"):
+                        window.location.href = "login.html";
+                        break;
+                    case("ValidationError"):
+                        break;
+                    default:
+                        window.location.href = "login.html";
                 }
-            });
-            return finalresult;
+                return null;
+            }
+            return result;
         }
         //names should be written
         const heading = document.querySelector(".welcome-text"); // no by tag name because it always returns list no matter what happens
@@ -310,7 +340,7 @@
             const currentSessions = data.currentSessions;
             sessions = currentSessions;
             heading.textContent = `Welcome, ${patientName}`;
-            avatare.setAttribute("src", getAvatar(avatar));
+            avatare.setAttribute("src", getpAvatar(avatar));
             let size = currentSessions.length;
             profileName.textContent = `${patientName}`;
             active_sessions = size;
@@ -323,8 +353,9 @@
                 // const colors = ["blue", "green", "purple", "orange"];
                 // const presentColor = colors[count % 4];
                 count++;
-                let avatarId = getAvatar(element.avatarId);
+                let avatarId = getdAvatar(element.avatarId);
                 let row = document.createElement("tr");
+                row.id = element.sessionId;
                 row.innerHTML = `
                                 <td><span class="session-id id-${presentColor}">${element.sessionId}</span></td>
                                 <td>
@@ -351,6 +382,94 @@
                 tablename.appendChild(row);
             });
             lucide.createIcons();
+        socket = new WebSocket(`ws://${window.location.host}/ws`);
+        socket.onopen = ()=>
+        {
+            console.log("connected websocket");
+            socket.send(JSON.stringify({
+                "type":"connect",
+                "accessToken":accessToken,
+                "page":"active"
+            }));
+        }
+        socket.onmessage = (event)=>
+        {
+            const data = JSON.parse(event.data);   // no await async because this runs only when frontend gets the message after waiting
+            if(data.type === "session_making_details")
+            {
+                sessionOverlay.classList.remove("hidden");
+                const doctor = data.doctorName;
+                const clinic = data.clinicName;
+                const department = data.department;
+                doctorNameEl.textContent = `${doctor}`;
+                clinicNameEl.textContent = `${clinic}`;
+                departmentNameEl.textContent = `${department}`;
+                //timer
+                let second = 300;
+                let timer = setInterval(displayTimer, 1000);
+                let minutes, seconds;
+                function displayTimer()
+                {
+                    minutes = Math.floor(second/60);  // to get nos rounded off
+                    seconds = second%60;
+                    timerEl.textContent = `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+                    second--;
+                    if(second<0)
+                    {
+                        clearInterval(timer);
+                        rejectSession();
+                        console.log("timer ended");
+                    }
+                }
+            }
+            else if(data.type === "session_success_details")
+            {
+                const sessionDetails = data.sessionDetails;
+                sessions.push(sessionDetails);              //try to check if there already exists that session id if needed.
+                let avatarId = getdAvatar(sessionDetails.avatarId);
+                let index = sessions.length-1;
+                let presentColore = getColor(index);
+                    let row = document.createElement("tr");
+                    row.id = sessionDetails.sessionId;
+                    row.innerHTML = `
+                                <td><span class="session-id id-${presentColore}">${sessionDetails.sessionId}</span></td>
+                                <td>
+                                    <div class="patient-cell">
+                                        <img src=${avatarId} alt="${sessionDetails.doctorName}">
+                                        <div class="patient-info">
+                                            <span class="p-name">${sessionDetails.doctorName}</span>
+                                            <span class="p-meta">Specialty: ${sessionDetails.doctorSpeciality}</span>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="time-cell">
+                                        <i data-lucide="calendar"></i>
+                                        <div>
+                                            <div class="date-text">${sessionDetails.sessionStartdate}</div>
+                                            <div class="time-text">${sessionDetails.sessionStarttime}</div>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td><span class="status-badge active-bg">Active</span></td>
+                                <td style="text-align: right;"><button onclick="window.location.href='patient_session.html'" class="action-btn"><i data-lucide="chevron-right"></i></button></td>
+                            `
+                    tablename.appendChild(row);
+            }
+            else if(data.type === "sessionCompleted")
+            {
+                const sessionId = data.sessionId;
+                sessions = sessions.filter((session)=>
+                {
+                    return session.id!==sessionId           //!==
+                });
+                const row = document.querySelector(sessionId);
+                if (row) {
+                    row.remove();
+                }
+                active_sessions = sessions.length;
+            }
+        }
         }
         document.addEventListener("DOMContentLoaded", askData);
         let result;
@@ -384,10 +503,11 @@
             let index = 0;
             searchedSessions.forEach((element)=>
             {
-                let avatarId = getAvatar(element.avatarId);
+                let avatarId = getdAvatar(element.avatarId);
                 let presentColor = getColor(index);
                 index++;
                 let row = document.createElement("tr");
+                row.id = element.sessionId
                 row.innerHTML = `
                                 <td><span class="session-id id-${presentColor}">${element.sessionId}</span></td>
                                 <td>
@@ -416,84 +536,10 @@
             return;
         }
 
-        const socket = new WebSocket(`ws://${window.location.host}/ws`);
-        socket.onopen = ()=>
-        {
-            console.log("connected websocket");
-        }
-        socket.onmessage = (event)=>
-        {
-            const data = JSON.parse(event.data);   // no await async because this runs only when frontend gets the message after waiting
-            if(data.type === "session_making_details")
-            {
-                sessionOverlay.classList.remove("hidden");
-                const doctor = data.doctorName;
-                const clinic = data.clinicName;
-                const department = data.department;
-                doctorNameEl.textContent = `${doctor}`;
-                clinicNameEl.textContent = `${clinic}`;
-                departmentNameEl.textContent = `${department}`;
-                //timer
-                let second = 300;
-                let timer = setInterval(displayTimer, 1000);
-                let minutes, seconds;
-                function displayTimer()
-                {
-                    minutes = Math.floor(second/60);  // to get nos rounded off
-                    seconds = second%60;
-                    timerEl.textContent = `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
-                    second--;
-                    if(second<0)
-                    {
-                        clearInterval(timer);
-                        rejectSession();
-                        console.log("timer ended");
-                    }
-                }
-
-            }
-            else if(data.type === "session_success_details")
-            {
-                const sessionDetails = data.sessionDetails;
-                sessions.push(sessionDetails);              //try to check if there already exists that session id if needed.
-                let avatarId = getAvatar(sessionDetails.avatarId);
-                let index = sessions.length-1;
-                let presentColore = getColor(index);
-                    let row = document.createElement("tr");
-                    row.innerHTML = `
-                                <td><span class="session-id id-${presentColore}">${sessionDetails.sessionId}</span></td>
-                                <td>
-                                    <div class="patient-cell">
-                                        <img src=${avatarId} alt="${sessionDetails.doctorName}">
-                                        <div class="patient-info">
-                                            <span class="p-name">${sessionDetails.doctorName}</span>
-                                            <span class="p-meta">Specialty: ${sessionDetails.doctorSpeciality}</span>
-                                        </div>
-                                    </div>
-                                </td>
-                                <td>
-                                    <div class="time-cell">
-                                        <i data-lucide="calendar"></i>
-                                        <div>
-                                            <div class="date-text">${sessionDetails.sessionStartdate}</div>
-                                            <div class="time-text">${sessionDetails.sessionStarttime}</div>
-                                        </div>
-                                    </div>
-                                </td>
-                                <td><span class="status-badge active-bg">Active</span></td>
-                                <td style="text-align: right;"><button onclick="window.location.href='patient_session.html'" class="action-btn"><i data-lucide="chevron-right"></i></button></td>
-                            `
-                    tablename.appendChild(row);
-            }
-            else if(data.type === "sessionCompleted")
-            {
-
-            }
-        }
     //try to do these accept and reject in websockets as they are faster 
     async function acceptSession()
     {
-        const result = await fetch("/sessionvalidatation", {
+        let result = await fetch("/sessionvalidatation", {
             method:"POST",
             headers:{
                 "Content-Type": "application/json",
@@ -502,19 +548,48 @@
             body:JSON.stringify({
                 message:"success"})
         });
+        if(result.status === 401)
+        {
+            const data = await refreshtoken();
+            if(!data) return;
+            result = await fetch("/sessionvalidatation", {
+            method:"POST",
+            headers:{
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${accessToken}`
+            },
+            body:JSON.stringify({
+                message:"success"})});
+        }
         if(result.ok)
         {
             sessionOverlay.classList.add("hidden");
         }
         else 
         {
-            console.log("Error:", data.message || "Something went wrong");
+            const error = await result.json()
+            alert(error.detail); 
+            switch(error.code)
+            {
+                case("TOKEN_EXPIRED"):
+                    window.location.href = "login.html";
+                    break;
+                case("INVALID_REQUEST"):
+                    break;
+                case("USER_MISSING"):
+                    window.location.href = "login.html";
+                    break;
+                case("ValidationError"):
+                    break;
+                default:
+                    window.location.href = "login.html";
+            }
         }
         return;
     }
     async function rejectSession()
     {
-        const result = await fetch("/sessionvalidatation", {
+        let result = await fetch("/sessionvalidatation", {
             method:"POST",
             headers:{
                 "Content-Type": "application/json",
@@ -523,18 +598,48 @@
             body:JSON.stringify({
                 message:"failure"})
         });
+
+        if(result.status === 401)
+        {
+            const data = await refreshtoken();
+            if(!data) return;
+            result = await fetch("/sessionvalidatation", {
+            method:"POST",
+            headers:{
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${accessToken}`
+            },
+            body:JSON.stringify({
+                message:"failure"})});
+        }
         if(result.ok)
         {
             sessionOverlay.classList.add("hidden");
         }
         else 
         {
-            console.log("Error:", data.message || "Something went wrong");
+            const error = await result.json()
+            alert(error.detail); 
+            switch(error.code)
+            {
+                case("TOKEN_EXPIRED"):
+                    window.location.href = "login.html";
+                    break;
+                case("INVALID_REQUEST"):
+                    break;
+                case("USER_MISSING"):
+                    window.location.href = "login.html";
+                    break;
+                case("ValidationError"):
+                    break;
+                default:
+                    window.location.href = "login.html";
+            }
         }
         return;
     }
-    logoutBtn.addEventListener("click", async () => {
-            await fetch("/logout", {
+    logout.addEventListener("click", async () => {
+            const result = await fetch("/logout", {
                 method: "POST",
                 credentials: "include"
             });

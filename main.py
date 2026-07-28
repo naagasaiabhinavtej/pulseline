@@ -67,7 +67,7 @@ class ConnectionManager:
                 "websocket": websocket,
                 "role": role
             }
-    def disconnect(self, userId:int, connectionType:ConnectionType, sessionId:sessionId|None = None):
+    def disconnect(self, userId:int, connectionType:ConnectionType, sessionId:int|None = None):
         if connectionType == ConnectionType.ACTIVE:
             self.activeConnections.pop(userId, None)       #do nothing if not exists
         elif connectionType == ConnectionType.SESSION:
@@ -153,7 +153,7 @@ async def websocketEndpoint(websocket:WebSocket):
                                     }
                                 )
         else:
-            await socket.connect(userId=userId, websocket=websocket, role=role, connectionType=ConnectionType(data["page"]), sessionId=data.get("sessionId"))
+            await socket.connect(userId=userId, websocket=websocket, role=role, connectionType=ConnectionType(data["page"]))
         if data["page"] == "call":
             participants = socket.get(
                 connectionType=ConnectionType.CALL,
@@ -675,7 +675,7 @@ async def createSession(data:MakeSessionRequest, currentUser=Depends(getCurrentU
                     "sessionId":data.sessionId
                 })
             else:
-                pendingConnections["active"].setdefault("doctorId", []).append({
+                pendingConnections["active"].setdefault(doctorId, []).append({
                     "type":"Accepted",
                     "sessionId":data.sessionId
                 })
@@ -701,7 +701,7 @@ async def createSession(data:MakeSessionRequest, currentUser=Depends(getCurrentU
                             "type":"Rejected"
                         })
             else:
-                pendingConnections["active"].setdefault("doctorId", []).append({
+                pendingConnections["active"].setdefault(doctorId, []).append({
                     "type":"Rejected"
                 })
             #fill here what happens when user clicks success or when user rejects and other things
@@ -714,7 +714,7 @@ async def createSession(data:MakeSessionRequest, currentUser=Depends(getCurrentU
                 "type":"Expired"
             })
         else:
-            pendingConnections[ConnectionType.ACTIVE].setdefault(doctorId, []).append(
+            pendingConnections[ConnectionType.ACTIVE.value].setdefault(doctorId, []).append(
                 {
                     "type":"Expired"
                 }
@@ -722,7 +722,7 @@ async def createSession(data:MakeSessionRequest, currentUser=Depends(getCurrentU
 
             
 @app.post("/sessionvalidation")
-async def respondSession(data:sessionResponse, currentUser=getCurrentUser()):
+async def respondSession(data:sessionResponse, currentUser=Depends(getCurrentUser)):
     userId = currentUser["userId"]
     result1 = checkPatientId(userId)
     if result1 is None:
@@ -747,8 +747,8 @@ async def respondSession(data:sessionResponse, currentUser=getCurrentUser()):
 
   
 @app.get("/success-failure/sessionDetails/{sessionId}")
-def giveSessionBasicDetails(sessionId:int, currentUser = getCurrentUser()):
-    doctorId = currentUser["doctorId"]
+def giveSessionBasicDetails(sessionId:int, currentUser = Depends(getCurrentUser)):
+    doctorId = currentUser["userId"]
     result1 = checkDoctorClinicId(sessionId=sessionId, doctorId=doctorId)
     if not result1:
         raise APIException(
@@ -925,7 +925,7 @@ def doctorWaitingRoom(sessionId: int, currentUser=Depends(getCurrentUser)):
             detail="User Unauthorised"
         )
     # Logged in doctor (profile card)
-    loginDoctorDetails = getDoctorDetails(userId)
+    loginDoctorDetails = getDoctorDetails(doctorId)
     # Actual doctor 1
     doctor1Details = getDoctorDetails(session.doctor1Id)
     # Actual doctor 2
@@ -1087,7 +1087,7 @@ async def emergencyWorkFlow(sessionId:int, doctorId:int, patientName:str, clinic
                     "createdAt":timestamp
                 })
             else:
-                pendingConnections[ConnectionType.ACTIVE].setdefault(doctors, []).append({    #so that if key doesnt exist makes a list 
+                pendingConnections[ConnectionType.ACTIVE.value].setdefault(doctors, []).append({    #so that if key doesnt exist makes a list 
                     "type":"emergencyConnection",
                     "sessionId":sessionId,
                     "patientName":patientName,
@@ -1139,7 +1139,7 @@ async def emergencyWorkFlow(sessionId:int, doctorId:int, patientName:str, clinic
                     "createdAt":timestamp
                 })
             else:
-                pendingConnections[ConnectionType.ACTIVE].setdefault(doctors, []).append({
+                pendingConnections[ConnectionType.ACTIVE.value].setdefault(doctors, []).append({
                     "type":"emergencyConnection",
                     "sessionId":sessionId,
                     "patientName":patientName,
@@ -1357,12 +1357,12 @@ async def updateMedicalData(
     currentUser=Depends(getCurrentUser)
 ): 
     userId = currentUser["userId"]
-    success = updateMedicalDataDB(patientId, data)
+    success = updateMedicalDataDB(userId, data)
     if not success:
         raise APIException(
-            status_code=500,
-            code="SERVER_ISSUE",
-            detail="Unable to update medical data"
+            status_code=404,
+            code="USER_MISSING",
+            detail="Unable to update medical data as user is not found"
         )
 
     return {
