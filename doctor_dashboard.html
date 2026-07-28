@@ -182,6 +182,7 @@
     <script>
         lucide.createIcons();
         let accessToken = null;
+        let socket = null;
         async function refreshtoken()
         {
             const result = await fetch("/refresh",
@@ -203,7 +204,8 @@
         }
         async function giveData()
         {
-            const result = await fetch("/doctor_dashboard",
+            let result;
+            result = await fetch("/doctor_dashboard",
             {
                 method:"GET",
                 headers:{
@@ -214,15 +216,38 @@
             {
                 const data = await refreshtoken();
                 if(!data) return null;
+                result = await fetch("/doctor_dashboard",
+                {
+                    method:"GET",
+                    headers:{
+                        "Authorization":`Bearer ${accessToken}`
+                    }
+                });
             }
-            const finalresult = await fetch("/doctor_dashboard",
+            if(!result.ok)
             {
-                method:"GET",
-                headers:{
-                    "Authorization":`Bearer ${accessToken}`
+                const error = await result.json()
+                alert(error.detail); 
+                switch(error.code)
+                {
+                    case("TOKEN_EXPIRED"):
+                        window.location.href = "login.html";
+                        break;
+                    case("INVALID_USER"):
+                        window.location.href = "login.html";
+                        break;
+                    case("USER_MISSING"):
+                        window.location.href = "login.html";
+                        break;
+                    case("ValidationError"):
+                        break;
+                    default:
+                        window.location.href = "login.html";
                 }
-            });
-            return finalresult;
+                return null;
+            }
+            
+            return result;
         }
         function getAvatar(id) 
         {
@@ -289,17 +314,49 @@
             // ===== Emergency =====
             emergencyHotline.textContent = data.clinic.emergencyHotline;
             lucide.createIcons();
+            socket = new WebSocket(`ws://${window.location.host}/ws`);  //this is only correct for now for production ready code there is other way to connect it 
+            socket.onopen = () => {
+                console.log("Connected to WebSocket");
+                socket.send(JSON.stringify({
+                    "type":"connect",
+                    "accessToken":accessToken,
+                    "page":"active"
+                }));
+            };
+            socket.onmessage = (event) => {
+                const data = JSON.parse(event.data);
+                if (data.type === "emergencyConnection") {
+                    emergencyQueue.push({
+                        // requestId: data.requestId,
+                        sessionId: data.sessionId,
+                        patientName: data.patientName,
+                        hospitalName: data.hospitalName,
+                        department: data.department,
+                        createdAt: data.createdAt
+                    });
+                    if (emergencyQueue.length === 1) {
+                        currentIndex = 0;
+                    }
+                    renderEmergency();
+                }
+                else if (data.type === "EmergencyResolved") {
+                    emergencyQueue = emergencyQueue.filter(                                 //good idea of filtering
+                        emergency => emergency.sessionId !== data.sessionId
+                    );
+                    if (currentIndex >= emergencyQueue.length) {
+                        currentIndex = Math.max(0, emergencyQueue.length - 1);
+                    }
+                    renderEmergency();
+                }
+            };
         }
         window.addEventListener("DOMContentLoaded", askData);
-
         // Emergency Panel
         const emergencyModal = document.getElementById("emergency-modal");
-
         // Header
         const emergencyCount = document.getElementById("emergency-count");
         const currentEmergency = document.getElementById("current-emergency");
         const totalEmergencies = document.getElementById("total-emergencies");
-
         // Navigation
         const prevEmergency = document.getElementById("prev-emergency");
         const nextEmergency = document.getElementById("next-emergency");
@@ -310,56 +367,14 @@
         const hospitalName = document.getElementById("hospital-name");
         const patientProblem = document.getElementById("patient-problem");
         const waitingTime = document.getElementById("waiting-time");
-
+        const acceptButton = document.getElementById("accept-emergency");
+        const rejectButton = document.getElementById("reject-emergency");
         // Queue
         let emergencyQueue = [];
         let currentIndex = 0;
 
         // Waiting timer
         let waitingInterval = null;
-
-        const socket = new WebSocket(`ws://${window.location.host}/ws`);
-
-        socket.onopen = () => {
-            console.log("Connected to WebSocket");
-        };
-
-        socket.onmessage = (event) => {
-
-            const data = JSON.parse(event.data);
-
-            if (data.type === "emergencyConnection") {
-
-                emergencyQueue.push({
-                    // requestId: data.requestId,
-                    sessionId: data.sessionId,
-                    patientName: data.patientName,
-                    hospitalName: data.hospitalName,
-                    problem: data.problem,
-                    createdAt: data.createdAt
-                });
-
-                if (emergencyQueue.length === 1) {
-                    currentIndex = 0;
-                }
-
-                renderEmergency();
-            }
-
-            else if (data.type === "EmergencyResolved") {
-
-                emergencyQueue = emergencyQueue.filter(                                 //good idea of filtering
-                    emergency => emergency.sessionId !== data.sessionId
-                );
-
-                if (currentIndex >= emergencyQueue.length) {
-                    currentIndex = Math.max(0, emergencyQueue.length - 1);
-                }
-
-                renderEmergency();
-            }
-
-        };
 
         function renderEmergency()
         {
@@ -385,7 +400,7 @@
             emergencySessionId.textContent = current.sessionId;
             patientName.textContent = current.patientName;
             hospitalName.textContent = current.hospitalName;
-            patientProblem.textContent = current.problem;
+            patientProblem.textContent = current.department;
 
             // Header
             emergencyCount.textContent = emergencyQueue.length;
@@ -588,11 +603,11 @@
 
         <div class="modal-actions">
 
-            <button class="btn-reject">
+            <button id="reject-emergency"class="btn-reject">
                 Reject
             </button>
 
-            <button class="btn-accept">
+            <button id="accept-emergency"class="btn-accept">
                 Accept
             </button>
 
