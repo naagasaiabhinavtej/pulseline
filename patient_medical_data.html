@@ -31,7 +31,7 @@
                     <i class="fa-solid fa-clock-rotate-left"></i> Previous Sessions
                 </a>
             </nav>
-            <button class="logout-btn">
+            <button class="logout-btn" id="logout-btn">
                 <i class="fa-solid fa-right-from-bracket"></i> Logout
             </button>
         </aside>
@@ -575,7 +575,7 @@
     }
     async function giveData()
     {
-        const result = await fetch("/patient_medical_data",
+        let result = await fetch("/patient_medical_data",
         {
             method:"GET",
             headers:{
@@ -586,15 +586,37 @@
         {
             const data = await refreshtoken();
             if(!data) return;
+            result = await fetch("/patient_medical_data",
+            {
+                method:"GET",
+                headers:{
+                    "Authorization":`Bearer ${accessToken}`
+                }
+            });
         }
-        const finalresult = await fetch("/patient_medical_data",
+        if(!result.ok)
         {
-            method:"GET",
-            headers:{
-                "Authorization":`Bearer ${accessToken}`
+            const error = await result.json()
+            alert(error.detail); 
+            switch(error.code)
+            {
+                case("TOKEN_EXPIRED"):
+                    window.location.href = "login.html";
+                    break;
+                case("INVALID_USER"):
+                    window.location.href = "login.html";
+                    break;
+                case("USER_MISSING"):
+                    window.location.href = "login.html";
+                    break;
+                case("ValidationError"):
+                    break;
+                default:
+                    window.location.href = "login.html";
             }
-        });
-        return finalresult;
+            return null;
+        }
+        return result;
     }
 const avatar = document.querySelector(".avatar");
 const profileName = document.querySelector(".profile-name");
@@ -691,6 +713,11 @@ const postMealData = [
     // 142,138,141,149,146,144,140,143,147,145,
     // 148,143,141,146,150,147,144,148,145
 ];
+const tempLabels = [];
+const temperatureData = [];
+
+const heartLabels = [];
+const heartRateData = [];
 let sessionsData = [];
 async function askData() {
     const res = await giveData();
@@ -823,7 +850,7 @@ function calculateAdultBMI(bmi)
         }
         else if(bmi<row.P85)
         {
-            status = "Healthyweight";
+            status = "Healthy weight";
             color = "#2ECC71";
         }
         else if (bmi < row.P95) {
@@ -1043,10 +1070,14 @@ function updateCharts()
         }
     }
 
-    updateBloodPressureCard(sessionsData);
-    updateBloodSugarCard(sessionsData);
-    updateTemperatureCard(sessionsData);
-    updateHeartRateCard(sessionsData);
+    if (filteredSessions.length > 0) 
+    {
+        const latestSession = filteredSessions[0];
+        updateBloodPressureCard(latestSession.bloodPressure);
+        updateBloodSugarCard(latestSession.bloodSugar);
+        updateTemperatureCard(latestSession.temperature);
+        updateHeartRateCard(latestSession.heartRate);
+    }
 
     bpChart.options.scales.x.min = Math.max(0, bpLabels.length - 7);
     bpChart.options.scales.x.max = bpLabels.length - 1;
@@ -1067,6 +1098,7 @@ function updateCharts()
 }
 function updateBloodPressureCard(bp)
 {
+    if(!bp) return;
     const [sys, dia] = bp.split("/").map(Number);
 
     document.querySelectorAll(".chart-stat-number")[0].innerHTML =
@@ -1097,6 +1129,7 @@ function updateBloodPressureCard(bp)
 }
 function updateBloodSugarCard(sugar)
 {
+    if(!sugar) return;
     const [fasting, postMeal] = sugar.split("/").map(Number);
 
     document.querySelectorAll(".chart-stat-number")[1].innerHTML =
@@ -1122,6 +1155,7 @@ function updateBloodSugarCard(sugar)
 }
 function updateTemperatureCard(temp)
 {
+    if(!temp) return;
     temp = Number(temp);
 
     document.querySelectorAll(".chart-stat-number")[2].innerHTML =
@@ -1147,6 +1181,7 @@ function updateTemperatureCard(temp)
 }
 function updateHeartRateCard(rate)
 {
+    if(!rate) return;
     rate = Number(rate);
 
     document.querySelectorAll(".chart-stat-number")[3].innerHTML =
@@ -1172,6 +1207,11 @@ function updateHeartRateCard(rate)
 }
 medicalForm.addEventListener("submit",(e)=>{
     e.preventDefault();
+    const error = validateMedicalData();
+    if (error) {
+        alert(error);
+        return;
+    }
     saveConfirmModal.style.display="flex";
 });
 cancelSaveBtn.onclick = ()=>{
@@ -1201,7 +1241,7 @@ function validateMedicalData()
 
 
     // Eye validation
-    const eyePattern = /^\d{2}\/\d{2}$/;
+    const eyePattern = /^\d{1,3}\/\d{1, 3}$/;
 
     if(!eyePattern.test(rightEyeInput.value))
     {
@@ -1262,16 +1302,6 @@ confirmSaveBtn.onclick = async ()=>{
     confirmSaveBtn.disabled = true;
     confirmSaveBtn.textContent = "Saving...";
     saveConfirmModal.style.display="none";
-
-    const error = validateMedicalData();
-    if(error)
-    {
-        alert(error);
-        isSaving = false;
-        confirmSaveBtn.disabled = false;
-        confirmSaveBtn.textContent = "Yes, Save";
-        return;
-    }
     const updatedData = {
         Height: heightInput.value,
         Weight: weightInput.value,
@@ -1308,26 +1338,41 @@ confirmSaveBtn.onclick = async ()=>{
         }
         if(result.ok)
         {
+            updatedData.dateOfBirth = dobValue.textContent;
+            updateBMI(updatedData);
             showSavedToast();
-            isSaving = false;
-            confirmSaveBtn.disabled = false;
-            confirmSaveBtn.textContent = "Yes, Save";
         }
         else
         {
-            isSaving = false;
-            confirmSaveBtn.disabled = false;
-            confirmSaveBtn.textContent = "Yes, Save";
-            alert("Failed to save data");
+            const error = await result.json()
+            alert(error.detail)
+            switch(error.code)
+            {
+                case("ValidationError"):
+                    break;
+                case("TOKEN_EXPIRED"):
+                    window.location.href = "login.html";
+                    break;
+                case("USER_MISSING"):
+                    window.location.href = "login.html";
+                    break;
+                default:
+                    window.location.href = "login.html";
+                    break;
+            }
         }
     }
     catch(error)
     {
+        
+        console.log(error);
+        alert("Server error");
+    }
+    finally
+    {
         isSaving = false;
         confirmSaveBtn.disabled = false;
         confirmSaveBtn.textContent = "Yes, Save";
-        console.log(error);
-        alert("Server error");
     }
 };
 
