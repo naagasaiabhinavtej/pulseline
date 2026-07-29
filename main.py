@@ -705,8 +705,6 @@ async def createSession(data:MakeSessionRequest, currentUser=Depends(getCurrentU
                     "type":"Rejected"
                 })
             #fill here what happens when user clicks success or when user rejects and other things
-
-
     except asyncio.TimeoutError:
         connection = socket.get(connectionType=ConnectionType.ACTIVE, userId=doctorId)
         if connection:
@@ -719,6 +717,8 @@ async def createSession(data:MakeSessionRequest, currentUser=Depends(getCurrentU
                     "type":"Expired"
                 }
             )
+    finally:
+        pendingRequests.pop(data.healthId, None)
 
             
 @app.post("/sessionvalidation")
