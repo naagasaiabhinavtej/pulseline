@@ -14,7 +14,7 @@ import shutil
 import base64
 from enum import Enum
 import asyncio
-
+#see disconnect edgecases or mistakes
 #using path
 UPLOAD_DIR = Path("uploads/chat")
 os.makedirs(UPLOAD_DIR, exist_ok = True)
@@ -649,7 +649,14 @@ async def createSession(data:MakeSessionRequest, currentUser=Depends(getCurrentU
         return {"type":"errorInDetails",
                 "errorPlace":"clinicId"}
     if result1 and result2 and result3:
-        return {"type":"validDetails"}
+        conn = socket.get(connectionType=ConnectionType.ACTIVE, userId=doctorId)
+        if conn:
+            conn.send_json({
+                "type":"validDetails"
+            })
+        else:
+            pendingConnections["active"].setdefault(doctorId, []).append({"type":"validDetails",
+                                                                          "expireAt":datetime.now()+timedelta(minutes=5)})
     if data.healthId in pendingRequests:
         raise APIException(
             status_code=409,
@@ -672,29 +679,34 @@ async def createSession(data:MakeSessionRequest, currentUser=Depends(getCurrentU
             if connection:
                 await connection["websocket"].send_json({
                     "type":"Accepted",
-                    "sessionId":data.sessionId
+                    "sessionId":result.sessionId
                 })
             else:
                 pendingConnections["active"].setdefault(doctorId, []).append({
                     "type":"Accepted",
-                    "sessionId":data.sessionId
+                    "sessionId":result.sessionId
                 })
-            res = getSessionDetails(data.sessionId)
-            if res is not None:
-                pconnection = socket.get(connectionType=ConnectionType.ACTIVE, userId=data.healthId)
-                if pconnection:
-                    await pconnection["websocket"].send_json(
-                        {
-                            "type":"session_success_details",
-                            "sessionId":data.sessionId,
-                            "avatarId":data.pavatarId,
-                            "patientName":data.patientName,
-                            "patientAge":data.patientAge,
-                            "patientGender":data.patientGender,
-                            "sessionStartDate":data.createdAt.strftime("%d %b %Y"),            #22 july 2026
-                            "sessionStartTime":data.createdAt.strftime("%I:%M %p")             # 7:45pm
-                        }
-                    )
+            res = getSessionDetails(result.sessionId)
+            if res is None:
+                raise APIException(
+                    status_code=404,
+                    code="INVALID_SESSION",
+                    detail="Session not found."
+                )
+            pconnection = socket.get(connectionType=ConnectionType.ACTIVE, userId=data.healthId)
+            if pconnection:
+                await pconnection["websocket"].send_json(
+                    {
+                        "type":"session_success_details",
+                        "sessionId":result.sessionId,
+                        "avatarId":data.pavatarId,
+                        "patientName":data.patientName,
+                        "patientAge":data.patientAge,
+                        "patientGender":data.patientGender,
+                        "sessionStartDate":data.createdAt.strftime("%d %b %Y"),            #22 july 2026
+                        "sessionStartTime":data.createdAt.strftime("%I:%M %p")             # 7:45pm
+                    }
+                )
         elif status == "failure":
             if connection:
                         await connection["websocket"].send_json({

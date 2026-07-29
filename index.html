@@ -536,9 +536,9 @@
             socket.onopen = () => {
                 console.log("Connected to WebSocket");
                 socket.send(JSON.stringify({
-                    "type":"connect",
-                    "page":"active",
-                    "accessToken":accessToken
+                    type:"connect",
+                    page:"active",
+                    accessToken:accessToken
                 }));
             };
 

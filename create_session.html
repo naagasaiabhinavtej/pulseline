@@ -236,13 +236,13 @@ button:hover {
 
             <div class="field">
                 <label>Health ID</label>
-                <input type="text" name="health_id" id="health_id">
+                <input type="text" name="healthId" id="health_id">
                 <small class="error-message" id="health_id_error">Please Enter your Name</small>
             </div>
 
             <div class="field">
                 <label>Clinic ID</label>
-                <input type="text" name="clinic_id" id="clinic_id">
+                <input type="text" name="clinicId" id="clinic_id">
                 <small class="error-message" id="clinic_id_error"></small>
             </div>
 
@@ -268,7 +268,7 @@ button:hover {
 
             <div class="field">
                 <label>Assigned Doctor ID</label>
-                <input type="text" name="assigned_doctor_id" id="assigned_doctor_id">
+                <input type="text" name="doctorId" id="assigned_doctor_id">
                 <small class="error-message" id="assigned_doctor_id_error"></small>
             </div>
 
@@ -319,13 +319,13 @@ button:hover {
             const data = await result.json();
             accessToken = data.access_token;
             console.log("Status:", result.status);
-        console.log("URL:", result.url);
-        console.log("Redirected:", result.redirected);
+            console.log("URL:", result.url);
+            console.log("Redirected:", result.redirected);
             return accessToken;
         }
         else
         {
-            // window.location.href="login.html";
+            window.location.href="login.html";
             return null;
         }
     }
@@ -352,8 +352,9 @@ socket.onopen = ()=>
 {
     console.log("Connected");
     socket.send(JSON.stringify({
-        type: "authenticate",
-        token: accessToken
+        type: "connect",
+        token: accessToken,
+        page:"active"
     }));
 }
 makeSessionForm.addEventListener("submit", validateForm);
@@ -397,7 +398,6 @@ async function validateForm(e)
     {
         accessToken = await refreshtoken();
         if (!accessToken) {
-            window.location.href = "login.html";
             return;
         }
         // Retry with the new token
@@ -409,11 +409,6 @@ async function validateForm(e)
         },
         body:JSON.stringify(formData)
         });
-        if (result.status === 401) 
-        {
-            window.location.href = "login.html";
-            return;
-        }
     }
     if(result.ok)
     {
@@ -432,22 +427,20 @@ async function validateForm(e)
             {
                 departmentError.textContent = "Select a valid Department";
             }
-            else if(data.errorPlace === "DoctorId")
+            else if(data.errorPlace === "doctorId")
             {
                 assignedDoctorIdError.textContent = "Enter a valid DoctorId";
             }
-        }
-        else if(data.type === "validDetails")
-        {
-            waitingOverlay.classList.remove("hidden");
-            countDown.textContent = "05:00";
-            startTimer();
         }
     }
     else{
         const error = await result.json();
         if (result.status === 422) 
         {
+            healthIdError.textContent = "";
+            clinicIdError.textContent = "";
+            departmentError.textContent = "";
+            assignedDoctorIdError.textContent = "";
             if (error.field === "doctorId")
                 assignedDoctorIdError.textContent = error.message
 
@@ -462,10 +455,29 @@ async function validateForm(e)
         }
         else if(result.status === 403)
         {
-                assignedDoctorIdError.textContent = error.message
+            assignedDoctorIdError.textContent = error.message
+        }
+        else
+        {
+            alert(error.detail);
+            switch(error.code)
+            {
+                case("INVALID_TOKEN"):
+                    window.location.href = "login.html";
+                    break;
+                case("INVALID_REQUEST"): 
+                    break;
+                case("INVALID_SESSION"):
+                    window.location.href = "login.html";
+                    break;
+                default:
+                    window.location.href= "login.html";
+                    break;                
+            }
         }
     }
 }
+
 socket.onmessage = (event)=>
 {
     const data =  JSON.parse(event.data);
@@ -486,6 +498,12 @@ socket.onmessage = (event)=>
         waitingOverlay.classList.add("hidden");
         clearInterval(timer);
         window.location.href = "success_failure.html?status=expired";
+    }
+    else if(data.type === "validDetails")
+    {
+        waitingOverlay.classList.remove("hidden");
+        countDown.textContent = "05:00";
+        startTimer();
     }
 };
 let timer = null;
