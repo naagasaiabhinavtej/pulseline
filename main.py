@@ -773,7 +773,8 @@ def giveSessionBasicDetails(sessionId:int, currentUser = Depends(getCurrentUser)
         "patientName":result["patientName"],
         "sessionId":sessionId,
         "doctorName":result["doctorName"],
-        "createdAt":result["createdAt"]
+        "createdAt":result["createdAt"],
+        "clinicName":result["clinicName"]
     }
 
 

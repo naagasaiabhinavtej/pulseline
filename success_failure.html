@@ -78,7 +78,7 @@
         }
         else
         {
-            // window.location.href="login.html";
+            window.location.href="login.html";
             return null;
         }
     }
@@ -101,12 +101,23 @@
         return;
     }
     if (status === 'success') {
-        const result = await fetch(`/success-failure/sessionDetails/${sessionId}`,{
+            let result = await fetch(`/success-failure/sessionDetails/${sessionId}`,{
             method:"GET",
             headers:{
                 Authorization:`Bearer ${accessToken}`
             }
         });
+        if(result.status === 401)
+        {
+            const data = await refreshtoken();
+            if(!data) return;
+            result = await fetch(`/success-failure/sessionDetails/${sessionId}`,{
+            method:"GET",
+            headers:{
+                Authorization:`Bearer ${accessToken}`
+            }
+            });
+        }
         if(result.ok)
         {
             const data = await result.json();
@@ -121,14 +132,26 @@
             document.getElementById('val-dt').innerText = data.createdAt;
             
             successDetails.style.display = 'block';
-            return;
         }
-        else if(result.status === 401)
+        else 
         {
-            window.location.href = "login.html";
+            const error = await result.json()
+            alert(error.detail); 
+            switch(error.code)
+            {
+                case("TOKEN_EXPIRED"):
+                    window.location.href = "login.html";
+                    break;
+                case("INVALID_SESSION"):
+                    window.location.href = "index.html";
+                    break;
+                case("ValidationError"):
+                    break;
+                default:
+                    window.location.href = "login.html";
+            }
             return;
         }
-        else return;
     } 
     else if(status === "failure")
     {
