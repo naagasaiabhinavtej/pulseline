@@ -377,7 +377,7 @@
                                     </div>
                                 </td>
                                 <td><span class="status-badge active-bg">Active</span></td>
-                                <td style="text-align: right;"><button onclick="window.location.href='patient_session.html'" class="action-btn"><i data-lucide="chevron-right"></i></button></td>
+                                <td style="text-align: right;"><button onclick="window.location.href='session_detail.html?sessionId='+${element.sessionId}" class="action-btn"><i data-lucide="chevron-right"></i></button></td>
                             `
                 tablename.appendChild(row);
             });
@@ -452,7 +452,7 @@
                                     </div>
                                 </td>
                                 <td><span class="status-badge active-bg">Active</span></td>
-                                <td style="text-align: right;"><button onclick="window.location.href='patient_session.html'" class="action-btn"><i data-lucide="chevron-right"></i></button></td>
+                                <td style="text-align: right;"><button onclick="window.location.href='session_detail.html?sessionId='+${sessionDetails.sessionId}" class="action-btn"><i data-lucide="chevron-right"></i></button></td>
                             `
                     tablename.appendChild(row);
                     lucide.createIcons();
@@ -530,7 +530,7 @@
                                     </div>
                                 </td>
                                 <td><span class="status-badge active-bg">Active</span></td>
-                                <td style="text-align: right;"><button onclick="window.location.href='patient_session.html'" class="action-btn"><i data-lucide="chevron-right"></i></button></td>
+                                <td style="text-align: right;"><button onclick="window.location.href='session_detail.html?sessionId='+${element.sessionId}" class="action-btn"><i data-lucide="chevron-right"></i></button></td>
                             `
                 tablename.appendChild(row);
             });

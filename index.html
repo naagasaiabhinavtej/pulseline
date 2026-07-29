@@ -151,7 +151,7 @@
                             <i data-lucide="check" class="check-icon"></i>
                         </div>
                         <div class="stat-text">
-                            <span class="stat-title color-green">Completed Today</span>
+                            <span class="stat-title color-green">Completed Sessions</span>
                             <span class="stat-number" id="stat2">6</span>
                         </div>
                     </div>
@@ -300,6 +300,7 @@
     <script>
         lucide.createIcons();
         let accessToken = null;
+        let socket = null;
         async function refreshtoken()
         {
             const result = await fetch("/refresh",
@@ -324,7 +325,16 @@
             const colors = ["blue", "green", "purple", "orange"];
             return colors[index % 4];
         }
-        function getAvatar(id) 
+        function getpAvatar(id) 
+        {
+            if (id === "first") return "avatar_patients/adult_female.png";
+            if (id === "second") return "avatar_patients/adult_male.png";
+            if (id === "third") return "avatar_patients/old_female.png";
+            if (id === "fourth") return "avatar_patients/old_male.png";
+            if (id === "fifth") return "avatar_patients/young_boy.png";
+            if (id === "sixth") return "avatar_patients/young_girl.png";            
+        }
+        function getdAvatar(id) 
         {
             if (id === "first") return "avatar_doctors/adult_female.png";
             if (id === "second") return "avatar_doctors/adult_male.png";
@@ -333,7 +343,7 @@
         }
         async function giveData()
         {
-            const result = await fetch("/index",
+            let result = await fetch("/index",
             {
                 method:"GET",
                 headers:{
@@ -344,15 +354,37 @@
             {
                 const data = await refreshtoken();
                 if(!data) return;
+                result = await fetch("/index",
+                {
+                    method:"GET",
+                    headers:{
+                        "Authorization":`Bearer ${accessToken}`
+                    }
+                });
             }
-            const finalresult = await fetch("/index",
+            if(!result.ok)
             {
-                method:"GET",
-                headers:{
-                    "Authorization":`Bearer ${accessToken}`
+                const error = await result.json()
+                alert(error.detail); 
+                switch(error.code)
+                {
+                    case("TOKEN_EXPIRED"):
+                        window.location.href = "login.html";
+                        break;
+                    case("INVALID_USER"):
+                        window.location.href = "login.html";
+                        break;
+                    case("USER_MISSING"):
+                        window.location.href = "login.html";
+                        break;
+                    case("ValidationError"):
+                        break;
+                    default:
+                        window.location.href = "login.html";
                 }
-            });
-            return finalresult;
+                return null;
+            }
+            return result;
         }
         //names should be written
         const heading = document.querySelector("h1"); // no by tag name because it always returns list no matter what happens
@@ -369,6 +401,8 @@
         let active_sessions = null;
         let completed_today = null;
         let sessions = [];  //not null
+        const acceptBtn = document.querySelector(".accept-btn");
+        const rejectBtn = document.querySelector(".reject-btn");
         async function askData()
         {
             const result = await giveData();
@@ -379,22 +413,7 @@
             const currentSessions = data.currentSessions;
             sessions = currentSessions;
             heading.textContent = `Welcome, Dr. ${doctorName}`;
-            if(avatar === "first")
-            {
-                avatare.setAttribute("src", "avatar_doctors/adult-female.png");
-            }
-            else if(avatar === "second")
-            {
-                avatare.setAttribute("src", "avatar_doctors/adult-male.png");
-            }
-            else if(avatar === "third")
-            {
-                avatare.setAttribute("src", "avatar_doctors/old-female.png");
-            }
-            else if(avatar === "fourth")
-            {
-                avatare.setAttribute("src", "avatar_doctors/old-male.png");
-            }
+            avatare.setAttribute("src", getdAvatar(avatar));
             let size = currentSessions.length;
             profileName.textContent = `${doctorName}`;
             statNumber1.textContent = `${size}`;
@@ -416,10 +435,34 @@
                 progressBar[0].classList.add("color-red");
             }
             active_sessions = size;
-            completed_today = 0;
+            completed_today = data.totalCasesSolved;
             progressBar[0].style.width = `${Math.min(size*5, 100)}%`;   //Math.min
-            progressBar[1].style.width = size>0? `${(completed_today*100)/size}%`: "100%";
-            statNumber2.textContent = "0";
+            let levelStart, levelSize;
+            // as per the cases solved level based system
+            if (completed_today <= 20) {
+                levelStart = 0;
+                levelSize = 20;
+            }
+            else if (completed_today <= 50) {
+                levelStart = 20;
+                levelSize = 30;
+            }
+            else if (completed_today <= 100) {
+                levelStart = 50;
+                levelSize = 50;
+            }
+            else if (completed_today <= 250) {
+                levelStart = 100;
+                levelSize = 150;
+            }
+            else {
+                levelStart = 250;
+                levelSize = 250;     // Every next 250 sessions is a new level
+            }
+
+            const progress = ((completed_today - levelStart) / levelSize) * 100;
+            progressBar[1].style.width = `${Math.min(progress, 100)}%`;
+            statNumber2.textContent = completed_today;
             tablename.replaceChildren(); //can use tbody.innerHTML = ""
             let count = 0;
             let presentColor = null;
@@ -462,6 +505,7 @@
                     avatarId = "avatar-doctors/old_male.png";
                 }
                 let row = document.createElement("tr");
+                row.id = element.sessionId;
                 row.innerHTML = `
                                 <td><span class="session-id id-${presentColor}">${element.sessionId}</span></td>
                                 <td>
@@ -488,6 +532,148 @@
                 tablename.appendChild(row);
             });
             lucide.createIcons();
+            socket = new WebSocket(`ws://${window.location.host}/ws`);
+            socket.onopen = () => {
+                console.log("Connected to WebSocket");
+                socket.send(JSON.stringify({
+                    "type":"connect",
+                    "page":"active",
+                    "accessToken":accessToken
+                }));
+            };
+
+            socket.onmessage = (event) => {
+
+                const data = JSON.parse(event.data);
+                if (data.type === "emergencyConnection") {
+
+                    emergencyQueue.push({
+                        requestId: data.requestId,
+                        sessionId: data.sessionId,
+                        patientName: data.patientName,
+                        hospitalName: data.hospitalName,
+                        problem: data.problem,
+                        createdAt: data.createdAt
+                    });
+
+                    if (emergencyQueue.length === 1) {
+                        currentIndex = 0;
+                    }
+
+                    renderEmergency();
+                }
+                else if (data.type === "EmergencyResolved") {
+                    emergencyQueue = emergencyQueue.filter(                                 //good idea of filtering
+                        emergency => emergency.requestId !== data.requestId
+                    );
+                    if (currentIndex >= emergencyQueue.length) {
+                        currentIndex = Math.max(0, emergencyQueue.length - 1);
+                    }
+                    renderEmergency();
+                }
+                else if(data.type === "session_success_details")
+                {
+                    const sessionDetails = data.sessionDetails;
+                    sessions.push(sessionDetails);              //try to check if there already exists that session id if needed.
+                    let avatarId = getpAvatar(sessionDetails.avatarId);
+                    let index = sessions.length-1;
+                    let presentColor = getColor(index);
+                    active_sessions = sessions.length;
+                    statNumber1.textContent = active_sessions;
+                    progressBar[0].style.width = `${Math.min(active_sessions * 5, 100)}%`;
+                    statTitle.classList.remove(
+                        "color-blue",
+                        "color-orange",
+                        "color-red"
+                    );
+                    progressBar[0].classList.remove(
+                        "bg-blue",
+                        "bg-orange",
+                        "bg-red"
+                    );
+                    if (active_sessions <= 7) {
+                        statTitle.classList.add("color-blue");
+                        progressBar[0].classList.add("bg-blue");
+                    }
+                    else if (active_sessions <= 14) {
+                        statTitle.classList.add("color-orange");
+                        progressBar[0].classList.add("bg-orange");
+                    }
+                    else {
+                        statTitle.classList.add("color-red");
+                        progressBar[0].classList.add("bg-red");
+                    }
+                        let row = document.createElement("tr");
+                        row.id = sessionDetails.sessionId;
+                        row.innerHTML = `
+                                        <td><span class="session-id id-${presentColor}">${sessionDetails.sessionId}</span></td>
+                                        <td>
+                                            <div class="patient-cell">
+                                                <img src="${avatarId}" alt="${sessionDetails.patientName}" class="table-avatar">
+                                                <div class="patient-info">
+                                                    <span class="p-name">${sessionDetails.patientName}</span>
+                                                    <span class="p-meta">Age: ${sessionDetails.patientAge} • ${sessionDetails.patientGender}</span>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <div class="time-cell">
+                                                <i data-lucide="calendar"></i>
+                                                <div>
+                                                    <div class="date-text">${sessionDetails.sessionStartdate}</div>
+                                                    <div class="time-text">${sessionDetails.sessionStarttime}</div>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td><span class="status-badge active-bg">Active</span></td>
+                                        <td style="text-align: right;"><button onclick="window.location.href='session_detail.html?sessionId='+${sessionDetails.sessionId}" class="action-btn"><i data-lucide="chevron-right"></i></button></td>
+                                    `
+                        tablename.appendChild(row);
+                        lucide.createIcons();
+                }
+                else if(data.type === "sessionCompleted")
+                {
+                    const sessionId = data.sessionId;
+                    sessions = sessions.filter((session)=>
+                    {
+                        return session.sessionId!==sessionId           //!==
+                    });
+                    const row = document.getElementById(sessionId);
+                    if (row) {
+                        row.remove();
+                    }
+                    active_sessions = sessions.length;
+                    completed_today++;
+                    statNumber2.textContent = completed_today;
+                    statNumber1.textContent = active_sessions;
+                    let levelStart, levelSize;
+
+                    if (completed_today <= 20) {
+                        levelStart = 0;
+                        levelSize = 20;
+                    }
+                    else if (completed_today <= 50) {
+                        levelStart = 20;
+                        levelSize = 30;
+                    }
+                    else if (completed_today <= 100) {
+                        levelStart = 50;
+                        levelSize = 50;
+                    }
+                    else if (completed_today <= 250) {
+                        levelStart = 100;
+                        levelSize = 150;
+                    }
+                    else {
+                        levelStart = 250;
+                        levelSize = 250;     // Every next 250 sessions is a new level
+                    }
+
+                    const progress = ((completed_today - levelStart) / levelSize) * 100;
+                    progressBar[1].style.width = `${Math.min(progress, 100)}%`;
+                }
+
+            };
         }
         document.addEventListener("DOMContentLoaded", askData);
         let result;
@@ -517,7 +703,6 @@
             {
                 return ele.sessionId.toLowerCase().includes(s) || ele.patientName.toLowerCase().includes(s);
             });
-            let avatarId = getAvatar(element.avatarId);
             tablename.innerHTML = "";
             let index = 0;
             searchedSessions.forEach((element)=>
@@ -525,6 +710,8 @@
                 let presentColor = getColor(index);
                 index++;
                 let row = document.createElement("tr");
+                row.id = element.sessionId;
+                let avatarId = getpAvatar(element.avatarId);
                 row.innerHTML = `
                                 <td><span class="session-id id-${presentColor}">${element.sessionId}</span></td>
                                 <td>
@@ -549,6 +736,7 @@
                                 <td style="text-align: right;"><button onclick="window.location.href='session_detail.html?session_id='+${element.sessionId}" class="action-btn"><i data-lucide="chevron-right"></i></button></td>
                             `
                 tablename.appendChild(row);
+                lucide.createIcons();
             });
             return;
         }
@@ -578,111 +766,6 @@
 
         // Waiting timer
         let waitingInterval = null;
-
-        const socket = new WebSocket(`ws://${window.location.host}/ws`);
-
-        socket.onopen = () => {
-            console.log("Connected to WebSocket");
-        };
-
-        socket.onmessage = (event) => {
-
-            const data = JSON.parse(event.data);
-
-            if (data.type === "emergencyConnection") {
-
-                emergencyQueue.push({
-                    requestId: data.requestId,
-                    sessionId: data.sessionId,
-                    patientName: data.patientName,
-                    hospitalName: data.hospitalName,
-                    problem: data.problem,
-                    createdAt: data.createdAt
-                });
-
-                if (emergencyQueue.length === 1) {
-                    currentIndex = 0;
-                }
-
-                renderEmergency();
-            }
-
-            else if (data.type === "EmergencyResolved") {
-
-                emergencyQueue = emergencyQueue.filter(                                 //good idea of filtering
-                    emergency => emergency.requestId !== data.requestId
-                );
-
-                if (currentIndex >= emergencyQueue.length) {
-                    currentIndex = Math.max(0, emergencyQueue.length - 1);
-                }
-
-                renderEmergency();
-            }
-            else if(data.type === "session_success_details")
-            {
-                const sessionDetails = data.sessionDetails;
-                sessions.push(sessionDetails);              //try to check if there already exists that session id if needed.
-                let avatarId = getAvatar(sessionDetails.avatarId);
-                let index = sessions.length-1;
-                let presentColor = getColor(index);
-                active_sessions = sessions.length;
-                statNumber1.textContent = active_sessions;
-                progressBar[0].style.width = `${Math.min(active_sessions * 5, 100)}%`;
-                statTitle.classList.remove(
-                    "color-blue",
-                    "color-orange",
-                    "color-red"
-                );
-                progressBar[0].classList.remove(
-                    "bg-blue",
-                    "bg-orange",
-                    "bg-red"
-                );
-                if (active_sessions <= 7) {
-                    statTitle.classList.add("color-blue");
-                    progressBar[0].classList.add("bg-blue");
-                }
-                else if (active_sessions <= 14) {
-                    statTitle.classList.add("color-orange");
-                    progressBar[0].classList.add("bg-orange");
-                }
-                else {
-                    statTitle.classList.add("color-red");
-                    progressBar[0].classList.add("bg-red");
-                }
-                    let row = document.createElement("tr");
-                    row.innerHTML = `
-                                    <td><span class="session-id id-${presentColor}">${sessionDetails.sessionId}</span></td>
-                                    <td>
-                                        <div class="patient-cell">
-                                            <img src="${avatarId}" alt="${sessionDetails.patientName}" class="table-avatar">
-                                            <div class="patient-info">
-                                                <span class="p-name">${sessionDetails.patientName}</span>
-                                                <span class="p-meta">Age: ${sessionDetails.patientAge} • ${sessionDetails.patientGender}</span>
-                                            </div>
-                                        </div>
-                                    </td>
-                                    <td>
-                                        <div class="time-cell">
-                                            <i data-lucide="calendar"></i>
-                                            <div>
-                                                <div class="date-text">${sessionDetails.sessionStartdate}</div>
-                                                <div class="time-text">${sessionDetails.sessionStarttime}</div>
-                                            </div>
-                                        </div>
-                                    </td>
-                                    <td><span class="status-badge active-bg">Active</span></td>
-                                    <td style="text-align: right;"><button onclick="window.location.href='session_detail.html?sessionId='+${sessionDetails.sessionId}" class="action-btn"><i data-lucide="chevron-right"></i></button></td>
-                                `
-                    tablename.appendChild(row);
-            }
-            else if(data.type === "sessionCompleted")
-            {
-                
-            }
-
-        };
 
         function renderEmergency()
         {
@@ -789,12 +872,12 @@
 
             waitingInterval = setInterval(updateTimer,1000);
         }
-        acceptButton.addEventListener("click", () =>
+        acceptBtn.addEventListener("click", () =>
         {
             handleResponse("accept");
         });
 
-        rejectButton.addEventListener("click", () =>
+        rejectBtn.addEventListener("click", () =>
         {
             handleResponse("reject");
         });
