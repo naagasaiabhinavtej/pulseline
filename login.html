@@ -385,7 +385,7 @@ form.addEventListener("submit", async(e)=>
             }
             else
             {
-                const error = await results.json();
+                const error = await answer.json();
                 backendError.style.display = "block";
                 if (Array.isArray(error.detail)) {
                     backendError.textContent = error.detail

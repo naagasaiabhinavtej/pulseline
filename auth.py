@@ -1,6 +1,6 @@
-from datatime import datetime, timedelta, timezone
+from datetime import datetime, timedelta, timezone
 from jose import JWTError, jwt
-from fastApi import FastAPI, HTTPException, Response, Request, Depends
+from fastapi import FastAPI, HTTPException, Response, Request, Depends
 from passlib.context import CryptContext
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from utils import APIException
@@ -11,7 +11,6 @@ pwd_context = CryptContext(
     deprecated="auto"
 )
 
-app = FastAPI()
 
 SECRET_KEY = "DARE_TO_DECODE_THIS"
 ALGORITHM = "HS256"  #commonly used for secret keys 
