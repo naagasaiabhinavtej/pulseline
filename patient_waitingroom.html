@@ -26,9 +26,13 @@
                     <i data-lucide="users"></i>
                     <span>Active Sessions</span>
                 </a>
-                <a href="doctor_dashboard.html" class="nav-item">
-                    <i data-lucide="layout-dashboard"></i>
-                    <span>Dashboard</span>
+                <a href="patient_medical_data.html" class="nav-item">
+                    <i data-lucide="activity"></i>
+                    <span>Medical Data</span>
+                </a>
+                <a href="patient_previous_sessions.html" class="nav-item">
+                    <i data-lucide="history"></i>
+                    <span>Previous Sessions</span>
                 </a>
                 <!-- <a href="#" class="nav-item">
                     <i data-lucide="settings"></i>
@@ -109,7 +113,7 @@
                     
                     <div class="hub-tabs-navigation-container">
                         <div class="left-tabs-group">
-                            <a href="patient_session.html" class="tab-trigger">
+                            <a href="patient_session.html" class="tab-trigger" id="chatbox">
                                 <i data-lucide="message-square"></i>
                                 <span>Group Chat</span>
                             </a>
@@ -208,6 +212,7 @@
     <script>
         lucide.createIcons();
         let accessToken = null;
+        let socket = null;
         const params = new URLSearchParams(window.location.search);
         const sessionId = params.get("sessionId");  //remember this returns in string format
         async function refreshtoken()
@@ -234,7 +239,7 @@
             const colors = ["blue", "green", "purple", "orange"];
             return colors[index % 4];
         }
-        function getAvatar(id) 
+        function getpAvatar(id) 
         {
             if (id === "first") return "avatar_patients/adult_female.png";
             if (id === "second") return "avatar_patients/adult_male.png";
@@ -242,6 +247,13 @@
             if (id === "fourth") return "avatar_patients/old_male.png";
             if (id === "fifth") return "avatar_patients/young_boy.png";
             if (id === "sixth") return "avatar_patients/young_girl.png";            
+        }
+        function getdAvatar(id)
+        {
+            if(id==="first") return "avatar_doctors/adult_female.png";
+            if(id==="second") return "avatar_doctors/adult_male.png";
+            if(id==="third") return "avatar_doctors/old_female.png";
+            if(id==="fourth") return "avatar_doctors/old_male.png";
         }
         async function giveData()
         {
@@ -256,19 +268,41 @@
             {
                 const data = await refreshtoken();
                 if(!data) return;
+                result = await fetch(`/patient_waiting_room/${sessionId}`,
+                {
+                    method:"GET",
+                    headers:{
+                        "Authorization":`Bearer ${accessToken}`
+                    }
+                });
             }
-            const finalresult = await fetch(`/patient_waiting_room/${sessionId}`,
+            if(!result.ok)
             {
-                method:"GET",
-                headers:{
-                    "Authorization":`Bearer ${accessToken}`
+                const error = await result.json()
+                alert(error.detail);
+                switch(error.code)
+                {
+                    case("TOKEN_EXPIRED"):
+                        window.location.href = "login.html";
+                        break;
+                    case("INVALID_USER"):
+                        window.location.href = "login.html";
+                        break;
+                    case("ValidationError"):
+                        break;
+                    case("INVALID_SESSION"):
+                        window.location.href = "index.html";
+                    default:
+                        window.location.href = "login.html";
                 }
-            });
-            return finalresult;
+                return null;
+            }
+            return result;
         }
         const micButton = document.querySelector(
             ".preview-overlay-controls .icon-toggle-circle:first-child"
         );
+        const chatbox = document.getElementById("groupChat");
         const videoButton = document.querySelector(
             ".preview-overlay-controls .icon-toggle-circle:last-child"
         );
@@ -417,10 +451,10 @@
         {
             const res = await giveData();
             if(!res || !res.ok) return;
-            const data = await res.json()
+            const data = await res.json();
             headerPatientName.textContent = data.name;
-            headerPatientAvatar.src = getAvatar(data.avatarId);
-            doctorAvatar.src = getAvatar(data.doctorAvatarId);
+            headerPatientAvatar.src = getpAvatar(data.avatarId);
+            doctorAvatar.src = getdAvatar(data.doctorAvatarId);
             doctorName.innerHTML = `${data.doctorName} <span class="status-dot-active">Active</span>`;
             sessionIdTop.textContent = data.sessionId;
             const start = new Date(data.startTime);
@@ -462,6 +496,28 @@
             }
             startTimer(start);
             setInterval(startTimer, 1000, start);
+            chatbox.href = `patient_session.html?sessionId=${sessionId}`;
+            socket = new WebSocket(`ws://${window.location.host}/ws`)
+            socket.onopen = ()=>{
+                console.log("Connected");
+            }
+            socket.onclose = ()=>
+            {
+                console.log("Disconnected");
+            }
+            socket.onmessage = (message)=>
+            {
+                const data = JSON.parse(message.data);
+                if(data.type === "CallJoined")
+                {
+                    joinButtonText.textContent = "In call";
+                }
+                else if(data.type === "CallCompleted")
+                {
+                    joinButtonText.textContent = "Start Session";
+                    joinButton.disabled = false;
+                }
+        }
         }
         window.addEventListener("DOMContentLoaded", askData)
         function startTimer(merged_start)
@@ -480,27 +536,6 @@
             joinButton.disabled = true;
             joinButtonText.textContent = "Joining";
             window.open(`incall.html?sessionId=${sessionId}`, "_blank");
-        }
-        const socket = new WebSocket(`ws://${window.location.host}/ws`)
-        socket.onopen = ()=>{
-            console.log("Connected");
-        }
-        socket.onclose = ()=>
-        {
-            console.log("Disconnected");
-        }
-        socket.onmessage = (message)=>
-        {
-            const data = JSON.parse(message.data);
-            if(data.type === "CallJoined")
-            {
-                joinButtonText.textContent = "In call";
-            }
-            else if(data.type === "CallCompleted")
-            {
-                joinButtonText.textContent = "Start Session";
-                joinButton.disabled = false;
-            }
         }
         logoutBtn.addEventListener("click", async () => {
             const result = await fetch("/logout", {
