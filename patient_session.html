@@ -308,12 +308,14 @@
                 return null;
             }
         }
-        function getColor(index) 
+        function getdAvatar(id) 
         {
-            const colors = ["blue", "green", "purple", "orange"];
-            return colors[index % 4];
+            if (id === "first") return "avatar_doctors/adult_female.png";
+            if (id === "second") return "avatar_doctors/adult_male.png";
+            if (id === "third") return "avatar_doctors/old_female.png";
+            if (id === "fourth") return "avatar_doctors/old_male.png";
         }
-        function getAvatar(id) 
+        function getpAvatar(id) 
         {
             if (id === "first") return "avatar_patients/adult_female.png";
             if (id === "second") return "avatar_patients/adult_male.png";
@@ -324,7 +326,7 @@
         }
         async function giveData()
         {
-            const result = await fetch(`/patient_session/${sessionId}`,
+            let result = await fetch(`/patient_session/${sessionId}`,
             {
                 method:"GET",
                 headers:{
@@ -335,15 +337,36 @@
             {
                 const data = await refreshtoken();
                 if(!data) return;
+                result = await fetch(`/patient_session/${sessionId}`,
+                {
+                    method:"GET",
+                    headers:{
+                        "Authorization":`Bearer ${accessToken}`
+                    }
+                });
             }
-            const finalresult = await fetch(`/patient_session/${sessionId}`,
+            if(!result.ok)
             {
-                method:"GET",
-                headers:{
-                    "Authorization":`Bearer ${accessToken}`
+                const error = await result.json()
+                alert(error.detail);  
+                switch(error.code)
+                {
+                    case("TOKEN_EXPIRED"):
+                        window.location.href = "login.html";
+                        break;
+                    case("INVALID_USER"):
+                        window.location.href = "login.html";
+                        break;
+                    case("ValidationError"):
+                        break;
+                    case("INVALID_SESSION"):
+                        window.location.href = "index.html";
+                    default:
+                        window.location.href = "login.html";
                 }
-            });
-            return finalresult;
+                return null;
+            }
+            return result;
         }
         const logoutBtn = document.querySelector(".logout-btn");
         const profileName = document.querySelector(".profile-name");
@@ -391,8 +414,9 @@
         // let recentDate = null; dont use this because sometimes backend may send the text late but before that forward dates gets uploaded and it will create a mess the late becasue of network speed, delays etc
         let user_id = null;
         let avatarSrc = "";
+        let avatarId = "";
         const params = new URLSearchParams(window.location.search)
-        let sessionId = params.get(sessionId); 
+        let sessionId = params.get("sessionId"); 
         let socket;
         async function askData()
         {
@@ -413,8 +437,9 @@
             const messages = data.messages;
             messageList = messages;
             profileName.textContent = name;
-            patientAvatar.src = getAvatar(pavatarId);
-            doctorAvatar.src = getAvatar(davatarId);
+            patientAvatar.src = getpAvatar(pavatarId);
+            doctorAvatar.src = getdAvatar(davatarId);
+            avatarId = pavatarId;
             startDatValue.textContent = startDate;
             startTimeValue.textContent = startTime;
             notesBox.value = notes;
@@ -459,7 +484,7 @@
                         timestamp.textContent = data.timestamp
 
                     }
-                    if(link && data.type === "delivered")
+                    if(link && timestamp && data.type === "delivered")
                     {
                         link.href = `/download-file-chat/${data.attachmentId}`;
                     }
@@ -471,7 +496,7 @@
                     if(link) link.href = `/download-file-chat/${data.attachmentId}`;
                     socket.send(JSON.stringify({
                         type: "read",
-                        message: data.messageId
+                        messageId: data.messageId
                     }));
                 }
                 else if(data.type === "patient_medical_file")
@@ -498,7 +523,7 @@
                 }
                 else if(data.type === "doctor2Details")
                 {
-                    
+                    doctor2Value.textContent=data.name;
                 }
             };
 
@@ -566,18 +591,32 @@
                 let filePath = "";
                 if(message.file_name)
                 {
-                    filePath = `<a href="/${message.file_Path}" target = "_blank">         
+                    try{
+                    filePath = `<a href="/download-file-chat/${message.attachmentId}" target = "_blank">         
                                     📄 ${message.file_name}
                                 </a>` //backend has to be careful while giving the filepath as people can get into the folders of the servers
+                        }
+                    catch(err)
+                    {
+                        alert(err.message);
+                    }
                 }
                 let bluetick; //in backend please have a list of who saw it but here send true or false
-                let avatarsrc = getAvatar(message.avatarId);
+                let avatarsrc;
+                if(message.senderId === user_id)
+                {
+                    avatarsrc = getpAvatar(message.avatarId);
+                }
+                else
+                {
+                    avatarsrc = getdAvatar(message.avatarId);
+                }
                 if(message.bluetick)
                 {
                 bluetick = "read-receipt";
                 }
                 else bluetick = "delivered";
-                if(message.sender_id === user_id)
+                if(message.senderId === user_id)
                 {
                     makehtml +=` <div class="chat-row message-outgoing" data-id="${message.tempId}">
                                     <div class="message-wrapper">
@@ -596,11 +635,14 @@
                 }
                 else 
                 {
-                    socket.send(JSON.stringify({
-                        type:"read",
-                        message:message.tempId
-                    }));
-                    makehtml += `<div class="chat-row message-incoming" data-id="${message.tempId}>
+                    if (socket && socket.readyState === WebSocket.OPEN)
+                    {
+                        socket.send(JSON.stringify({
+                            type: "read",
+                            messageId: message.tempId
+                        }));
+                    }
+                    makehtml += `<div class="chat-row message-incoming" data-id="${message.tempId}">
                                     <img src=${avatarsrc} alt="Doctor" class="msg-avatar">
                                     <div class="message-wrapper">
                                         <span class="sender-title">${message.senderName}</span>
@@ -742,8 +784,14 @@ function handleSend() {
         showMessage({
             tempId,
             sender_id: user_id,
+            avatarId:avatarId,
             chattext: text,
             files: [],
+            date: new Date().toLocaleDateString("en-US", {
+                day:"numeric",
+                month:"long",
+                year:"numeric"
+            }),  
             timestamp: new Date().toLocaleTimeString(),
             status: "sending"
         });
@@ -754,8 +802,6 @@ function handleSend() {
             text,
             files: [],
             sessionId: sessionId,
-            timestamp: new Date().toISOString(),
-            sender_id: user_id
         }));
 
         messageInputField.value = "";
@@ -763,19 +809,26 @@ function handleSend() {
     }
 
     // CASE 2: FILES EXIST → text only goes to FIRST file
-    files.forEach((file, index) => {
+    files.forEach(async (file, index) => {
 
         const tempId = crypto.randomUUID();
+        const fileData = await fileToBase64(file);
         const fileObj = {
             name: file.name,
-            type: file.type
+            type: fileData
         };
 
         showMessage({
             tempId,
             sender_id: user_id,
+            avatarId:avatarId,
             chattext: index === 0 ? text : "",   // 👈 ONLY FIRST FILE GETS TEXT
             files: [fileObj],
+            date: new Date().toLocaleDateString("en-US", {
+                day:"numeric",
+                month:"long",
+                year:"numeric"
+            }),
             timestamp: new Date().toLocaleTimeString(),
             status: "sending"
         });
@@ -786,8 +839,6 @@ function handleSend() {
             text: index === 0 ? text : "",
             files: [fileObj],
             sessionId: sessionId,
-            timestamp: new Date().toISOString(),
-            sender_id: user_id
         }));
     });
 
@@ -802,21 +853,40 @@ function showMessage({
     chattext = "",
     files = [],
     avatarId,
+    date,
     senderName = "",
     timestamp = "",
     status = "sent",   // "sent" | "sending" | "delivered" | "read"
     tempId = ""
 }) {
     const chatBox = document.querySelector(".chat-viewport-window");
+    const previousMessage = messageList[messageList.length - 1];
+    if (!previousMessage || previousMessage.date !== date) {
+        chatBox.insertAdjacentHTML(
+            "beforeend",
+            `
+            <div class="chat-date-separator">
+                <span>${date}</span>
+            </div>
+            `
+        );
+    }
     const isOutgoing = sender_id === user_id;
-    const avatar = avatarId ? getAvatar(avatarId) : avatarsrc;
+    const avatar = sender_id=== user_id?getpAvatar(avatarId):getdAvatar(avatarId);
     // file (ONE file per message)
     const file = files?.[0];
-    const fileHTML = file?.file_Path
-        ? `<a href="${file.file_Path}" target="_blank">
-              📄 ${file.file_name}
-           </a>`
-        : "";
+    try
+    {
+        const fileHTML = file
+            ? `<a href="#" target="_blank">
+                📄 ${file.name}
+            </a>`
+            : "";
+    }
+    catch(err)
+    {
+        alert(err.message);
+    }
     // tick system (WhatsApp style)
     let tickIcon = "check";
     let tickClass = "sending";
@@ -888,6 +958,20 @@ function showMessage({
     `;
 
     chatBox.insertAdjacentHTML("beforeend", isOutgoing ? outgoingHTML : incomingHTML);  //because we are sending strings but if you want to send the objects like div and div.innerHtml then you can use appendchild
+    chatBox.scrollTop = chatBox.scrollHeight;
+    const data = {
+        senderId: sender_id,
+        chattext,
+        files,
+        avatarId,
+        date,
+        senderName,
+        timestamp,
+        status,
+        tempId
+    };
+    messageList.push(data);
+    chatBox.scrollTop = chatBox.scrollHeight;
     lucide.createIcons();
 }
 sendDataActionBtn.addEventListener("click", ()=>
@@ -895,6 +979,10 @@ sendDataActionBtn.addEventListener("click", ()=>
     socket.send(JSON.stringify({
         type:"patient_medical_history"
     }));
+});
+window.addEventListener("beforeunload",()=>{
+    if(socket)
+        socket.close();
 });
 logoutBtn.addEventListener("click", async () => {
             const result = await fetch("/logout", {

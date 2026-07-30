@@ -375,7 +375,7 @@
             }
             return result;
         }
-        const reportTab = document.querySelector("#report-tab");
+        const reportTab = document.querySelector("#reportTab");
         const logoutBtn = document.querySelector(".logout-btn");
         const profileName = document.querySelector(".profile-name");
         const dropdownIcon = document.querySelector(".dropdown-icon");
@@ -873,14 +873,14 @@ function showMessage({
         );
     }
     const isOutgoing = sender_id === user_id;
-    const avatar = sender_id=== user_id?(avatarId):getpAvatar(avatarId);
+    const avatar = sender_id=== user_id?getdAvatar(avatarId):getpAvatar(avatarId);
     // file (ONE file per message)
     const file = files?.[0];
     try
     {
         const fileHTML = file
-            ? `<a href="/download-file-chat/${message.attachmentId}" target="_blank">
-                📄 ${file.fileName}
+            ? `<a href="#" target="_blank">
+                📄 ${file.name}
             </a>`
             : "";
     }
@@ -959,6 +959,7 @@ function showMessage({
     `;
 
     chatBox.insertAdjacentHTML("beforeend", isOutgoing ? outgoingHTML : incomingHTML);  //because we are sending strings but if you want to send the objects like div and div.innerHtml then you can use appendchild
+    chatBox.scrollTop = chatBox.scrollHeight;
     const data = {
         senderId: sender_id,
         chattext,
@@ -971,6 +972,7 @@ function showMessage({
         tempId
     };
     messageList.push(data);
+    chatBox.scrollTop = chatBox.scrollHeight;
     lucide.createIcons();
 }
 const emergencyBtn = document.querySelector("#emergency-dispatch-btn");
@@ -984,6 +986,7 @@ emergencyBtn.addEventListener("click", async()=>
     {
         method:"POST",
         headers:{
+            "Content_Type":"application/json",
             Authorization:`Bearer ${accessToken}`
         },
         body:JSON.stringify({
