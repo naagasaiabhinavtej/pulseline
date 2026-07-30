@@ -109,11 +109,11 @@
                     
                     <div class="hub-tabs-navigation-container">
                         <div class="left-tabs-group">
-                            <a href="session_detail.html" class="tab-trigger">
+                            <a href="session_detail.html" class="tab-trigger" id="groupChat">
                                 <i data-lucide="message-square"></i>
                                 <span>Group Chat</span>
                             </a>
-                            <a href="report_submission.html" class="tab-trigger">
+                            <a href="report_submission.html" class="tab-trigger" id="report-tab">
                                 <i data-lucide="file-text"></i>
                                 <span>Report Submission</span>
                             </a>
@@ -231,12 +231,21 @@
             window.location.href="login.html";
             return null;
         }
-        function getAvatar(id)
+        function getdAvatar(id)
         {
             if(id==="first") return "avatar_doctors/adult_female.png";
             if(id==="second") return "avatar_doctors/adult_male.png";
             if(id==="third") return "avatar_doctors/old_female.png";
             if(id==="fourth") return "avatar_doctors/old_male.png";
+        }
+        function getpAvatar(id) 
+        {
+            if (id === "first") return "avatar_patients/adult_female.png";
+            if (id === "second") return "avatar_patients/adult_male.png";
+            if (id === "third") return "avatar_patients/old_female.png";
+            if (id === "fourth") return "avatar_patients/old_male.png";
+            if (id === "fifth") return "avatar_patients/young_boy.png";
+            if (id === "sixth") return "avatar_patients/young_girl.png";            
         }
         async function giveData()
         {
@@ -252,18 +261,41 @@
             {
                 const token = await refreshtoken();
                 if(!token) return;
-            }
-            const finalresult = await fetch(`/doctor_waiting_room/${sessionId}`,
-            {
-                method:"GET",
-                headers:
+                result = await fetch(`/doctor_waiting_room/${sessionId}`,
                 {
-                    Authorization:`Bearer ${accessToken}`
+                    method:"GET",
+                    headers:
+                    {
+                        Authorization:`Bearer ${accessToken}`
+                    }
+                });
+            }
+            if(!result.ok)
+            {
+                const error = await result.json()
+                alert(error.detail);
+                switch(error.code)
+                {
+                    case("TOKEN_EXPIRED"):
+                        window.location.href = "login.html";
+                        break;
+                    case("INVALID_USER"):
+                        window.location.href = "login.html";
+                        break;
+                    case("ValidationError"):
+                        break;
+                    case("INVALID_SESSION"):
+                        window.location.href = "index.html";
+                    default:
+                        window.location.href = "login.html";
                 }
-            });
-            return finalresult;
+                return null;
+            }
+            return result;
         }
         /* ---------------- DOM ---------------- */
+        const reporttab = document.querySelector(".report-tab");
+        const chatbox = document.getElementById("groupChat");
         const logoutBtn = document.querySelector(".logout-btn");
         const profileName = document.querySelector(".profile-name");
         const profileAvatar = document.querySelector(".profile-card .avatar");
@@ -445,8 +477,8 @@
             const userId = data.userId;
             const doctor2Id = data.doctor2Id;
             const doctor1Id = data.doctor1Id;
-            profileAvatar.src=getAvatar(data.avatarId);
-            patientAvatar.src=data.patientAvatar;
+            profileAvatar.src=getdAvatar(data.avatarId);
+            patientAvatar.src=getpAvatar(data.avatarId);
             patientName.innerHTML=
             `${data.patientName}
             <span class="status-dot-active">Active</span>`;
@@ -501,6 +533,35 @@
             }
             startTimer(start);
             setInterval(startTimer,1000,start);
+            chatbox.href = `session_detail.html?sessionId=${sessionId}`;
+            reporttab.href = `report_submission.html?sessionId=${sessionId}`;
+            socket = new WebSocket(`ws://${window.location.host}/ws`)
+            socket.onopen = ()=>{
+                console.log("Connected");
+                socket.send(JSON.stringify({
+                    "type":"connect",
+                    "page":"session",
+                    "sessionId":sessionId,
+                    "accessToken":accessToken
+                }));
+            }
+            socket.onclose = ()=>
+            {
+                console.log("Disconnected");
+            }
+            socket.onmessage = (message)=>
+            {
+                const data = JSON.parse(message.data);
+                if(data.type === "CallJoined")
+                {
+                    joinButtonText.textContent = "Join Session";
+                }
+                else if(data.type === "CallCompleted")
+                {
+                    joinButtonText.textContent = "Start Video Call ";
+                    joinButton.disabled = false;
+                }
+            }
         }
         /* ---------------- TIMER ---------------- */
         window.addEventListener("DOMContentLoaded", askData)
@@ -520,27 +581,6 @@
             joinButton.disabled = true;
             joinButtonText.textContent = "Joining";
             window.open(`incall.html?sessionId=${sessionId}`, "_blank");
-        }
-        socket = new WebSocket(`ws://${window.location.host}/ws`)
-        socket.onopen = ()=>{
-            console.log("Connected");
-        }
-        socket.onclose = ()=>
-        {
-            console.log("Disconnected");
-        }
-        socket.onmessage = (message)=>
-        {
-            const data = JSON.parse(message.data);
-            if(data.type === "CallJoined")
-            {
-                joinButtonText.textContent = "Join Session";
-            }
-            else if(data.type === "CallCompleted")
-            {
-                joinButtonText.textContent = "Start Video Call ";
-                joinButton.disabled = false;
-            }
         }
         logoutBtn.addEventListener("click", async () => {
             const result = await fetch("/logout", {

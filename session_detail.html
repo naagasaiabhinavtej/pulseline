@@ -355,7 +355,7 @@
             if(!result.ok)
             {
                 const error = await result.json()
-                alert(error.detail); //because sometimes detail may not be present 
+                alert(error.detail);  
                 switch(error.code)
                 {
                     case("TOKEN_EXPIRED"):
@@ -375,7 +375,7 @@
             }
             return result;
         }
-        const reportTab = document.querySelector(".report-tab");
+        const reportTab = document.querySelector("#report-tab");
         const logoutBtn = document.querySelector(".logout-btn");
         const profileName = document.querySelector(".profile-name");
         const dropdownIcon = document.querySelector(".dropdown-icon");

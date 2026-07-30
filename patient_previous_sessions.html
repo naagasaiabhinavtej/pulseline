@@ -283,7 +283,7 @@ async function giveData()
     if(!result.ok)
     {
         const error = await result.json()
-        alert(error.detail); //because sometimes detail may not be present 
+        alert(error.detail); 
         switch(error.code)
         {
             case("TOKEN_EXPIRED"):
