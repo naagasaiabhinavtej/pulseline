@@ -123,7 +123,7 @@
                                 <i data-lucide="message-square"></i>
                                 <span>Group Chat</span>
                             </a>
-                            <a href="report_submission.html" class="tab-trigger">
+                            <a href="report_submission.html" class="tab-trigger" id="reportTab">
                                 <i data-lucide="file-text"></i>
                                 <span>Report Submission</span>
                             </a>
@@ -282,14 +282,15 @@
 
     <script>
         lucide.createIcons();
-        function openVideoConfirmationModal() {
-            if (confirm("Do you want to establish an encrypted video call channel for Session MC-1001?")) {
-                window.location.href = "waiting_room.html";
-            }
-        }
         let accessToken = null;
         const params = new URLSearchParams(window.location.search)
-        let sessionId = params.get(sessionId); 
+        let sessionId = params.get("sessionId");  //put "" as its not a varaible 
+        function openVideoConfirmationModal() {
+            if(!sessionId) return;
+            if (confirm("Do you want to establish an encrypted video call channel for Session")) {
+                window.location.href = `waiting_room.html?sessionId=${sessionId}`;
+            }
+        }
         async function refreshtoken()
         {
             const result = await fetch("/refresh",
@@ -314,16 +315,25 @@
         //     const colors = ["blue", "green", "purple", "orange"];
         //     return colors[index % 4];
         // }
-        function getAvatar(id) 
+        function getdAvatar(id) 
         {
             if (id === "first") return "avatar_doctors/adult_female.png";
             if (id === "second") return "avatar_doctors/adult_male.png";
             if (id === "third") return "avatar_doctors/old_female.png";
             if (id === "fourth") return "avatar_doctors/old_male.png";
         }
+        function getpAvatar(id) 
+        {
+            if (id === "first") return "avatar_patients/adult_female.png";
+            if (id === "second") return "avatar_patients/adult_male.png";
+            if (id === "third") return "avatar_patients/old_female.png";
+            if (id === "fourth") return "avatar_patients/old_male.png";
+            if (id === "fifth") return "avatar_patients/young_boy.png";
+            if (id === "sixth") return "avatar_patients/young_girl.png";            
+        }
         async function giveData()
         {
-            const result = await fetch(`/session_detail/${sessionId}`,
+            let result = await fetch(`/session_detail/${sessionId}`,
             {
                 method:"GET",
                 headers:{
@@ -334,16 +344,38 @@
             {
                 const data = await refreshtoken();
                 if(!data) return;
+                result = await fetch(`/session_detail/${sessionId}`,
+                {
+                    method:"GET",
+                    headers:{
+                        "Authorization":`Bearer ${accessToken}`
+                    }
+                });
             }
-            const finalresult = await fetch(`/session_detail/${sessionId}`,
+            if(!result.ok)
             {
-                method:"GET",
-                headers:{
-                    "Authorization":`Bearer ${accessToken}`
+                const error = await result.json()
+                alert(error.detail); //because sometimes detail may not be present 
+                switch(error.code)
+                {
+                    case("TOKEN_EXPIRED"):
+                        window.location.href = "login.html";
+                        break;
+                    case("INVALID_USER"):
+                        window.location.href = "login.html";
+                        break;
+                    case("ValidationError"):
+                        break;
+                    case("INVALID_SESSION"):
+                        window.location.href = "index.html";
+                    default:
+                        window.location.href = "login.html";
                 }
-            });
-            return finalresult;
+                return null;
+            }
+            return result;
         }
+        const reportTab = document.querySelector(".report-tab");
         const logoutBtn = document.querySelector(".logout-btn");
         const profileName = document.querySelector(".profile-name");
         const dropdownIcon = document.querySelector(".dropdown-icon");
@@ -356,7 +388,6 @@
         const startTimeValue = document.querySelector(".meta-value small");
         const timerDigits = document.querySelector(".timer-digits");
         const chatDateSeparator = document.querySelector(".chat-date-separator span");
-        const notesBox = document.querySelector(".notes-box");
         const metasessionIdValue = document.querySelector(".badge-id");
         const patientNameValue = document.querySelector(
             '.detail-row:nth-child(2) .row-value'
@@ -378,7 +409,7 @@
         );
         const chatBox = document.querySelector(".chat-viewport-window");
         const attachmentActionBtn = document.querySelector(".attachment-action-btn");
-        const sendDataActionBtn = document.querySelector(".send-data-action-btn");
+        const sendDataActionBtn = document.querySelector(".send-action-submit-btn");
         const messageInputField = document.querySelector(".message-input-field");
         const sendActionSubmitBtn = document.querySelector(".send-action-submit-btn");
         const copyIc = document.querySelector(".copy-ic");
@@ -402,8 +433,8 @@
             const doctor2Name = data.doctor2Name;
             const name = data.name;
             user_id = data.user_id;
-            let doctor1Id = doctor.doctor1Id;
-            let doctor2Id = doctor.doctor2Id;
+            let doctor1Id = data.doctor1Id;
+            let doctor2Id = data.doctor2Id;
             const patientFullName = data.patientName;
             const pavatarId = data.pavatarId;
             const davatarId = data.davatarId;
@@ -416,8 +447,8 @@
             const isReffered = data.isReffered;
             messageList = messages;
             profileName.textContent = name;
-            patientAvatar.src = getAvatar(davatarId);
-            doctorAvatar.src = getAvatar(pavatarId);
+            patientAvatar.src = getdAvatar(davatarId);
+            doctorAvatar.src = getpAvatar(pavatarId);
             startDatValue.textContent = startDate;
             startTimeValue.textContent = startTime;
             sessionIdValue.textContent = sessionId;
@@ -437,6 +468,7 @@
             let merged_start = new Date(`${startDate}T${startTime}`);             //T is a seperator
             startTimer(merged_start);
             setInterval(startTimer, 1000, merged_start );     //setInterval(startTimer, 1000, arg1, arg2, arg3);
+            reportTab.href = `report_submission.html?sessionId=${sessionId}`;
             socket = new WebSocket(`ws://${window.location.host}/ws`);
             socket.onopen = ()=>
             {
@@ -470,8 +502,16 @@
                 }
                 if(link && timestamp && data.type === "delivered")
                 {
-                    msg.closest(".chat-row").setAttribute("data-id", data.messageId);    //closest() shows the recent top data which has this class name                
-                    link.href = `/download-file-chat/${data.attachmentId}`;
+                    if(!msg) return;
+                    msg.closest(".chat-row").setAttribute("data-id", data.messageId);    //closest() shows the recent top data which has this class name    
+                    try
+                    {           
+                        link.href = `/download-file-chat/${data.attachmentId}`;
+                    }
+                    catch(err)
+                    {
+                        alert(err.message);
+                    }
                     timestamp.textContent = data.timestamp
                 }
             }
@@ -479,10 +519,20 @@
             {
                 showMessage(data);
                 const link = document.querySelector(`[data-id = ${data.tempId}] .attachments-container a `);
-                if(link) link.href = `/download-file-chat/${data.attachmentId}`;
+                if(link) 
+                {
+                    try
+                    {
+                        link.href = `/download-file-chat/${data.attachmentId}`;
+                    }
+                    catch(err)
+                    {
+                        alert(err.message);
+                    }
+                }
                 socket.send(JSON.stringify({
                     type: "read",
-                    message: data.messageId
+                    messageId: data.messageId
                 }));
             }
             else if(data.type === "callStarted")
@@ -516,7 +566,7 @@
             }
             else if(data.type === "doctor2Details")
             {
-                
+                doctor2Value.textContent = data.name;
             }
 
         };
@@ -532,6 +582,12 @@
             let seconds = diff%60;
             timerDigits.textContent = `${days}D:${String(hours).padStart(2, "0")}:${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`;
         }
+        messageInputField.addEventListener("keydown", (e) => {
+            if (e.key === "Enter") {
+                e.preventDefault();
+                handleSend();
+            }
+        });
         async function fileToBase64(file)              //converts file into base64 format to send to backend
         {
             try
@@ -578,18 +634,33 @@
                 let filePath = "";
                 if(message.file_name)
                 {
+                    try{
                     filePath = `<a href="/download-file-chat/${message.attachmentId}" target = "_blank">         
                                     📄 ${message.file_name}
                                 </a>` //backend has to be careful while giving the filepath as people can get into the folders of the servers
+                        }
+                    catch(err)
+                    {
+                        alert(err.message);
+                    }
                 }
                 let bluetick; //in backend please have a list of who saw it but here send true or false
-                let avatarsrc = getAvatar(message.avatarId);
+                let avatarsrc;
+                if(message.senderId === user_id)
+                {
+                    avatarsrc = getdAvatar(message.avatarId);
+                }
+                else
+                {
+                    avatarsrc = getpAvatar(message.avatarId);
+                }
+                
                 if(message.bluetick)
                 {
                     bluetick = "read-receipt";
                 }
                 else bluetick = "delivered";
-                if(message.sender_id === user_id)
+                if(message.senderId === user_id)
                 {
                     makehtml +=` <div class="chat-row message-outgoing" data-id="${message.tempId}">
                                     <div class="message-wrapper">
@@ -611,7 +682,7 @@
                     if (socket && socket.readyState === WebSocket.OPEN){
                     socket.send(JSON.stringify({
                         type:"read",
-                        message:message.tempId
+                        messageId:message.tempId
                     }));}
                     makehtml += `<div class="chat-row message-incoming" data-id="${message.tempId}">
                                     <img src=${avatarsrc} alt="Doctor" class="msg-avatar">
@@ -802,14 +873,21 @@ function showMessage({
         );
     }
     const isOutgoing = sender_id === user_id;
-    const avatar = avatarId ? getAvatar(avatarId) : avatarsrc;
+    const avatar = sender_id=== user_id?(avatarId):getpAvatar(avatarId);
     // file (ONE file per message)
     const file = files?.[0];
-    const fileHTML = file
-        ? `<a href="/download-file-chat/${message.attachmentId}" target="_blank">
-              📄 ${file.fileName}
-           </a>`
-        : "";
+    try
+    {
+        const fileHTML = file
+            ? `<a href="/download-file-chat/${message.attachmentId}" target="_blank">
+                📄 ${file.fileName}
+            </a>`
+            : "";
+    }
+    catch(err)
+    {
+        alert(err.message);
+    }
     // tick system (WhatsApp style)
     let tickIcon = "check";
     let tickClass = "sending";
@@ -881,6 +959,17 @@ function showMessage({
     `;
 
     chatBox.insertAdjacentHTML("beforeend", isOutgoing ? outgoingHTML : incomingHTML);  //because we are sending strings but if you want to send the objects like div and div.innerHtml then you can use appendchild
+    const data = {
+        senderId: sender_id,
+        chattext,
+        files,
+        avatarId,
+        date,
+        senderName,
+        timestamp,
+        status,
+        tempId
+    };
     messageList.push(data);
     lucide.createIcons();
 }
@@ -888,10 +977,10 @@ const emergencyBtn = document.querySelector("#emergency-dispatch-btn");
 const referralStatus = document.querySelector("#referral-status");
 const statusTitle = document.querySelector("#status-title");
 const statusIcon = document.querySelector("#status-icon");
-emergencyBtn.addEventListener("click", ()=>
+emergencyBtn.addEventListener("click", async()=>
 {
     emergencyBtn.disabled = true;
-    const result = fetch("/sessions/emergency", 
+    let result = await fetch("/sessions/emergency", 
     {
         method:"POST",
         headers:{
@@ -901,6 +990,44 @@ emergencyBtn.addEventListener("click", ()=>
             sessionId:sessionId
         })
     });
+    if(result.status === 401)
+    {
+        const data = await refreshtoken();
+        if(!data) return;
+        result = await fetch("/sessions/emergency", 
+        {
+            method:"POST",
+            headers:{
+                Authorization:`Bearer ${accessToken}`
+            },
+            body:JSON.stringify({
+                sessionId:sessionId
+            })
+        });
+    }
+    if(!result.ok)
+    {
+        const error = await result.json()
+        alert(error.detail); //because sometimes detail may not be present 
+        switch(error.code)
+        {
+            case("TOKEN_EXPIRED"):
+                window.location.href = "login.html";
+                break;
+            case("INVALID_USER"):
+                window.location.href = "login.html";
+                break;
+            case("INVALID_REQUEST"): 
+                break;
+            case("EMERGENCY_EXISTS"): 
+                break;
+            case("ValidationError"):
+                break;
+            default:
+                window.location.href = "login.html";
+        }
+        return null;
+    }
 });
 function updateReferralStatus(state)
 {

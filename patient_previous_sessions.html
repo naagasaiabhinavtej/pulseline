@@ -286,7 +286,7 @@ async function giveData()
         alert(error.detail); //because sometimes detail may not be present 
         switch(error.code)
         {
-            case("INVALID_TOKEN"):
+            case("TOKEN_EXPIRED"):
                 window.location.href = "login.html";
                 break;
             case("INVALID_USER"):
