@@ -413,7 +413,7 @@
     }
     async function giveData()
     {
-        const result = await fetch(`/in_call?sessionId=${sessionId}`,
+        let result = await fetch(`/in_call?sessionId=${sessionId}`,
         {
             method:"GET",
             headers:{
@@ -424,15 +424,34 @@
         {
             const data = await refreshtoken();
             if(!data) return;
+            result = await fetch(`/in_call?sessionId=${sessionId}`,
+            {
+                method:"GET",
+                headers:{
+                    "Authorization":`Bearer ${accessToken}`
+                }
+            });
         }
-        const finalresult = await fetch(`/in_call?sessionId=${sessionId}`,
+        if(!result.ok)
         {
-            method:"GET",
-            headers:{
-                "Authorization":`Bearer ${accessToken}`
+            const error = await result.json()
+            alert(error.detail);
+            switch(error.code)
+            {
+                case("TOKEN_EXPIRED"):
+                    window.location.href = "login.html";
+                    break;
+                case("INVALID_USER"):
+                    window.location.href = "login.html";
+                    break;
+                case("ValidationError"):
+                    break;
+                default:
+                    window.location.href = "login.html";
             }
-        });
-        return finalresult;
+            return null;
+        }
+        return result;
     }
     async function getSession()
     {

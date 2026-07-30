@@ -1256,7 +1256,7 @@ def enterCall(sessionId:int, curr = Depends(getCurrentUser)):
     if result is None:
         raise APIException(
             status_code=403,
-            code="USER_INVALID",
+            code="INVALID_USER",
             detail="Unauthorised user or session"
         )
     return {"userId":userId,
