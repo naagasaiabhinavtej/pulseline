@@ -548,7 +548,7 @@
                 if (data.type === "emergencyConnection") {
 
                     emergencyQueue.push({
-                        requestId: data.requestId,
+                        // requestId: data.requestId,
                         sessionId: data.sessionId,
                         patientName: data.patientName,
                         hospitalName: data.hospitalName,
@@ -562,9 +562,10 @@
 
                     renderEmergency();
                 }
-                else if (data.type === "EmergencyResolved") {
+                else if (data.type === "EmergencyResolved") 
+                {
                     emergencyQueue = emergencyQueue.filter(                                 //good idea of filtering
-                        emergency => emergency.requestId !== data.requestId
+                        emergency => emergency.sessionId !== data.sessionId
                     );
                     if (currentIndex >= emergencyQueue.length) {
                         currentIndex = Math.max(0, emergencyQueue.length - 1);

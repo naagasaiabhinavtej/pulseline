@@ -95,7 +95,7 @@ CREATE TABLE consultation_sessions (
     uploaded_file_path TEXT DEFAULT NULL, 
     content_type TEXT DEFAULT NULL,
     additional_vitals TEXT DEFAULT '{}', 
-    session_status VARCHAR(20) DEFAULT 'started',
+    session_status VARCHAR(20) DEFAULT 'active',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     resolved_at TIMESTAMP,
     is_referred BOOLEAN DEFAULT 0,

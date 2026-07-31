@@ -163,6 +163,92 @@ def checkDoctorClinicId(doctorId:str, clinicId:str):
     finally:
         if conn:
             conn.close()
+
+def checkSessionUser(sessionId:int, userId:int):
+    conn = None
+    try:
+        conn = sqlite3.connect(database_path)
+        curs = conn.cursor()
+        sessionId = int(sessionId)
+        userId = int(userId)
+        curs.execute("""
+                        SELECT 
+                        CASE 
+                        WHEN health_id=? THEN "patient"
+                        WHEN assigned_doctor_id=? THEN "doctor1"
+                        WHEN referred_doctor_id=? THEN "doctor2"
+                        END AS role
+                        FROM consultation_sessions
+                        WHERE session_id=? AND 
+                        (health_id=? OR assigned_doctor_id=? OR referred_doctor_id=?) 
+                    """, (userId, userId, userId,
+                        sessionId,
+                        userId, userId, userId))
+        result = curs.fetchone()
+        if result is None:
+            return None
+        return {
+            "myRole": result[0]
+        }
+    except Exception as e:
+        if conn:
+            conn.rollback()
+        logger.exception("Error while checking the Details of user")
+        raise e
+    finally:
+        if conn:
+            conn.close()
+def checkUserPermissionToEndSession(doctorId: int, sessionId: int):
+    conn = None
+    try:
+        conn = sqlite3.connect(database_path)
+        curs = conn.cursor()
+
+        curs.execute("""
+            SELECT session_id
+            FROM consultation_sessions
+            WHERE session_id = ?
+            AND (
+                (is_referred = 0 AND assigned_doctor_id = ?)
+                OR
+                (is_referred = 1 AND referred_doctor_id = ?)
+            )
+        """, (sessionId, doctorId, doctorId))
+
+        result = curs.fetchone()
+
+        return result
+
+    except Exception:
+        logger.exception("Error while checking session end permission")
+        raise
+
+    finally:
+        if conn:
+            conn.close()
+def getSessionUsers(sessionId:int):
+    conn = None
+    try:
+        conn = sqlite3.connect(database_path)
+        curs = conn.cursor()
+        sessionId = int(sessionId)
+        curs.execute("""
+                        SELECT health_id, assigned_doctor_id, referred_doctor_id
+                        FROM consultation_sessions
+                        WHERE session_id=? 
+                    """, (sessionId,))
+        result = curs.fetchone()
+        if result is None:
+            return []   # wrote this because user in None will raise error
+        return [user for user in result if result is not None]
+    except Exception as e:
+        if conn:
+            conn.rollback()
+        logger.exception("Error while checking the Details of users in session")
+        raise e
+    finally:
+        if conn:
+            conn.close()
 def createSessionMessage(sessionId:int, senderId:int, text:str, files:dict | None = None):
     conn = None
     try:
@@ -189,13 +275,38 @@ def createSessionMessage(sessionId:int, senderId:int, text:str, files:dict | Non
                         SELECT uploaded_at
                         FROM session_messages
                         WHERE message_id=?
-                            """, messageId)
-        timeStamp = curs.fetchone()
+                            """,(messageId,)) 
+        timeStamp = curs.fetchone()[0]
         timeStamp = datetime.fromisoformat(timeStamp).strftime("%I:%M %p")
+        curs.execute("""
+            SELECT name, avatarId
+            FROM patients
+            WHERE health_id = ?
+        """, (senderId,))
+
+        sender = curs.fetchone()
+
+        if sender is None:
+            curs.execute("""
+                SELECT name, avatarId
+                FROM doctors
+                WHERE doctor_id = ?
+            """, (senderId,))
+
+            sender = curs.fetchone()
+
+        senderName = sender[0]
+        avatarId = sender[1]
         return {
-            "messageId":messageId,
-            "attachmentId":attachmentId,
-            "timeStamp":timeStamp
+            "messageId": messageId,
+            "attachmentId": attachmentId,
+            "timestamp": timeStamp,
+            "senderId": senderId,
+            "senderName": senderName,
+            "avatarId": avatarId,
+            "text": text,
+            "fileName": files["fileName"] if files else None,
+            "date": datetime.fromisoformat(timeStamp).strftime("%d %b %Y")
         }
     except Exception as e:
         if conn:
@@ -205,7 +316,102 @@ def createSessionMessage(sessionId:int, senderId:int, text:str, files:dict | Non
     finally:
         if conn:
             conn.close()
+def markMessageRead(messageId: int, userId: int):
+    conn = None
+    try:
+        conn = sqlite3.connect(database_path)
+        curs = conn.cursor()
 
+        # Prevent duplicate inserts
+        curs.execute("""
+            INSERT OR IGNORE INTO message_reads (message_id, user_id)
+            VALUES (?, ?)
+        """, (messageId, userId))
+
+        # Get the session for this message
+        curs.execute("""
+            SELECT session_id
+            FROM session_messages
+            WHERE message_id = ?
+        """, (messageId,))
+        sessionId = curs.fetchone()[0]
+
+        # Get all participants
+        curs.execute("""
+            SELECT
+                health_id,
+                assigned_doctor_id,
+                referred_doctor_id
+            FROM consultation_sessions
+            WHERE session_id = ?
+        """, (sessionId,))
+
+        participants = [x for x in curs.fetchone() if x is not None]
+        totalParticipants = len(participants)
+
+        # Count how many have read
+        curs.execute("""
+            SELECT COUNT(*)
+            FROM message_reads
+            WHERE message_id = ?
+        """, (messageId,))
+
+        readCount = curs.fetchone()[0]
+
+        conn.commit()
+
+        return {
+            "read": readCount == totalParticipants,
+            "sessionId": sessionId
+        }
+
+    except Exception as e:
+        if conn:
+            conn.rollback()
+        logger.exception("Error marking message as read")
+        raise
+
+    finally:
+        if conn:
+            conn.close()
+def updateReferredDoctorDetails(sessionId: int, doctorId: int):
+    conn = None
+    try:
+        conn = sqlite3.connect(database_path)
+        curs = conn.cursor()
+
+        # Update the session
+        #this is how reffered_doctor_id and isreffered both are set
+        curs.execute("""
+            UPDATE consultation_sessions
+            SET
+                is_referred = 1,  
+                referred_doctor_id = ?
+            WHERE session_id = ?
+        """, (doctorId, sessionId))
+
+        # Get the referred doctor's name
+        curs.execute("""
+            SELECT name
+            FROM doctors
+            WHERE doctor_id = ?
+        """, (doctorId,))
+
+        doctorName = curs.fetchone()[0]
+
+        conn.commit()
+
+        return {
+            "doctor2": doctorName
+        }
+    except Exception as e:
+        if conn:
+            conn.rollback()
+        logger.exception("Error while updating referred doctor details")
+        raise
+    finally:
+        if conn:
+            conn.close()
 def updateMedicalDataDB(patientId, data):
     conn = None
     try:
@@ -281,130 +487,66 @@ def getPreviousSessions(patientId):
         "previousSessions": previousSessions
     }
 #still there and also this is incorrect too as i dint give the doctor2 detials 
-def getReportSubmissionData(sessionId, doctorId):
-    conn = sqlite3.connect(DATABASE)
-    conn.row_factory = sqlite3.Row
-    cursor = conn.cursor()
+def getReportSubmissionData(sessionId:int, doctorId:int):
+    conn = None
+    try:
+        conn = sqlite3.connect(database_path)
+        curs = conn.cursor()
 
-    cursor.execute("""
-        SELECT
-            s.session_id,
-            s.start_time,
+        curs.execute("""
+            SELECT
+                cs.session_id,
+                cs.created_at,
 
-            d.doctor_id,
-            d.name AS doctor_name,
+                cs.assigned_doctor_id,
+                cs.referred_doctor_id,
 
-            p.name AS patient_name,
-            p.gender,
-            p.date_of_birth,
-            p.avatar_id
+                d1.name,
+                d2.name,
 
-        FROM sessions s
+                p.name,
+                p.gender,
+                p.date_of_birth,
+                p.avatarId
 
-        JOIN doctors d
-            ON s.doctor_id = d.doctor_id
+            FROM consultation_sessions cs
 
-        JOIN patients p
-            ON s.patient_id = p.patient_id
+            JOIN patients p
+                ON cs.health_id = p.health_id
 
-        WHERE
-            s.session_id = ?
-            AND s.doctor_id = ?
-            AND s.status = 'Active'
-    """, (sessionId, doctorId))
+            JOIN doctors d1
+                ON cs.assigned_doctor_id = d1.doctor_id
 
-    row = cursor.fetchone()
+            LEFT JOIN doctors d2
+                ON cs.referred_doctor_id = d2.doctor_id
 
-    conn.close()
+            WHERE
+                cs.session_id = ?
+                AND cs.session_status IN ('active','referred')
+                AND (
+                    (cs.is_referred = 0
+                     AND cs.assigned_doctor_id = ?)
+                    OR
+                    (cs.is_referred = 1
+                     AND cs.referred_doctor_id = ?)
+                )
+        """, (
+            sessionId,
+            doctorId,
+            doctorId
+        ))
 
-    if row is None:
-        return None
+        row = curs.fetchone()
 
-    dob = datetime.strptime(
-        row["date_of_birth"],
-        "%Y-%m-%d"
-    ).date()
+        if row is None:
+            return None
 
-    today = date.today()
 
-    age = (
-        today.year
-        - dob.year
-        - (
-            (today.month, today.day)
-            <
-            (dob.month, dob.day)
-        )
-    )
-
-    start = datetime.fromisoformat(row["start_time"])
-
-    return {
-        "doctorName": row["doctor_name"],
-
-        "patientName": row["patient_name"],
-
-        "patientAvatar": row["avatar_id"],
-
-        "age": age,
-
-        "gender": row["gender"],
-
-        "ageGender": f"{age} / {row['gender']}",
-
-        "startDate": start.strftime("%Y-%m-%d"),
-
-        "startTime": start.strftime("%H:%M:%S")
-    }
-#still have this to complete but almost completed
-def getDoctorHomeData(doctorId):
-    conn = sqlite3.connect(DATABASE)
-    conn.row_factory = sqlite3.Row
-    cursor = conn.cursor()
-
-    # Doctor information
-    cursor.execute("""
-        SELECT
-            name,
-            avatar_id
-        FROM doctors
-        WHERE doctor_id = ?
-    """, (doctorId,))
-
-    doctor = cursor.fetchone()
-
-    if doctor is None:
-        conn.close()
-        return None
-
-    # Active sessions
-    cursor.execute("""
-        SELECT
-            s.session_id,
-            s.start_time,
-
-            p.name,
-            p.date_of_birth,
-            p.gender,
-            p.avatar_id
-
-        FROM sessions s
-        JOIN patients p
-            ON s.patient_id = p.patient_id
-
-        WHERE s.doctor_id = ?
-        AND s.status = 'Active'
-
-        ORDER BY s.start_time DESC
-    """, (doctorId,))
-
-    rows = cursor.fetchall()
-
-    currentSessions = []
-
-    for row in rows:
-
-        dob = datetime.strptime(row["date_of_birth"], "%Y-%m-%d").date()
+        # Calculate age
+        dob = datetime.strptime(
+            row[8],
+            "%Y-%m-%d"
+        ).date()
 
         today = date.today()
 
@@ -413,267 +555,512 @@ def getDoctorHomeData(doctorId):
             - dob.year
             - (
                 (today.month, today.day)
-                < (dob.month, dob.day)
+                <
+                (dob.month, dob.day)
             )
         )
 
-        start = datetime.fromisoformat(row["start_time"])
 
-        currentSessions.append({
-            "sessionId": row["session_id"],
-            "patientName": row["name"],
-            "patientAge": age,
-            "patientGender": row["gender"],
-            "avatarId": row["avatar_id"],
-            "sessionStartdate": start.strftime("%b %d, %Y"),
-            "sessionStarttime": start.strftime("%I:%M %p")
-        })
+        start = datetime.fromisoformat(row[1])
 
-    conn.close()
 
-    return {
-        "doctorName": doctor["name"],
-        "avatar": doctor["avatar_id"],
-        "currentSessions": currentSessions
-    }
+        # Decide current doctor name
+        if row[3] == doctorId:
+            currentDoctorName = row[5]   # referred doctor
+        else:
+            currentDoctorName = row[4]   # assigned doctor
+
+
+        return {
+            "doctorName": currentDoctorName,
+            "doctor1Name": row[4],
+            "doctor2Name": row[5],
+            "patientName": row[6],
+            "patientAvatar": row[9],
+            "age": age,
+            "gender": row[7],
+            "ageGender": f"{age} / {row[7]}",
+            "startDate": start.strftime("%Y-%m-%d"),
+            "startTime": start.strftime("%H:%M:%S")
+        }
+
+
+    except Exception:
+        logger.exception(
+            "Error while fetching report submission details"
+        )
+        raise
+
+    finally:
+        if conn:
+            conn.close()
+#still have this to complete but almost completed
+def getDoctorHomeData(doctorId):
+    conn = None
+    try:
+        conn = sqlite3.connect(database_path)
+        conn.row_factory = sqlite3.Row #makes the result[name] no need of result[0] 
+        curs = conn.cursor()
+        # Doctor details
+        curs.execute("""
+            SELECT
+                name,
+                avatarId
+            FROM doctors
+            WHERE doctor_id = ?
+        """, (doctorId,))
+        doctor = curs.fetchone()
+        if doctor is None:
+            return None
+        # Active sessions where doctor is either doctor1 or doctor2
+        curs.execute("""
+            SELECT
+                cs.session_id,
+                cs.created_at,
+                p.name AS patient_name,
+                p.date_of_birth,
+                p.gender,
+                p.avatarId AS patient_avatar
+            FROM consultation_sessions cs
+            JOIN patients p
+                ON cs.health_id = p.health_id
+            WHERE 
+                (cs.assigned_doctor_id = ?
+                OR cs.referred_doctor_id = ?)
+                AND cs.session_status IN ('active', 'referred')
+            ORDER BY cs.created_at DESC
+        """, (doctorId, doctorId))
+        rows = curs.fetchall()
+        currentSessions = []
+        for row in rows:
+            dob = datetime.strptime(
+                row["date_of_birth"],
+                "%Y-%m-%d"
+            ).date()
+            today = date.today()
+            age = (
+                today.year
+                - dob.year
+                - (
+                    (today.month, today.day)
+                    <
+                    (dob.month, dob.day)
+                )
+            )
+            start = datetime.fromisoformat(
+                row["created_at"]
+            )
+            currentSessions.append({
+                "sessionId": row["session_id"],
+                "patientName": row["patient_name"],
+                "patientAge": age,
+                "patientGender": row["gender"],
+                "avatarId": row["patient_avatar"],
+                "sessionStartDate":
+                    start.strftime("%b %d, %Y"),
+                "sessionStartTime":
+                    start.strftime("%I:%M %p")
+            })
+        return {
+            "doctorName": doctor["name"],
+            "avatar": doctor["avatarId"],
+            "currentSessions": currentSessions
+        }
+    except Exception:
+        logger.exception("Error while fetching doctor home data")
+        raise
+    finally:
+        if conn:
+            conn.close()
 #still have this to complete but almost completed
 def getDoctorDashboardData(doctorId):
-    conn = sqlite3.connect(DATABASE)
-    conn.row_factory = sqlite3.Row
-    cursor = conn.cursor()
-
-    cursor.execute("""
-        SELECT
-            d.doctor_id,
-            d.name,
-            d.contact_number,
-            d.specialization,
-            d.avatar_id,
-            d.total_cases_solved,
-
-            c.clinic_id,
-            c.name AS clinic_name,
-            c.type,
-            c.scale,
-            c.speciality_stream,
-            c.address,
-            c.latitude,
-            c.longitude,
-            c.emergency_hotline
-
-        FROM doctors d
-        JOIN clinics c
-            ON d.clinic_id = c.clinic_id
-        WHERE d.doctor_id = ?
-    """, (doctorId,))
-
-    row = cursor.fetchone()
-
-    conn.close()
-
-    if row is None:
-        return None
-
-    return {
-        "doctorId": row["doctor_id"],
-        "doctorName": row["name"],
-        "contactNumber": row["contact_number"],
-        "specialization": row["specialization"],
-        "avatarId": row["avatar_id"],
-        "totalCasesSolved": row["total_cases_solved"],
-
-        "clinic": {
-            "id": row["clinic_id"],
-            "name": row["clinic_name"],
-            "type": row["type"],
-            "scale": row["scale"],
-            "specialityStream": row["speciality_stream"],
-            "address": row["address"],
-            "latitude": row["latitude"],
-            "longitude": row["longitude"],
-            "emergencyHotline": row["emergency_hotline"]
+    conn = None
+    try:
+        conn = sqlite3.connect(database_path)
+        conn.row_factory = sqlite3.Row
+        curs = conn.cursor()
+        curs.execute("""
+            SELECT
+                d.doctor_id,
+                d.name,
+                d.contact_number,
+                d.specialization,
+                d.avatarId,
+                d.total_cases_solved,
+                c.clinic_id,
+                c.name AS clinic_name,
+                c.type,
+                c.scale,
+                c.speciality_stream,
+                c.address,
+                c.latitude,
+                c.longitude,
+                c.emergency_hotline
+            FROM doctors d
+            JOIN clinics c
+                ON d.assigned_clinic_id = c.clinic_id
+            WHERE d.doctor_id = ?
+        """, (doctorId,))
+        result = curs.fetchone()
+        if result is None:
+            return None
+        return {
+            "doctorId": result["doctor_id"],
+            "doctorName": result["name"],
+            "contactNumber": result["contact_number"],
+            "specialization": result["specialization"],
+            "avatarId": result["avatarId"],
+            "totalCasesSolved": result["total_cases_solved"],
+            "clinic": {
+                "clinicId": result["clinic_id"],
+                "clinicName": result["clinic_name"],
+                "type": result["type"],
+                "scale": result["scale"],
+                "specialityStream": result["speciality_stream"],
+                "address": result["address"],
+                "latitude": result["latitude"],
+                "longitude": result["longitude"],
+                "emergencyHotline": result["emergency_hotline"]
+            }
         }
-    }
+    except Exception:
+        logger.exception("Error while fetching doctor dashboard details")
+        raise
+    finally:
+        if conn:
+            conn.close()
 
 #even this still have to do 
 def getPatientSessions(patientId):
-    conn = sqlite3.connect(DB_NAME)
-    conn.row_factory = sqlite3.Row
-    cur = conn.cursor()
-
-    # patient information
-    cur.execute("""
-        SELECT patient_name,
-               avatar_id
-        FROM patients
-        WHERE patient_id = ?
-    """, (patientId,))
-
-    patient = cur.fetchone()
-
-    if patient is None:
-        conn.close()
-        return None
-    sessions = []
-
-    for row in cur.fetchall():
-
-        dt = datetime.fromisoformat(row["start_time"])
-
-        sessions.append({
-            "sessionId": row["session_id"],
-            "doctorName": row["doctor_name"],
-            "doctorSpeciality": row["speciality"],
-            "avatarId": row["avatar_id"],
-            "sessionStartdate": dt.strftime("%b %d, %Y"),
-            "sessionStarttime": dt.strftime("%I:%M %p")
-        })
-
-    conn.close()
-
-    return {
-        "patientName": patient["patient_name"],
-        "avatar": patient["avatar_id"],
-        "currentSessions": sessions
-    }
-
-# dont forget to give here for the below function the content type newly updated
-def create_patient_session(health_id:str, clinic_id:str, department:str, assigned_doctor_id:str):
     conn = None
     try:
         conn = sqlite3.connect(database_path)
         curs = conn.cursor()
-        clinic_id = int(clinic_id)
-        assigned_doctor_id = int(assigned_doctor_id)
+        # Patient details
         curs.execute("""
-                        SELECT name from patients
-                        WHERE health_id = ?  
-                        """, (health_id,))
-        patient_row = curs.fetchone()
-        patient_name = patient_row[0] if patient_row else "unknown Patient"
-        
-        curs.execute("SELECT name FROM clinics WHERE clinic_id = ?", (clinic_id,))
-        clinic_row = curs.fetchone()
-        clinic_name = clinic_row[0] if clinic_row else "Unknown Clinic"
-
+            SELECT
+                name,
+                avatarId
+            FROM patients
+            WHERE health_id = ?
+        """, (patientId,))
+        patient = curs.fetchone()
+        if patient is None:
+            return None
+        # Patient sessions
         curs.execute("""
-                    SELECT name FROM doctors
-                    WHERE assigned_clinic_id = ? 
-                      AND specialization = ? 
-                      AND doctor_id = ? 
-                      AND is_available = 1
-                    """, (clinic_id, department, assigned_doctor_id))
-        doctor_row = curs.fetchone()
-        doctor_name = doctor_row[0] if doctor_row else "unknown Doctor"
+            SELECT
+                cs.session_id,
+                cs.created_at,
+                d.name,
+                d.specialization,
+                d.avatarId
+            FROM consultation_sessions cs
+            JOIN doctors d
+                ON cs.assigned_doctor_id = d.doctor_id
+            WHERE cs.health_id = ?
+              AND cs.session_status IN ('active', 'referred')
+            ORDER BY cs.created_at DESC
+        """, (patientId,))
+        rows = curs.fetchall()
+        currentSessions = []
+        for row in rows:
+            start = datetime.fromisoformat(row[1])
+            currentSessions.append({
+                "sessionId": row[0],
+                "doctorName": row[2],
+                "doctorSpeciality": row[3],
+                "avatarId": row[4],
+                "sessionStartDate": start.strftime("%b %d, %Y"),
+                "sessionStartTime": start.strftime("%I:%M %p")
+            })
+        return {
+            "patientName": patient[0],
+            "avatar": patient[1],
+            "currentSessions": currentSessions
+        }
+    except Exception:
+        logger.exception("Error while fetching patient sessions")
+        raise
+    finally:
+        if conn:
+            conn.close()
 
+# dont forget to give here for the below function the content type newly updated
+def makeSession(doctorid:int, patientId:int, department:str, clinicid:int):
+    conn = None
+    try:
+        conn = sqlite3.connect(database_path)
+        curs = conn.cursor()
+        clinicid = int(clinicid)
+        patientId = int(patientId)  
+        doctorid = int(doctorid)
         curs.execute("""
                     INSERT INTO consultation_sessions
                     (health_id, clinic_id, assigned_doctor_id, department, session_status)
                     VALUES
-                    (?,?,?,?,"started")
-                        """, (health_id, clinic_id, assigned_doctor_id, department))
+                    (?,?,?,?,"active")
+                        """, (patientId, clinicid, doctorid, department))
         conn.commit()
         newsession_id = curs.lastrowid
         return{
-            "session_id" : newsession_id,
-            "patient_name" : patient_name,
-            "clinic_name" : clinic_name,
-            "doctor_name" : doctor_name,
+            "sessionId" : newsession_id,
             "message" : "Session created successfully"
         }
     except Exception as e:
         if conn:
             conn.rollback()
-        raise e
+        logger.exception("Error while creating consultation session")
+        raise 
     finally:
         if conn:
             conn.close()
-def getDoctorDashboardData(doctorId):
-    conn = sqlite3.connect(DATABASE)
-    conn.row_factory = sqlite3.Row
-    cursor = conn.cursor()
+def getSessionDetails(sessionId: int):
+    conn = None
+    try:
+        conn = sqlite3.connect(database_path)
+        curs = conn.cursor()
 
-    cursor.execute("""
-        SELECT
-            d.doctor_id,
-            d.name,
-            d.contact_number,
-            d.specialization,
-            d.avatar_id,
-            d.total_cases_solved,
+        curs.execute("""
+            SELECT
+                p.name,
+                d.name,
+                cs.created_at,
+                c.name
+            FROM consultation_sessions cs
+            JOIN patients p
+                ON cs.health_id = p.health_id
+            JOIN doctors d
+                ON cs.assigned_doctor_id = d.doctor_id
+            JOIN clinics c
+                ON cs.clinic_id = c.clinic_id
+            WHERE cs.session_id = ?
+        """, (sessionId,))
 
-            c.clinic_id,
-            c.name AS clinic_name,
-            c.type,
-            c.scale,
-            c.speciality_stream,
-            c.address,
-            c.latitude,
-            c.longitude,
-            c.emergency_hotline
+        result = curs.fetchone()
 
-        FROM doctors d
-        JOIN clinics c
-            ON d.clinic_id = c.clinic_id
-        WHERE d.doctor_id = ?
-    """, (doctorId,))
+        if result is None:
+            return None
 
-    row = cursor.fetchone()
-
-    conn.close()
-
-    if row is None:
-        return None
-
-    return {
-        "doctorId": row["doctor_id"],
-        "doctorName": row["name"],
-        "contactNumber": row["contact_number"],
-        "specialization": row["specialization"],
-        "avatarId": row["avatar_id"],
-        "totalCasesSolved": row["total_cases_solved"],
-
-        "clinic": {
-            "id": row["clinic_id"],
-            "name": row["clinic_name"],
-            "type": row["type"],
-            "scale": row["scale"],
-            "specialityStream": row["speciality_stream"],
-            "address": row["address"],
-            "latitude": row["latitude"],
-            "longitude": row["longitude"],
-            "emergencyHotline": row["emergency_hotline"]
+        return {
+            "patientName": result[0],
+            "doctor1Name": result[1],
+            "createdAt": result[2],
+            "clinicName": result[3]
         }
-    }
-#dont use None things first 
-def complete_patient_session( 
-    session_id:int,
-    chief_complaint: str,
-    additional_vitals: str,
-    uploaded_filepath: str,
-    resolved_time:str,
-    blood_pressure: Optional[str] = None,
-    blood_sugar: Optional[float] = None,
-    temperature: Optional[float] = None,
-    heart_rate: Optional[int] = None):
+
+    except Exception as e:
+        logger.exception("Error while fetching session details")
+        raise
+
+    finally:
+        if conn:
+            conn.close()
+def getReadCount(messageId: int):
+    conn = None
+    try:
+        conn = sqlite3.connect(database_path)
+        curs = conn.cursor()
+
+        curs.execute("""
+            SELECT COUNT(*)
+            FROM message_reads
+            WHERE message_id = ?
+        """, (messageId,))
+
+        return curs.fetchone()[0]
+
+    except Exception as e:
+        logger.exception("Error while getting read count")
+        raise
+
+    finally:
+        if conn:
+            conn.close()
+def getAttachmentDetails(userId: int, attachmentId: int):
+    conn = None
+    try:
+        conn = sqlite3.connect(database_path)
+        curs = conn.cursor()
+
+        curs.execute("""
+            SELECT
+                sa.file_name,
+                sa.file_path
+            FROM session_attachments sa
+            JOIN session_messages sm
+                ON sa.message_id = sm.message_id
+            JOIN consultation_sessions cs
+                ON sm.session_id = cs.session_id
+            WHERE sa.attachment_id = ?
+              AND (
+                    cs.health_id = ?
+                 OR cs.assigned_doctor_id = ?
+                 OR cs.referred_doctor_id = ?
+              )
+        """, (attachmentId, userId, userId, userId))
+
+        result = curs.fetchone()
+
+        if result is None:
+            return None
+
+        return {
+            "fileName": result[0],
+            "filePath": result[1]
+        }
+
+    except Exception as e:
+        logger.exception("Error while fetching attachment details")
+        raise
+
+    finally:
+        if conn:
+            conn.close()
+def getReport(sessionId: int, userId: int):
     conn = None
     try:
         conn = sqlite3.connect(database_path)
         curs = conn.cursor()
         curs.execute("""
-                        UPDATE consultation_sessions
-                        SET chief_complaint = ?, additional_vitals = ?, uploaded_file_path = ?, blood_pressure = ?, blood_sugar = ?, temperature = ?, heart_rate = ?, session_status = 'completed', resolved_at = ?
-                        WHERE session_id = ?   
-                    """, (chief_complaint, additional_vitals, uploaded_filepath, blood_pressure, blood_sugar, temperature, heart_rate, resolved_time, session_id))
-        
-        conn.commit()
-        return{
-            "message":"session completed successfully"
+            SELECT
+                uploaded_file_path,
+                content_type
+            FROM consultation_sessions
+            WHERE session_id = ?
+              AND health_id = ?
+              AND session_status = 'completed'
+        """, (sessionId, userId))
+        result = curs.fetchone()
+        if result is None:
+            return None
+        return {
+            "reportPath": result[0],
+            "content_type": result[1]
         }
-    except Exception as e:
+    except Exception:
+        logger.exception("Error while fetching report details")
+        raise
+
+    finally:
+        if conn:
+            conn.close()
+def updateNotes(sessionId: int, userId: int, notes: str):
+    conn = None
+    try:
+        conn = sqlite3.connect(database_path)
+        curs = conn.cursor()
+
+        curs.execute("""
+            UPDATE consultation_sessions
+            SET notes = ?
+            WHERE session_id = ?
+              AND health_id = ?
+              AND session_status in ('active', 'referred')
+        """, (notes, sessionId, userId))
+
+        conn.commit()
+
+        return curs.rowcount > 0
+
+    except Exception:
         if conn:
             conn.rollback()
-        raise e
+        logger.exception("Error while updating session notes")
+        raise
+
+    finally:
+        if conn:
+            conn.close()
+def checkSessionId(sessionId: int):
+    conn = None
+    try:
+        conn = sqlite3.connect(database_path)
+        curs = conn.cursor()
+        curs.execute("""
+            SELECT
+                assigned_doctor_id,
+                referred_doctor_id
+            FROM consultation_sessions
+            WHERE session_id = ?
+        """, (sessionId,))
+        result = curs.fetchone()
+        if result is None:  #this because other wise dictornay is not said to be none
+            return None
+        return {
+            "doctor1Id": result[0],
+            "doctor2Id": result[1]
+        }
+    except Exception as e:
+        logger.exception("Error while checking session ID")
+        raise
+    finally:
+        if conn:
+            conn.close()
+#dont use None things first 
+def complete_patient_session(
+    session_id: int,
+    doctor_id: int,
+    chief_complaint: str,
+    additional_vitals: str,
+    uploaded_filepath: str,
+    content_type: str,
+    resolved_time: str,
+    blood_pressure: str = None,
+    blood_sugar: float = None,
+    temperature: float = None,
+    heart_rate: int = None
+):
+    conn = None
+    try:
+        conn = sqlite3.connect(database_path)
+        curs = conn.cursor()
+        # Complete session
+        curs.execute("""
+            UPDATE consultation_sessions
+            SET
+                chief_complaint = ?,
+                additional_vitals = ?,
+                uploaded_file_path = ?,
+                content_type = ?,
+                blood_pressure = ?,
+                blood_sugar = ?,
+                temperature = ?,
+                heart_rate = ?,
+                session_status = 'completed',
+                resolved_at = ?
+            WHERE session_id = ?
+        """,
+        (
+            chief_complaint,
+            additional_vitals,
+            uploaded_filepath,
+            content_type,
+            blood_pressure,
+            blood_sugar,
+            temperature,
+            heart_rate,
+            resolved_time,
+            session_id
+        ))
+        if curs.rowcount == 0:
+            return None
+        # Increase doctor's solved cases
+        #see how we can make functions there itself
+        curs.execute("""
+            UPDATE doctors
+            SET total_cases_solved = total_cases_solved + 1  
+            WHERE doctor_id = ?
+        """, (doctor_id,))
+        conn.commit()
+        return {
+            "message": "Session completed successfully"
+        }
+    except Exception:
+        if conn:
+            conn.rollback()
+        logger.exception("Error while completing session")
+        raise
     finally:
         if conn:
             conn.close()
@@ -734,7 +1121,73 @@ def emergency_connect_hospitals(session_id:int, clinic_id:int, department:int):
         raise e
     finally:
         conn.close()
+def getSessionDetailsToConnect(sessionId: int):
+    conn = None
+    try:
+        conn = sqlite3.connect(database_path)
+        curs = conn.cursor()
 
+        curs.execute("""
+            SELECT
+                cs.assigned_doctor_id,
+                p.name,
+                c.name,
+                cs.department,
+                cs.created_at
+            FROM consultation_sessions cs
+            JOIN patients p
+                ON cs.health_id = p.health_id
+            JOIN clinics c
+                ON cs.clinic_id = c.clinic_id
+            WHERE cs.session_id = ?
+              AND cs.is_referred = 0
+        """, (sessionId,))
+
+        result = curs.fetchone()
+
+        if result is None:
+            return None
+
+        return {
+            "doctorId": result[0],
+            "patientName": result[1],
+            "clinicName": result[2],
+            "department": result[3],
+            "timestamp": result[4]
+        }
+
+    except Exception:
+        logger.exception("Error while fetching session details for emergency")
+        raise
+
+    finally:
+        if conn:
+            conn.close()
+
+def checkSessionEmergency(sessionId: int):
+    conn = None
+    try:
+        conn = sqlite3.connect(database_path)
+        curs = conn.cursor()
+
+        curs.execute("""
+            SELECT is_referred
+            FROM consultation_sessions
+            WHERE session_id = ?
+              AND is_referred = 1
+        """, (sessionId,))
+
+        result = curs.fetchone()
+
+        return result
+
+    except Exception:
+        logger.exception("Error while checking session emergency status")
+        raise
+
+    finally:
+        if conn:
+            conn.close()
 
 def make_available_doctor(doctor_id:int):
     conn = None

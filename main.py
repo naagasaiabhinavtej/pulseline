@@ -1,6 +1,6 @@
 import os
 from fastapi import FastAPI, UploadFile, File, Form, HTTPException, Request, Query, WebSocket, Response, Depends, RequestValidationError, WebSocketDisconnect
-from crud import create_patient_session, complete_patient_session, emergency_connect_hospitals, make_available_doctor, patientLogin,doctorLogin, checkPatientId, checkDoctorId, checkDoctorClinicId, createSessionMessage, updateMedicalDataDB, getPreviousSessions, getPatientSessions, getDoctorDashboardData, getDoctorHomeData, getReportSubmissionData
+from crud import getDoctorHomeData, getDoctorDashboardData, getPatientSessions, updateMedicalDataDB,complete_patient_session,checkSessionUser, getSessionUsers,createSessionMessage, markMessageRead, patientLogin, doctorLogin, checkDoctorId,checkPatientId, checkDoctorClinicId, makeSession, getSessionDetails, checkSessionId, getReadCount, getAttachmentDetails, updateNotes, checkSessionEmergency, getSessionDetailsToConnect,checkUserPermissionToEndSession, getReportSubmissionData
 from datetime import datetime, timedelta
 from typing import Optional
 from fastapi.middleware.cors import CORSMiddleware
@@ -686,13 +686,13 @@ async def createSession(data:MakeSessionRequest, currentUser=Depends(getCurrentU
                     "type":"Accepted",
                     "sessionId":result.sessionId
                 })
-            res = getSessionDetails(result.sessionId)
-            if res is None:
-                raise APIException(
-                    status_code=404,
-                    code="INVALID_SESSION",
-                    detail="Session not found."
-                )
+            # res = getSessionDetails(result.sessionId) #no need of this actually because there is no need if session created ccan give details
+            # if res is None:
+            #     raise APIException(
+            #         status_code=404,
+            #         code="INVALID_SESSION",
+            #         detail="Session not found."
+            #     )
             pconnection = socket.get(connectionType=ConnectionType.ACTIVE, userId=data.healthId)
             if pconnection:
                 await pconnection["websocket"].send_json(
@@ -772,7 +772,7 @@ def giveSessionBasicDetails(sessionId:int, currentUser = Depends(getCurrentUser)
     return {
         "patientName":result["patientName"],
         "sessionId":sessionId,
-        "doctorName":result["doctorName"],
+        "doctorName":result["doctor1Name"],
         "createdAt":result["createdAt"],
         "clinicName":result["clinicName"]
     }
@@ -788,7 +788,7 @@ def giveDataSessionDetail(sessionId:int, currentUser=Depends(getCurrentUser)):
             detail="Session Not Found"
         )
     doctorId = currentUser["userId"]
-    if doctorId not in {result.doctor1Id, result.doctor2Id}:
+    if doctorId not in {result["doctor1Id"], result["doctor2Id"]}:
         raise APIException(
             status_code=403,
             code="INVALID_USER",
@@ -1505,58 +1505,7 @@ async def doctorIndex(currentUser=Depends(getCurrentUser)):
     return data
 
 
-# def make_session(health_id:str = Form(...), clinic_id:str = Form(...), department:str = Form(...), assigned_doctor_id:str = Form(...)):
-#     #make check when unkown patient_name comes or unknown_doc_name or clinic name comes
-#     return create_patient_session(health_id, clinic_id, department, assigned_doctor_id)
 
-
-# @app.post("/api/sessions/{session_id}/submit")
-# async def complete_session(request:Request,chief_complaint:str = Form(...), additional_vitals:str = Form(...), uploaded_filepath:UploadFile = File(...),
-#                             blood_pressure: Optional[str] = Form(None), blood_sugar: Optional[float] = Form(None), temperature:Optional[float] = Form(None), 
-#                             heart_rate: Optional[int] = Form(None)):
-#     file_path = None
-#     try:
-#         _, file_ext = os.path.splitext(uploaded_filepath.filename)
-#         if not file_ext:
-#             file_ext = '.jpg'
-#         session_id = request.path_params.get("session_id")
-#         resolved_time = datetime.now().strftime("%Y%m%d_%H%M%S")
-#         file_total_name = f"{str(session_id)}_{resolved_time}{file_ext}"
-#         file_path = os.path.join(TO_UPLOAD_DIR, file_total_name)
-#         with open(file_path, "wb") as f:
-#             content = await uploaded_filepath.read()
-#             f.write(content)
-#         result = complete_patient_session(session_id=int(session_id), chief_complaint=chief_complaint, additional_vitals=additional_vitals,uploaded_filepath=file_path,resolved_time=resolved_time, blood_pressure=blood_pressure, blood_sugar=blood_sugar,temperature=temperature, heart_rate=heart_rate )
-#         return result
-#     except Exception as e:
-#         if file_path and os.path.exists(file_path):
-#             os.remove(file_path)
-#         raise APIException(status_code=500,code="SERVER_ISSUE", detail=f"Internal server problem : {str(e)}")
-        
-
-# @app.get("/api/sessions/emergency")
-# async def connect_hospitals(session_id:int = Query(..., description="The ID of the current consultation session"),
-#                       clinic_id: int = Query(..., description="The ID of the requesting clinic"),
-#                       department: str = Query(..., description="The department stream (e.g., Cardiology)")):
-#     try:
-#         results = emergency_connect_hospitals(session_id=session_id, clinic_id=clinic_id, department=department)
-        
-#         for result in results:
-#             await connections[result[0]].send_text()
-#         return results
-#     except Exception as e:
-#         raise APIException(status_code=500, detail=f"Internal sever issue: {str(e)}")
-    
-# connections = {}
-# @app.websocket("/ws/doctor")
-# async def make_connections_doctor(websocket:WebSocket):
-#     doctor_id = websocket.query_params["doctor_id"]
-#     await websocket.accept()
-#     connections[doctor_id] = websocket
-#     result = make_available_doctor(doctor_id=doctor_id)
-#     return result
-
-    
 
 
 
