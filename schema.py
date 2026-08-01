@@ -12,6 +12,7 @@ class SessionResponse(BaseModel):
         form_attributes = True
 
 class patientRegister(BaseModel):
+    person: str
     name: str
     date_of_birth: date
     gender: str
@@ -152,8 +153,8 @@ class doctorRegister(BaseModel):
 
         return value
 class LoginRequest(BaseModel):
-    person=str,
-    id=int = Field(gt=0),
+    person:str
+    id:int = Field(gt=0)
     password:str
 
 
@@ -166,7 +167,7 @@ class LoginRequest(BaseModel):
         return value
     
 
-    @field_validator
+    @field_validator("password")
     @classmethod
     def validate_password(cls, value):
 

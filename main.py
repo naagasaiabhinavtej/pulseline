@@ -1,5 +1,5 @@
 import os
-from fastapi import FastAPI, UploadFile, File, Form, HTTPException, Request, Query, WebSocket, Response, Depends, RequestValidationError, WebSocketDisconnect
+from fastapi import FastAPI, UploadFile, File, Form, HTTPException, Request, Query, WebSocket, Response, Depends, WebSocketDisconnect
 from crud import getEmergencyDoctors, getSessionMessages, getPreviousSessions, updateRefferedDoctorDetails, getReport, getPatientMedicalData, getDoctorDetails, getPatientDetails, getDoctorHomeData, getDoctorDashboardData, getPatientSessions, updateMedicalDataDB,complete_patient_session,checkSessionUser, getSessionUsers,createSessionMessage, markMessageRead, patientLogin, doctorLogin, checkDoctorId,checkPatientId, checkDoctorClinicId, makeSession, getSessionDetails, checkSessionId, getReadCount, getAttachmentDetails, updateNotes, checkSessionEmergency, getSessionDetailsToConnect,checkUserPermissionToEndSession, getReportSubmissionData
 from datetime import datetime, timedelta
 from typing import Optional
@@ -8,6 +8,7 @@ from auth import createAccessToken, createRefreshToken, decodeToken, hash_passwo
 from schema import patientRegister, doctorRegister, LoginRequest, MakeSessionRequest, NewMessage, Notes, AcceptEmergency, sessionResponse,  UpdateMedicalData
 from utils import makeAvatarIdP, loadBmiData, APIException
 from fastapi.responses import JSONResponse, FileResponse
+from fastapi.exceptions import RequestValidationError
 from uuid import uuid4
 from pathlib import Path
 # import shutil
