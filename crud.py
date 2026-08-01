@@ -2,7 +2,7 @@ import sqlite3
 from typing import Optional
 import math
 import logging
-from datetime import datetime
+from datetime import datetime, date
 
 database_path = "medical_platform.db"
 
@@ -249,6 +249,227 @@ def getSessionUsers(sessionId:int):
     finally:
         if conn:
             conn.close()
+def getReport(sessionId: int, userId: int):
+    conn = None
+    try:
+        conn = sqlite3.connect(database_path)
+        conn.row_factory = sqlite3.Row
+        curs = conn.cursor()
+
+        curs.execute("""
+            SELECT
+                uploaded_file_path AS reportPath,
+                content_type
+            FROM consultation_sessions
+            WHERE session_id = ?
+              AND health_id = ?
+              AND uploaded_file_path IS NOT NULL
+        """, (sessionId, userId))
+
+        result = curs.fetchone()
+
+        if result is None:
+            return None
+
+        return dict(result)
+
+    except Exception:
+        if conn:
+            conn.rollback()
+        logger.exception("Error getting report")
+        return None
+
+    finally:
+        if conn:
+            conn.close()
+def updateRefferedDoctorDetails(sessionId:int, doctorId:int):
+    conn = None
+    try:
+        conn = sqlite3.connect(database_path)
+        conn.row_factory = sqlite3.Row
+        curs = conn.cursor()
+
+        curs.execute("""
+                        UPDATE consultation_sessions
+                        SET
+                            referred_doctor_id=?,
+                            is_referred=1,
+                            session_status='inReferral'
+                        WHERE session_id=?
+                    """, (doctorId, sessionId))
+
+        if curs.rowcount == 0:
+            conn.rollback()
+            return None
+
+        curs.execute("""
+                        SELECT
+                            name
+                        FROM doctors
+                        WHERE doctor_id=?
+                    """, (doctorId,))
+
+        result = curs.fetchone()
+
+        conn.commit()
+
+        return {
+            "Doctor2name": result["name"]
+        }
+
+    except Exception as e:
+        if conn:
+            conn.rollback()
+        logger.exception("Error updating referred doctor")
+        return None
+
+    finally:
+        if conn:
+            conn.close()
+def getPatientMedicalData(patientId:int):
+    conn = None
+    try:
+        conn = sqlite3.connect(database_path)
+        conn.row_factory = sqlite3.Row
+        curs = conn.cursor()
+        curs.execute("""
+                        SELECT
+                            health_id,
+                            name,
+                            avatarId,
+                            date_of_birth,
+                            gender,
+                            blood_group,
+                            height,
+                            weight,
+                            right_eye,
+                            left_eye,
+                            right_ear,
+                            left_ear,
+                            medical_history,
+                            allergies,
+                            emergency_contact
+                        FROM patients
+                        WHERE health_id=?
+                    """, (patientId,))
+        patient = curs.fetchone()
+        if patient is None:
+            return None
+        curs.execute("""
+                        SELECT
+                            created_at,
+                            department,
+                            blood_pressure,
+                            blood_sugar,
+                            temperature,
+                            heart_rate
+                        FROM consultation_sessions
+                        WHERE health_id=?
+                        ORDER BY created_at DESC
+                    """, (patientId,))
+        sessions = curs.fetchall()
+        return {
+            "HealthID": patient["health_id"],
+            "PatientName": patient["name"],
+            "patientAvatarId": patient["avatarId"],
+            "dateOfBirth": patient["date_of_birth"],
+            "Gender": patient["gender"],
+            "BloodGroup": patient["blood_group"],
+            "Height": patient["height"],
+            "Weight": patient["weight"],
+            "RightEye": patient["right_eye"],
+            "LeftEye": patient["left_eye"],
+            "RightEarHearing": patient["right_ear"],
+            "LeftEarHearing": patient["left_ear"],
+            "EmergencyContact": patient["emergency_contact"],
+            "MedicalHistory": patient["medical_history"],
+            "Allergies": patient["allergies"],
+            "sessionsData": [                     #see how list comprehension is useful
+                {
+                    "createdAt": session["created_at"],
+                    "department": session["department"],
+                    "bloodPressure": session["blood_pressure"],
+                    "bloodSugar": session["blood_sugar"],
+                    "temperature": session["temperature"],
+                    "heartRate": session["heart_rate"]
+                }
+                for session in sessions
+            ]
+        }
+    except Exception as e:
+        logger.exception("Error getting patient medical data")
+        return None
+    finally:
+        if conn:
+            conn.close()
+def getDoctorDetails(doctorId: int):
+    conn = None
+    try:
+        conn = sqlite3.connect(database_path)
+        conn.row_factory = sqlite3.Row
+        curs = conn.cursor()
+        curs.execute("""
+            SELECT
+                doctor_id,
+                name,
+                avatarId,
+                specialization
+            FROM doctors
+            WHERE doctor_id = ?
+        """, (doctorId,))
+        result = curs.fetchone()
+        if result is None:
+            return None
+        return {
+            "userId": result["doctor_id"],
+            "name": result["name"],
+            "avatarId": result["avatarId"],
+            "specialization": result["specialization"]
+        }
+    except Exception:
+        if conn:
+            conn.rollback()
+        logger.exception("Error while getting doctor details")
+        return None
+    finally:
+        if conn:
+            conn.close()
+def getPatientDetails(patientId: int):
+    conn = None
+    try:
+        conn = sqlite3.connect(database_path)
+        curs = conn.cursor()
+        curs.execute("""
+            SELECT
+                name,
+                avatarId,
+                gender,
+                CAST((julianday('now') - julianday(date_of_birth)) / 365.25 AS INTEGER) AS age
+            FROM patients
+            WHERE health_id = ?
+        """, (patientId,))
+
+        result = curs.fetchone()
+
+        if result is None:
+            return None
+
+        return {
+            "name": result[0],
+            "avatarId": result[1],
+            "gender": result[2],
+            "age": result[3]
+        }
+
+    except Exception as e:
+        if conn:
+            conn.rollback()
+        logger.exception("Error while getting patient details")
+        return None
+
+    finally:
+        if conn:
+            conn.close()
 def createSessionMessage(sessionId:int, senderId:int, text:str, files:dict | None = None):
     conn = None
     try:
@@ -374,44 +595,6 @@ def markMessageRead(messageId: int, userId: int):
     finally:
         if conn:
             conn.close()
-def updateReferredDoctorDetails(sessionId: int, doctorId: int):
-    conn = None
-    try:
-        conn = sqlite3.connect(database_path)
-        curs = conn.cursor()
-
-        # Update the session
-        #this is how reffered_doctor_id and isreffered both are set
-        curs.execute("""
-            UPDATE consultation_sessions
-            SET
-                is_referred = 1,  
-                referred_doctor_id = ?
-            WHERE session_id = ?
-        """, (doctorId, sessionId))
-
-        # Get the referred doctor's name
-        curs.execute("""
-            SELECT name
-            FROM doctors
-            WHERE doctor_id = ?
-        """, (doctorId,))
-
-        doctorName = curs.fetchone()[0]
-
-        conn.commit()
-
-        return {
-            "doctor2": doctorName
-        }
-    except Exception as e:
-        if conn:
-            conn.rollback()
-        logger.exception("Error while updating referred doctor details")
-        raise
-    finally:
-        if conn:
-            conn.close()
 def updateMedicalDataDB(patientId, data):
     conn = None
     try:
@@ -457,36 +640,106 @@ def updateMedicalDataDB(patientId, data):
         if conn:
             conn.close()
 
-
-#you have to still update the down code      
-def getPreviousSessions(patientId):
-    conn = sqlite3.connect(DB_NAME)
-    cursor = conn.cursor()
-
-    # Check patient exists
-    cursor.execute("""
-        SELECT name, avatar_id
-        FROM patients
-        WHERE patient_id = ?
-    """, (patientId,))
-
-    patient = cursor.fetchone()
-
-    if patient is None:
-        conn.close()
+#read the below funciton for sure
+def getPreviousSessions(patientId: int):
+    conn = None
+    try:
+        conn = sqlite3.connect(database_path)
+        conn.row_factory = sqlite3.Row
+        curs = conn.cursor()
+        curs.execute("""
+            SELECT
+                p.name AS patient_name,
+                p.avatar_id AS patient_avatar,
+                cs.session_id,
+                cs.department,
+                cs.issue,
+                cs.bp,
+                cs.hr,
+                cs.temperature,
+                cs.bs,
+                cs.additional_vitals,
+                cs.start_time,
+                cs.end_time,
+                cs.reffered_doctor_id,
+                d1.name AS doctor1_name,
+                d1.avatar_id AS doctor1_avatar,
+                c1.name AS doctor1_hospital,
+                d2.name AS doctor2_name,
+                d2.avatar_id AS doctor2_avatar,
+                c2.name AS doctor2_hospital
+            FROM consultation_sessions cs
+            JOIN patients p
+                ON cs.health_id = p.health_id
+            JOIN doctors d1
+                ON cs.assigned_doctor_id = d1.doctor_id
+            JOIN clinics c1
+                ON d1.clinic_id = c1.clinic_id
+            LEFT JOIN doctors d2         
+                ON cs.reffered_doctor_id = d2.doctor_id
+            LEFT JOIN clinics c2
+                ON d2.clinic_id = c2.clinic_id
+            WHERE
+                cs.health_id = ?
+                AND cs.status = 'completed'
+            ORDER BY cs.end_time DESC
+        """, (patientId,))
+        #left join because doctor2 can be null too and also if join is sued then the sessions where doctor2 is not used is gone
+        rows = curs.fetchall()
+        if not rows:
+            return None
+        previousSessions = []
+        patientName = rows[0]["patient_name"]
+        avatarId = rows[0]["patient_avatar"]
+        for row in rows:
+            start = row["start_time"]
+            end = row["end_time"]
+            try:
+                start = datetime.fromisoformat(start).strftime("%d %b %Y")
+            except:
+                start = start or ""
+            try:
+                end = datetime.fromisoformat(end).strftime("%d %b %Y")
+            except:
+                end = end or ""
+            doctorTwo = None
+            if row["doctor2_name"] is not None:
+                doctorTwo = {
+                    "name": row["doctor2_name"] or "",
+                    "hospital": row["doctor2_hospital"] or "",
+                    "avatarId": row["doctor2_avatar"] or "first"
+                }
+            previousSessions.append({
+                "sessionId": row["session_id"],
+                "department": row["department"] or "",
+                "date": f"{start} → {end}",
+                "issue": row["issue"] or "",
+                "bp": row["bp"] or "---",
+                "hr": row["hr"] or "---",
+                "temperature": row["temperature"] or "---",
+                "bs": row["bs"] or "---",
+                "additionalVitals": row["additional_vitals"] or "",
+                "isReferred": row["reffered_doctor_id"] is not None,
+                "doctorOne": {
+                    "name": row["doctor1_name"] or "Unknown Doctor",
+                    "hospital": row["doctor1_hospital"] or "",
+                    "avatarId": row["doctor1_avatar"] or "first"
+                },
+                "doctorTwo": doctorTwo
+            })
+        return {
+            "patientName": patientName,
+            "avatarId": avatarId,
+            "previousSessions": previousSessions
+        }
+    except Exception:
+        logger.exception("Error fetching previous sessions")
         return None
+    finally:
+        if conn:
+            conn.close() 
 
-    # Fetch previous sessions here...
-    # ...
 
-    conn.close()
-
-    return {
-        "patientName": patient[0],
-        "avatarId": patient[1],
-        "previousSessions": previousSessions
-    }
-#still there and also this is incorrect too as i dint give the doctor2 detials 
 def getReportSubmissionData(sessionId:int, doctorId:int):
     conn = None
     try:
@@ -522,7 +775,7 @@ def getReportSubmissionData(sessionId:int, doctorId:int):
 
             WHERE
                 cs.session_id = ?
-                AND cs.session_status IN ('active','referred')
+                AND cs.session_status IN ('active','inReferral')
                 AND (
                     (cs.is_referred = 0
                      AND cs.assigned_doctor_id = ?)
@@ -594,6 +847,7 @@ def getReportSubmissionData(sessionId:int, doctorId:int):
     finally:
         if conn:
             conn.close()
+        
 #still have this to complete but almost completed
 def getDoctorHomeData(doctorId):
     conn = None
@@ -627,7 +881,7 @@ def getDoctorHomeData(doctorId):
             WHERE 
                 (cs.assigned_doctor_id = ?
                 OR cs.referred_doctor_id = ?)
-                AND cs.session_status IN ('active', 'referred')
+                AND cs.session_status IN ('active', 'inReferral')
             ORDER BY cs.created_at DESC
         """, (doctorId, doctorId))
         rows = curs.fetchall()
@@ -672,6 +926,61 @@ def getDoctorHomeData(doctorId):
     finally:
         if conn:
             conn.close()
+def getSessionMessages(session_id: int):
+    conn = None
+    try:
+        conn = sqlite3.connect(database_path)
+        curs = conn.cursor()
+
+        curs.execute("""
+            SELECT
+                sm.message_id,
+                sm.sender_id,
+                sm.message,
+                sm.created_at,
+                sa.file_name,
+                sa.file_path,
+                sa.content_type,
+                CASE
+                    WHEN sm.sender_id = cs.health_id THEN p.name
+                    WHEN sm.sender_id = cs.assigned_doctor_id THEN d1.name
+                    WHEN sm.sender_id = cs.reffered_doctor_id THEN d2.name
+                END AS sender_name,
+                CASE
+                    WHEN sm.sender_id = cs.health_id THEN p.avatar_id
+                    WHEN sm.sender_id = cs.assigned_doctor_id THEN d1.avatar_id
+                    WHEN sm.sender_id = cs.reffered_doctor_id THEN d2.avatar_id
+                END AS sender_avatar,
+                CASE
+                    WHEN sm.sender_id = cs.health_id THEN 'patient'
+                    WHEN sm.sender_id = cs.assigned_doctor_id THEN 'doctor'
+                    WHEN sm.sender_id = cs.reffered_doctor_id THEN 'doctor'
+                END AS sender_role
+            FROM session_messages sm
+            JOIN consultation_sessions cs
+            ON sm.session_id = cs.session_id
+            JOIN patients p
+            ON cs.health_id = p.health_id
+            JOIN doctors d1
+            ON cs.assigned_doctor_id = d1.doctor_id
+            LEFT JOIN doctors d2
+            ON cs.reffered_doctor_id = d2.doctor_id
+            LEFT JOIN session_attachments sa
+            ON sm.message_id = sa.message_id
+            WHERE sm.session_id = ? 
+            AND cs.session_status IN ("active", "isReferral")
+            ORDER BY sm.created_at ASC
+        """, (session_id,))
+        messages = curs.fetchall()
+        return messages
+    except Exception as e:
+        if conn:
+            conn.rollback()
+        logger.exception(f"Error fetching session messages: {e}")
+        return None
+    finally:
+        if conn:
+            conn.close()       
 #still have this to complete but almost completed
 def getDoctorDashboardData(doctorId):
     conn = None
@@ -759,7 +1068,7 @@ def getPatientSessions(patientId):
             JOIN doctors d
                 ON cs.assigned_doctor_id = d.doctor_id
             WHERE cs.health_id = ?
-              AND cs.session_status IN ('active', 'referred')
+              AND cs.session_status IN ('active', 'inReferral')
             ORDER BY cs.created_at DESC
         """, (patientId,))
         rows = curs.fetchall()
@@ -956,7 +1265,7 @@ def updateNotes(sessionId: int, userId: int, notes: str):
             SET notes = ?
             WHERE session_id = ?
               AND health_id = ?
-              AND session_status in ('active', 'referred')
+              AND session_status in ('active', 'inReferral')
         """, (notes, sessionId, userId))
 
         conn.commit()
@@ -1078,49 +1387,59 @@ def caluculate_distance(lat1, lon1, lat2, lon2):
     a = (math.sin(diff1/2))**2
     b = math.cos(a1)*math.cos(a2)*(math.sin(diff2/2))**2
     return 2*6371*(math.asin(math.sqrt(a+b)))
-    
-def emergency_connect_hospitals(session_id:int, clinic_id:int, department:int):
+def getEmergencyDoctors(session_id: int, emergency_time):
     conn = None
     try:
         conn = sqlite3.connect(database_path)
         curs = conn.cursor()
-        # Arguments: (Name inside SQL, number of inputs, Python function name)
-        conn.create_function("calculate_distance", 4, caluculate_distance)
-        available = []
         curs.execute("""
-                        SELECT a.clinic_id, b.doctor_id
-                        FROM clinics as a
-                        LEFT JOIN doctors as b
-                        ON a.clinic_id = b.assigned_clinic_id
-                        WHERE a.clinic_type IN ('Corporate_Multi_Specialty', 
-                        'Single_Specialty_Hospital' 
-                        ) AND a.specialty_stream = ? AND b.specialization = ?
-                        AND b.is_available = True
-                        AND (
-                                ((SELECT created_at FROM consultation_sessions WHERE session_id = ?)>=datetime('now','-30 minutes')
-                                AND calculate_distance(
-                                                        (SELECT latitude FROM consultation_sessions WHERE session_id = ?),
-                                                        (SELECT lONGItude FROM consultation_sessions WHERE session_id = ?),
-                                                        a.latitude,
-                                                        a.longitude
-                                                    ) <= 50
-                                OR
-                                ( (SELECT created_at FROM consultation_sessions WHERE session_id = ?)<datetime('now','-30 minutes') )
-                            )
-                        """, department,department, session_id, session_id, session_id, session_id)
-        conn.commit()
-        rows = curs.fetchall() 
-        for row in rows:
-            available.append({
-                "assigned_clinic_id":row[0],
-                "assigned_doctor_id":row[1]
-            })
-        return available
+            SELECT d.doctor_id
+            FROM doctors AS d
+            JOIN clinics AS c
+            ON d.assigned_clinic_id = c.clinic_id
+            JOIN consultation_sessions AS cs
+            ON cs.session_id = ?
+            JOIN clinics AS patient_clinic
+            ON cs.clinic_id = patient_clinic.clinic_id
+            WHERE d.is_available = 1
+            AND d.specialization = cs.department
+            AND c.clinic_type IN (
+                'Corporate_Multi_Specialty',
+                'Single_Specialty_Hospital'
+            )
+            AND
+            (
+                (
+                    datetime('now') < datetime(?, '+30 minutes')
+                    AND
+                    calculate_distance(
+                        patient_clinic.longitude,
+                        patient_clinic.latitude,
+                        c.longitude,
+                        c.latitude
+                    ) <= 100
+                )
+                OR
+                (
+                    datetime('now') >= datetime(?, '+30 minutes')
+                )
+            )
+        """, (
+            session_id,
+            emergency_time,
+            emergency_time
+        ))
+        doctors = curs.fetchall()
+        return doctors
     except Exception as e:
-        conn.rollback()
-        raise e
+        if conn:
+            conn.rollback()
+        logger.exception(f"Error fetching emergency doctors: {e}")
+        return None
     finally:
-        conn.close()
+        if conn:
+            conn.close()
+
 def getSessionDetailsToConnect(sessionId: int):
     conn = None
     try:
@@ -1188,81 +1507,3 @@ def checkSessionEmergency(sessionId: int):
     finally:
         if conn:
             conn.close()
-
-def make_available_doctor(doctor_id:int):
-    conn = None
-    try:
-        conn = sqlite3.connect(database_path)
-        curs = conn.cursor()
-        curs.execute("""
-                        UPDATE doctors
-                        SET is_available = not is_available
-                        WHERE doctor_id = ? AND is_available = True
-                        """, (doctor_id,))
-        conn.commit()
-        return {"message":"success"}
-    except Exception as e:
-        conn.rollback()
-        raise e
-    finally:
-        if conn:
-            conn.close()
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-def trigger_emergency_escalation(session_id: int):
-    conn = sqlite3.connect(database_path)
-    cursor = conn.cursor()
-    try:
-        cursor.execute("""
-                        UPDATE consultation_sessions
-                        SET session_status = "emergency"
-                        WHERE session_id = ?                        
-                        """, (session_id,))
-        conn.commit()
-        cursor.execute("""
-                        SELECT 
-                            s.session_id,
-                            p.name AS patient_name,
-                            c.name AS clinic_name,
-                            s.chief_complaint,
-                            s.additional_vitals,
-                            s.uploaded_report_path
-                        FROM consultation_sessions s
-                        LEFT JOIN patients p ON s.health_id = p.health_id
-                        LEFT JOIN Clinics c ON s.clinic_id = c.clinic_id
-                        WHERE s.session_id = ?
-                        """, (session_id,))
-        row = cursor.fetchone()
-        if row:
-            emergency_packet = {
-                "session_id": row[0],
-                "patient_name": row[1] if row[1] else "Unknown Patient",
-                "clinic_name": row[2] if row[2] else "Unknown Clinic",
-                "chief_complaint": row[3],
-                "file_updates": row[4] if (row[4] and row[4] != '{}') else "No automated report data generated",
-                "image_path": row[5] if row[5] else "No image uploaded"
-            }
-            return emergency_packet
-        return None
-    except Exception as e:
-        print(f"Database error during escalation: {e}")
-        raise e
-    finally:
-        conn.close()
-
-        

@@ -1,6 +1,6 @@
 import os
 from fastapi import FastAPI, UploadFile, File, Form, HTTPException, Request, Query, WebSocket, Response, Depends, RequestValidationError, WebSocketDisconnect
-from crud import getDoctorHomeData, getDoctorDashboardData, getPatientSessions, updateMedicalDataDB,complete_patient_session,checkSessionUser, getSessionUsers,createSessionMessage, markMessageRead, patientLogin, doctorLogin, checkDoctorId,checkPatientId, checkDoctorClinicId, makeSession, getSessionDetails, checkSessionId, getReadCount, getAttachmentDetails, updateNotes, checkSessionEmergency, getSessionDetailsToConnect,checkUserPermissionToEndSession, getReportSubmissionData
+from crud import getEmergencyDoctors, getSessionMessages, getPreviousSessions, updateRefferedDoctorDetails, getReport, getPatientMedicalData, getDoctorDetails, getPatientDetails, getDoctorHomeData, getDoctorDashboardData, getPatientSessions, updateMedicalDataDB,complete_patient_session,checkSessionUser, getSessionUsers,createSessionMessage, markMessageRead, patientLogin, doctorLogin, checkDoctorId,checkPatientId, checkDoctorClinicId, makeSession, getSessionDetails, checkSessionId, getReadCount, getAttachmentDetails, updateNotes, checkSessionEmergency, getSessionDetailsToConnect,checkUserPermissionToEndSession, getReportSubmissionData
 from datetime import datetime, timedelta
 from typing import Optional
 from fastapi.middleware.cors import CORSMiddleware
@@ -10,11 +10,11 @@ from utils import makeAvatarIdP, loadBmiData, APIException
 from fastapi.responses import JSONResponse, FileResponse
 from uuid import uuid4
 from pathlib import Path
-import shutil
+# import shutil
 import base64
 from enum import Enum
 import asyncio
-#see disconnect edgecases or mistakes
+#see websockt disconnect, errorhandling,  edgecases or mistakes
 #using path
 UPLOAD_DIR = Path("uploads/chat")
 os.makedirs(UPLOAD_DIR, exist_ok = True)
@@ -1087,7 +1087,8 @@ async def download_report(
     )
 async def emergencyWorkFlow(sessionId:int, doctorId:int, patientName:str, clinicName:str, deparment:str, timestamp:str):
     try:
-        ldoctors = getLocalDoctors(doctorId, sessionId)
+        present = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        ldoctors = getEmergencyDoctors(sessionId,present)
         for doctors in ldoctors:
             ws = socket.get(connectionType=ConnectionType.ACTIVE, userId=doctors)
             if ws:
@@ -1139,7 +1140,7 @@ async def emergencyWorkFlow(sessionId:int, doctorId:int, patientName:str, clinic
         except asyncio.TimeoutError:
             pass
 
-        adoctors = getAllDoctors(doctorId, sessionId)
+        adoctors = getEmergencyDoctors(sessionId, present)
         for doctors in adoctors:
             ws = socket.get(connectionType=ConnectionType.ACTIVE, userId=doctors)
             if ws:
