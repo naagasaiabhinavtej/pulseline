@@ -337,7 +337,7 @@
         const doctor2Value =
         document.querySelector(".detail-row:nth-child(7) .doctor-sub-profile span");
 
-        const copyIcon = document.querySelector(".copy-ic");
+        const copyIc = document.querySelector(".copy-ic");
 
         const reportTab =
         document.querySelectorAll(".tab-trigger")[1];
@@ -575,6 +575,19 @@
             let seconds = diff%60;
             timerDigits.textContent = `${days}D:${String(hours).padStart(2, "0")}:${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`;
         }
+        copyIc.addEventListener("click", async ()=>
+        {
+            const sessionCode = sessionIdTop.textContent;
+            await navigator.clipboard.writeText(sessionCode);  //copies text into clipboard as navigation is a browser property
+            copyIc.setAttribute("data-lucide", "check");         //lucide is a built in symbols instead of us to design
+            lucide.createIcons();
+            setTimeout(()=>
+            {
+                console.log("timeout fired");
+                copyIc.setAttribute("data-lucide", "copy");
+                lucide.createIcons();
+            }, 1000);
+        });
         joinButton.addEventListener("click", joinSession);
         function joinSession()
         {

@@ -353,7 +353,7 @@
             ".profile-name"
         );
         const logoutBtn = document.querySelector(".logout-btn");
-        const copyIcon = document.querySelector('.copy-ic');
+        const copyIc = document.querySelector('.copy-ic');
         // const micIcon = document.getElementById("mic-icon");
         // const videoIcon = document.getElementById("video-icon");
         let localStream;
@@ -467,6 +467,7 @@
             patientNameSide.textContent = data.patientName;
             patientAgeGenderSide.textContent =
             `${data.patientAge} / ${data.patientGender}`;
+            //this is like let browser decide as per user local location [] but if want soem style like eu-us
             startDateSide.textContent = start.toLocaleDateString();
             startTimeSide.textContent = start.toLocaleTimeString([], {
                 hour: "2-digit",
@@ -537,6 +538,19 @@
             joinButtonText.textContent = "Joining";
             window.open(`incall.html?sessionId=${sessionId}`, "_blank");
         }
+        copyIc.addEventListener("click", async ()=>
+        {
+            const sessionCode = sessionIdTop.textContent;
+            await navigator.clipboard.writeText(sessionCode);  //copies text into clipboard as navigation is a browser property
+            copyIc.setAttribute("data-lucide", "check");         //lucide is a built in symbols instead of us to design
+            lucide.createIcons();
+            setTimeout(()=>
+            {
+                console.log("timeout fired");
+                copyIc.setAttribute("data-lucide", "copy");
+                lucide.createIcons();
+            }, 1000);
+        });
         logoutBtn.addEventListener("click", async () => {
             const result = await fetch("/logout", {
                 method: "POST",
