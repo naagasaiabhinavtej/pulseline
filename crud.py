@@ -220,6 +220,8 @@ def checkUserPermissionToEndSession(doctorId: int, sessionId: int):
         return result
 
     except Exception:
+        if conn:
+            conn.rollback()
         logger.exception("Error while checking session end permission")
         raise
 

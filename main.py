@@ -649,6 +649,12 @@ async def createSession(data:MakeSessionRequest, currentUser=Depends(getCurrentU
     if not result3:
         return {"type":"errorInDetails",
                 "errorPlace":"clinicId"}
+    if data.healthId in pendingRequests:
+        raise APIException(
+            status_code=409,
+            code="INVALID_REQUEST",
+            detail="Patient has been requested with other session"
+        )
     if result1 and result2 and result3:
         conn = socket.get(connectionType=ConnectionType.ACTIVE, userId=doctorId)
         if conn:
@@ -657,13 +663,7 @@ async def createSession(data:MakeSessionRequest, currentUser=Depends(getCurrentU
             })
         else:
             pendingConnections["active"].setdefault(doctorId, []).append({"type":"validDetails",
-                                                                          "expireAt":datetime.now()+timedelta(minutes=5)})
-    if data.healthId in pendingRequests:
-        raise APIException(
-            status_code=409,
-            code="INVALID_REQUEST",
-            detail="Patient has been requested with other session"
-        )
+                                                                    "expireAt":datetime.now()+timedelta(minutes=5)})
     pendingRequests[data.healthId] = {
         "event":asyncio.Event(),
         "doctorId":doctorId

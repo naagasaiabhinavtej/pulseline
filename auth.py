@@ -5,9 +5,14 @@ from passlib.context import CryptContext
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from utils import APIException
 security = HTTPBearer()
+#this https bearer does read header
+# find Authorization
+# remove Bearer
+# extract token
+# create credentials object
 
 pwd_context = CryptContext(
-    schemes=["bcrypt"],
+    schemes=["bcrypt"],          #highly powerful
     deprecated="auto"
 )
 
@@ -48,6 +53,11 @@ def hash_password(password:str):
 def validate_password(password:str, hashed_password:str):
     return pwd_context.verify(password, hashed_password)
 
+#credentials = {
+#     scheme: "Bearer",
+#     credentials: "eyJhbGciOiJIUzI1Ni..."
+# }
+# HTTPAuthorizationCredentials (type) is what creates the object. thats the reason why makes a credentials inside it
 def getCurrentUser(credentials: HTTPAuthorizationCredentials = Depends(security)):
     accessToken = credentials.credentials
     payload = decodeToken(accessToken)

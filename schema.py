@@ -24,7 +24,7 @@ class patientRegister(BaseModel):
     medical_data: str | None = None
     password: str
     @field_validator("person")
-    @classmethod
+    @classmethod      #class method needed if you want to use some other details like cls.medical_data etch
     def validate_person(cls, value):
         if value != "patient":
             raise ValueError("Invalid user type")
